@@ -1,52 +1,6 @@
-/**
- * @format
- */
+import { StyleSheet } from 'react-native';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Button,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  useColorScheme,
-  View,
-} from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import {
-  cancelDailyReminder,
-  configureNotificationChannel,
-  requestNotificationPermission,
-  scheduleDailyReminder,
-} from './src/features/notifications/service';
-import {
-  DEFAULT_REMINDER_PREFERENCES,
-  loadReminderPreferences,
-  saveReminderPreferences,
-} from './src/features/notifications/storage';
-import { ReminderPreferences } from './src/features/notifications/types';
-import HomeScreen from './src/screens/HomeScreen';
-
-
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
-  );
-}
-
-function AppContent() {
-  return <HomeScreen />;
-}
-
-const styles = StyleSheet.create({
+export default StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -129,5 +83,3 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
 });
-
-export default App;
