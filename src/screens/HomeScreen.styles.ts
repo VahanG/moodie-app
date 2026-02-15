@@ -5,32 +5,47 @@ export default StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  content: {
+  pager: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  page: {
+    flex: 1,
+  },
+  settingsContent: {
     flex: 1,
     padding: 20,
     gap: 16,
   },
-  affirmationCard: {
+  affirmationPage: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  affirmationContent: {
+    flex: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 8,
+    gap: 16,
   },
   affirmationImage: {
-    width: 220,
-    height: 220,
-    borderRadius: 16,
+    width: '100%',
+    height: '72%',
+    borderRadius: 24,
   },
   affirmationText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '700',
     color: '#111827',
     textAlign: 'center',
+    paddingHorizontal: 8,
   },
   loadingContainer: {
-    flex: 1,
+    paddingVertical: 16,
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
   },
   loadingText: {
@@ -81,5 +96,32 @@ export default StyleSheet.create({
   status: {
     fontSize: 13,
     color: '#2563eb',
+  },
+  footer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#d1d5db',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  pageDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#d1d5db',
+  },
+  pageDotActive: {
+    backgroundColor: '#2563eb',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#6b7280',
   },
 });

@@ -38,24 +38,12 @@ Moodie’s supporter app pairs digital analogs of Moodie products with in-app pu
 - Maintains build pipelines, certificates, provisioning profiles, and OTA delivery (CodePush/AppCenter if adopted).
 - Oversees `android/` and `ios/` native configs, ensuring CI parity.
 
-## Core Workflows
-### Daily Cadence
-- Async standup in `#moodie-agents` Slack: blockers, deploys, incidents.
-- Content diffs reviewed via pull request + CMS change log.
-
-### Backlog & Planning
-- Product Analog + Experience agents co-own feature tickets in Linear/Jira.
-- Commerce agent reviews every item tagged `iap`, ensuring SKU readiness before merge.
-
 ### Content Drops
 1. Dynamic Content agent stages new catalog entries.
 2. Product Analog agent validates assets + metadata.
 3. Release agent triggers OTA or app store release only if native change required.
 4. Data agent updates experiment dashboards.
 
-### Purchase SKU Updates
-- Sandbox test cases documented in `docs/testing/iap.md`.
-- Receipt verification smoke tests executed before store submission.
 
 ### Incident / Escalation
 - P0 incidents triaged by Infra agent, handed to responsible owner within 15 minutes.
@@ -68,13 +56,6 @@ Moodie’s supporter app pairs digital analogs of Moodie products with in-app pu
 - Analytics stack (e.g., Segment + BigQuery).
 - Monitoring: Sentry for runtime errors, Firebase Performance for latency.
 
-## Next Steps
-1. Stand up the remote content service schema (owner: Dynamic Content agent).
-2. Draft initial digital analog templates + sample assets (owner: Product Analog agent).
-3. Spike `react-native-iap` integration with sandbox SKUs (owner: Commerce agent).
-4. Decide on OTA strategy (CodePush vs. in-app CMS only) before first release (owner: Infra agent).
 
-## Open Questions
-- Do we need region-specific pricing rules or tax handling beyond store defaults?
-- Which backend service will host receipt validation, and who owns SLAs?
-- Should analytics events aggregate per campaign or per SKU variant for reporting?
+# Contributing
+- Follow the principles outlined in `CONTRIBUTING.md` for code quality and maintainability
