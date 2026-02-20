@@ -13,5 +13,8 @@ Principles
 Developer workflow
 - When refactoring, move behavior into services and keep screens/components as thin as possible.
 - Update `AGENTS.MD` when agent responsibilities or workflows change.
+- Follow docs-first delivery: update or add `docs/` artifacts before implementing behavior changes.
+- In implementation PRs, link the relevant `docs/*.md` paths or provide explicit rationale when docs are not affected (`No docs impact: ...`).
+- Keep documentation and code changes in the same PR when behavior changes.
 
 If unsure, prefer a brief RFC or small PR so the team can review the change quickly.
