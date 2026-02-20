@@ -211,27 +211,25 @@ const HomeScreen: React.FC = () => {
           handlePageChange(event.nativeEvent.contentOffset.x);
         }}
       >
-        <View style={[styles.page, { width }]}>
-          <SettingsPanel
-            isLoading={isLoading}
-            isSaving={isSaving}
-            preferences={preferences}
-            hourInput={hourInput}
-            minuteInput={minuteInput}
-            setHourInput={setHourInput}
-            setMinuteInput={setMinuteInput}
-            onToggle={handleToggle}
-            onSaveTime={handleSaveTime}
-            statusMessage={statusMessage}
-            reminderTimeText={reminderTimeText}
-          />
-        </View>
-
         <View style={[styles.page, styles.affirmationPage, { width }]}>
           <AffirmationPanel  />
         </View>
+        <View style={[styles.page, { width }]}>
+          <SettingsPanel
+              isLoading={isLoading}
+              isSaving={isSaving}
+              preferences={preferences}
+              hourInput={hourInput}
+              minuteInput={minuteInput}
+              setHourInput={setHourInput}
+              setMinuteInput={setMinuteInput}
+              onToggle={handleToggle}
+              onSaveTime={handleSaveTime}
+              statusMessage={statusMessage}
+              reminderTimeText={reminderTimeText}
+          />
+        </View>
       </ScrollView>
-
       <HomeFooter activePage={activePage} />
     </SafeAreaView>
   );

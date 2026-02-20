@@ -43,7 +43,9 @@ const AffirmationPanel = () => (
       style={styles.affirmationImage}
       resizeMode="cover"
     />
-    <Text style={styles.affirmationText}>{activeAffirmation.text}</Text>
+    <View style={styles.affirmationTextOverlay}>
+      <Text style={styles.affirmationText}>{activeAffirmation.text}</Text>
+    </View>
   </View>
 );
 

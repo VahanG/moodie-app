@@ -13,7 +13,7 @@ const HomeFooter: React.FC<Props> = ({ activePage }) => (
       <View style={[styles.pageDot, activePage === 1 && styles.pageDotActive]} />
     </View>
     <Text style={styles.footerText}>
-      {activePage === 1 ? 'Swipe right for settings' : 'Swipe left for affirmation'}
+      {activePage === 1 ? 'Swipe right for affirmation' : 'Swipe left for settings'}
     </Text>
   </View>
 );
