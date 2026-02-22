@@ -1,5 +1,13 @@
-import React, { useMemo, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Image,
+  Modal,
+  PanResponder,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import {
   AFFIRMATION_TOPICS,
   getAffirmationTopicById,
@@ -22,14 +30,78 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicId, onSelectTopic }) =
     () => getAffirmationTopicById(selectedTopicId),
     [selectedTopicId],
   );
+  const dailyAffirmationIndex = useMemo(
+    () => getDailyIndex(activeTopic.affirmations.length),
+    [activeTopic],
+  );
+  const [activeAffirmationIndex, setActiveAffirmationIndex] = useState(
+    dailyAffirmationIndex,
+  );
+  const totalAffirmations = activeTopic.affirmations.length;
+
+  useEffect(() => {
+    setActiveAffirmationIndex(dailyAffirmationIndex);
+  }, [dailyAffirmationIndex]);
+
+  const showPreviousAffirmation = useCallback(() => {
+    if (totalAffirmations === 0) {
+      return;
+    }
+
+    setActiveAffirmationIndex(
+      currentIndex => (currentIndex - 1 + totalAffirmations) % totalAffirmations,
+    );
+  }, [totalAffirmations]);
+
+  const showNextAffirmation = useCallback(() => {
+    if (totalAffirmations === 0) {
+      return;
+    }
+
+    setActiveAffirmationIndex(
+      currentIndex => (currentIndex + 1) % totalAffirmations,
+    );
+  }, [totalAffirmations]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx) &&
+          Math.abs(gestureState.dy) > 12,
+        onPanResponderRelease: (_, gestureState) => {
+          if (Math.abs(gestureState.dy) < 30) {
+            return;
+          }
+
+          if (gestureState.dy < 0) {
+            showNextAffirmation();
+            return;
+          }
+
+          showPreviousAffirmation();
+        },
+      }),
+    [showNextAffirmation, showPreviousAffirmation],
+  );
+
   const activeAffirmation = useMemo(() => {
     const cards = activeTopic.affirmations;
-    const dayIndex = getDailyIndex(cards.length);
-    return cards[dayIndex] ?? cards[0];
-  }, [activeTopic]);
+    if (cards.length === 0) {
+      return undefined;
+    }
+
+    const safeIndex =
+      ((activeAffirmationIndex % cards.length) + cards.length) % cards.length;
+    return cards[safeIndex];
+  }, [activeAffirmationIndex, activeTopic]);
+
+  if (!activeAffirmation) {
+    return null;
+  }
 
   return (
-    <View style={styles.affirmationContent}>
+    <View style={styles.affirmationContent} {...panResponder.panHandlers}>
       <Image
         source={{ uri: activeAffirmation.imageUri }}
         style={styles.affirmationImage}
@@ -48,6 +120,9 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicId, onSelectTopic }) =
           <Text style={styles.topicPickerButtonText}>Topic: {activeTopic.name}</Text>
         </Pressable>
       </View>
+      <Text style={styles.affirmationSwipeHint}>
+        Swipe up/down for next affirmation
+      </Text>
 
       <Modal
         animationType="fade"

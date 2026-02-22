@@ -27,10 +27,11 @@ Users currently see a single generic affirmation stream. The product now needs a
 2. Users can open topic selection quickly from Affirmations.
 3. Selected topic persists across sessions until the user changes it.
 4. Affirmations page displays only texts from the selected topic.
-5. Users can choose between fixed background mode and Free mode.
-6. Fixed background mode overrides topic/text background suggestions.
-7. Free mode uses affirmation-text-connected backgrounds.
-8. Calendar and Settings behavior from v1 remains unchanged by this update.
+5. On the Affirmations page, swipe up/down moves to next/previous topic text.
+6. Users can choose between fixed background mode and Free mode.
+7. Fixed background mode overrides topic/text background suggestions.
+8. Free mode uses affirmation-text-connected backgrounds.
+9. Calendar and Settings behavior from v1 remains unchanged by this update.
 
 ## Acceptance criteria
 - Requirement statement: Topic switching is discoverable and fast.
@@ -39,6 +40,9 @@ Users currently see a single generic affirmation stream. The product now needs a
 - Requirement statement: Topic choice is sticky across restarts.
   - User impact: Users do not need to reconfigure every session.
   - Measurable success condition: Relaunching the app preserves the last selected topic.
+- Requirement statement: Text navigation by gesture is predictable.
+  - User impact: Users can browse affirmations quickly without opening another screen.
+  - Measurable success condition: QA can swipe up/down on Affirmations and observe next/previous text with wrap-around.
 - Requirement statement: Background mode behavior is deterministic.
   - User impact: Users understand when custom vs adaptive visuals are used.
   - Measurable success condition: Fixed mode always shows chosen background; Free mode shows text-connected background.
