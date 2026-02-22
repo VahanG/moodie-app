@@ -16,6 +16,7 @@ import { ReminderPreferences } from '../features/notifications/types';
 import styles from './HomeScreen.styles';
 import SettingsPanel from './SettingsPanel';
 import AffirmationPanel from './AffirmationPanel';
+import CalendarPanel from './CalendarPanel';
 import HomeFooter from './HomeFooter';
 
 function formatTime(hour: number, minute: number): string {
@@ -213,6 +214,9 @@ const HomeScreen: React.FC = () => {
       >
         <View style={[styles.page, styles.affirmationPage, { width }]}>
           <AffirmationPanel  />
+        </View>
+        <View style={[styles.page, styles.calendarPage, { width }]}>
+          <CalendarPanel />
         </View>
         <View style={[styles.page, { width }]}>
           <SettingsPanel

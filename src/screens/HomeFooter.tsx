@@ -10,10 +10,15 @@ const HomeFooter: React.FC<Props> = ({ activePage }) => (
   <View style={styles.footer}>
     <View style={styles.pageIcons}>
       <Text style={[styles.pageIcon, activePage === 0 && styles.pageIconActive]}>A</Text>
-      <Text style={[styles.pageIcon, activePage === 1 && styles.pageIconActive]}>⚙</Text>
+      <Text style={[styles.pageIcon, activePage === 1 && styles.pageIconActive]}>C</Text>
+      <Text style={[styles.pageIcon, activePage === 2 && styles.pageIconActive]}>⚙</Text>
     </View>
     <Text style={styles.footerText}>
-      {activePage === 1 ? 'Swipe right for affirmation' : 'Swipe left for settings'}
+      {activePage === 0
+        ? 'Swipe left for calendar'
+        : activePage === 1
+          ? 'Swipe for affirmations or settings'
+          : 'Swipe right for calendar'}
     </Text>
   </View>
 );
