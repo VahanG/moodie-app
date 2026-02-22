@@ -52,6 +52,88 @@ export default StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
+  affirmationHeader: {
+    position: 'absolute',
+    top: 18,
+    right: 16,
+  },
+  topicPickerButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  topicPickerButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  topicModalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+  },
+  topicModalSheet: {
+    maxHeight: '75%',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    backgroundColor: '#0f172a',
+    padding: 16,
+    gap: 12,
+  },
+  topicModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  topicModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#f8fafc',
+  },
+  topicModalCloseText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#93c5fd',
+  },
+  topicList: {
+    gap: 12,
+    paddingBottom: 12,
+  },
+  topicCard: {
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.45)',
+  },
+  topicCardSelected: {
+    borderColor: '#60a5fa',
+    borderWidth: 2,
+  },
+  topicCardImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topicCardOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.38)',
+    gap: 4,
+  },
+  topicCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  topicCardSelectionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#bfdbfe',
+  },
   calendarContent: {
     flex: 1,
     width: '100%',

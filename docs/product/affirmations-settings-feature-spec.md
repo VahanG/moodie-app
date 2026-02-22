@@ -1,61 +1,44 @@
 # Affirmations + Calendar + Settings Feature Spec
 
 ## Summary
-Deliver a three-page swipe experience with immersive Affirmations and Calendar pages plus a lightweight Settings page focused on notification setup.
+Keep the three-page swipe experience (Affirmations, Calendar, Settings), and upgrade Affirmations with configurable topics and background behavior.
 
 ## Problem
-Moodie needs a simple, high-clarity first experience that delivers affirmation content while still giving users quick access to essential app controls.
+Users currently see a single generic affirmation stream. The product now needs a lightweight way to personalize affirmations by topic while keeping the immersive visual style.
+
+## Screen-level specs
+- Affirmations screen: `docs/product/affirmations-screen-spec.md`
+- Topic selection screen: `docs/product/topic-selection-screen-spec.md`
+- Background selection screen: `docs/product/background-selection-screen-spec.md`
 
 ## Scope
 - In
-  - Affirmations page with full-screen background image.
-  - Centered affirmation text (horizontally and vertically).
-  - Calendar page with full-screen background image.
-  - Centered calendar text (horizontally and vertically) matching Affirmations layout treatment.
-  - Bottom date row on Calendar in `25 Feb [small logo] Monday` style.
-  - Settings page with notification setup controls (v1 only).
-  - Swipe navigation between Affirmations, Calendar, and Settings pages.
-  - Persistent, minimal footer page indicator with icons (including gear for Settings).
+  - Existing swipe navigation between Affirmations, Calendar, and Settings.
+  - Topic-aware affirmations on the Affirmations screen.
+  - Dedicated topic selection and background selection experiences.
+  - Persistent user selections across app sessions.
 - Out
-  - Advanced settings categories beyond notifications.
-  - Multi-page affirmation feed or history browsing.
-  - Remote personalization logic for affirmation layout.
+  - Advanced personalization beyond topic and background mode.
+  - Topic recommendation engine.
+  - Gallery-image and affirmation-text strict one-to-one matching.
 
-## Requirements
-1. The default landing page is Affirmations.
-2. The Affirmations page renders a full-screen image without visible layout gaps.
-3. Affirmation copy is centered both horizontally and vertically on top of the image.
-4. The Calendar page renders a full-screen image without visible layout gaps.
-5. Calendar copy is centered both horizontally and vertically on top of the image.
-6. Calendar includes a bottom-aligned date row in `25 Feb [small logo] Monday` style.
-7. Users can navigate between Affirmations, Calendar, and Settings by swiping.
-8. The Settings page includes notification setup entry points (permission/status/toggle behavior defined by implementation detail doc).
-9. A compact footer remains visible as a UI hint that multiple pages exist.
-10. Footer includes page icons, with a gear icon representing Settings.
-11. Footer height and spacing should be minimized while preserving tap/accessibility viability.
+## Product requirements (high level)
+1. The default landing page remains Affirmations.
+2. Users can open topic selection quickly from Affirmations.
+3. Selected topic persists across sessions until the user changes it.
+4. Affirmations page displays only texts from the selected topic.
+5. Users can choose between fixed background mode and Free mode.
+6. Fixed background mode overrides topic/text background suggestions.
+7. Free mode uses affirmation-text-connected backgrounds.
+8. Calendar and Settings behavior from v1 remains unchanged by this update.
 
 ## Acceptance criteria
-- Requirement statement: Users understand there are three pages and can move between them by swipe.
-  - User impact: Navigation is discoverable without onboarding friction.
-  - Measurable success condition: In QA, first-time users can reach Calendar and Settings from Affirmations via swipe without prompts.
-- Requirement statement: Affirmation content remains legible and centered on all supported phone sizes.
-  - User impact: Core affirmation moment feels intentional and premium.
-  - Measurable success condition: Visual QA confirms centered alignment and no clipping on supported breakpoints.
-- Requirement statement: Calendar content remains legible and centered, and bottom date row remains visible on all supported phone sizes.
-  - User impact: Daily context is clear while preserving immersive layout quality.
-  - Measurable success condition: Visual QA confirms centered calendar text and visible bottom date row (`25 Feb [small logo] Monday`) on supported breakpoints.
-- Requirement statement: Notification setup is reachable from Settings in one interaction.
-  - User impact: Users can enable reminder behavior quickly.
-  - Measurable success condition: QA can access notification controls from Settings with no dead-end states.
-- Requirement statement: Footer indicator is present but visually unobtrusive.
-  - User impact: Users get navigation cues without sacrificing immersion.
-  - Measurable success condition: Footer is always visible and occupies minimal vertical space per design token threshold.
-
-## Dependencies
-- Experience & Navigation agent: pager/swipe implementation and footer interaction design.
-- Commerce/Infra not required for v1 of this feature.
-- Data & Insights agent: optional event tracking for swipe-to-calendar and swipe-to-settings conversion.
-
-## Rollout and fallback
-- Rollout as a default three-page home experience behind a feature flag if needed.
-- Fallback: if swipe container fails on specific devices, retain tab/icon tap navigation between the same three pages.
+- Requirement statement: Topic switching is discoverable and fast.
+  - User impact: Personalization feels accessible during normal use.
+  - Measurable success condition: QA can reach topic selection from Affirmations in one tap and return with updated content.
+- Requirement statement: Topic choice is sticky across restarts.
+  - User impact: Users do not need to reconfigure every session.
+  - Measurable success condition: Relaunching the app preserves the last selected topic.
+- Requirement statement: Background mode behavior is deterministic.
+  - User impact: Users understand when custom vs adaptive visuals are used.
+  - Measurable success condition: Fixed mode always shows chosen background; Free mode shows text-connected background.
