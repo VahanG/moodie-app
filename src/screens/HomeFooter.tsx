@@ -8,9 +8,9 @@ type Props = {
 
 const HomeFooter: React.FC<Props> = ({ activePage }) => (
   <View style={styles.footer}>
-    <View style={styles.pageDots}>
-      <View style={[styles.pageDot, activePage === 0 && styles.pageDotActive]} />
-      <View style={[styles.pageDot, activePage === 1 && styles.pageDotActive]} />
+    <View style={styles.pageIcons}>
+      <Text style={[styles.pageIcon, activePage === 0 && styles.pageIconActive]}>A</Text>
+      <Text style={[styles.pageIcon, activePage === 1 && styles.pageIconActive]}>⚙</Text>
     </View>
     <Text style={styles.footerText}>
       {activePage === 1 ? 'Swipe right for affirmation' : 'Swipe left for settings'}

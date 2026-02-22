@@ -35,7 +35,10 @@ export default StyleSheet.create({
     position: 'absolute',
     left: 20,
     right: 20,
-    bottom: 24,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   affirmationText: {
     fontSize: 24,
@@ -109,19 +112,17 @@ export default StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  pageDots: {
+  pageIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
   },
-  pageDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#d1d5db',
+  pageIcon: {
+    fontSize: 16,
+    color: '#9ca3af',
   },
-  pageDotActive: {
-    backgroundColor: '#2563eb',
+  pageIconActive: {
+    color: '#2563eb',
   },
   footerText: {
     fontSize: 12,
