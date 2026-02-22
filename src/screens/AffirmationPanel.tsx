@@ -16,28 +16,76 @@ import { AffirmationTopicId } from '../features/affirmations/types';
 import styles from './HomeScreen.styles';
 
 type Props = {
-  selectedTopicId: AffirmationTopicId;
-  onSelectTopic: (topicId: AffirmationTopicId) => Promise<void> | void;
+  selectedTopicIds: AffirmationTopicId[];
+  onSelectTopics: (topicIds: AffirmationTopicId[]) => Promise<void> | void;
 };
 
 function getDailyIndex(length: number): number {
+  if (length <= 0) {
+    return 0;
+  }
+
   return Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % length;
 }
 
-const AffirmationPanel: React.FC<Props> = ({ selectedTopicId, onSelectTopic }) => {
+type TopicAffirmation = {
+  topicName: string;
+  imageUri: string;
+  text: string;
+};
+
+function buildAffirmationFeed(topicIds: AffirmationTopicId[]): TopicAffirmation[] {
+  const topics = topicIds.map(getAffirmationTopicById);
+  const maxAffirmationCount = topics.reduce(
+    (maxCount, topic) => Math.max(maxCount, topic.affirmations.length),
+    0,
+  );
+  const feed: TopicAffirmation[] = [];
+
+  for (let index = 0; index < maxAffirmationCount; index += 1) {
+    topics.forEach(topic => {
+      const affirmation = topic.affirmations[index];
+
+      if (!affirmation) {
+        return;
+      }
+
+      feed.push({
+        topicName: topic.name,
+        imageUri: affirmation.imageUri,
+        text: affirmation.text,
+      });
+    });
+  }
+
+  return feed;
+}
+
+const AffirmationPanel: React.FC<Props> = ({ selectedTopicIds, onSelectTopics }) => {
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
-  const activeTopic = useMemo(
-    () => getAffirmationTopicById(selectedTopicId),
-    [selectedTopicId],
+  const normalizedSelectedTopicIds = useMemo(
+    () => [...new Set(selectedTopicIds)],
+    [selectedTopicIds],
+  );
+  const activeTopicIds = useMemo(() => {
+    if (normalizedSelectedTopicIds.length > 0) {
+      return normalizedSelectedTopicIds;
+    }
+
+    return AFFIRMATION_TOPICS.map(topic => topic.id);
+  }, [normalizedSelectedTopicIds]);
+  const affirmationFeed = useMemo(
+    () => buildAffirmationFeed(activeTopicIds),
+    [activeTopicIds],
   );
   const dailyAffirmationIndex = useMemo(
-    () => getDailyIndex(activeTopic.affirmations.length),
-    [activeTopic],
+    () => getDailyIndex(affirmationFeed.length),
+    [affirmationFeed.length],
   );
   const [activeAffirmationIndex, setActiveAffirmationIndex] = useState(
     dailyAffirmationIndex,
   );
-  const totalAffirmations = activeTopic.affirmations.length;
+  const totalAffirmations = affirmationFeed.length;
 
   useEffect(() => {
     setActiveAffirmationIndex(dailyAffirmationIndex);
@@ -86,15 +134,15 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicId, onSelectTopic }) =
   );
 
   const activeAffirmation = useMemo(() => {
-    const cards = activeTopic.affirmations;
-    if (cards.length === 0) {
+    if (affirmationFeed.length === 0) {
       return undefined;
     }
 
     const safeIndex =
-      ((activeAffirmationIndex % cards.length) + cards.length) % cards.length;
-    return cards[safeIndex];
-  }, [activeAffirmationIndex, activeTopic]);
+      ((activeAffirmationIndex % affirmationFeed.length) + affirmationFeed.length) %
+      affirmationFeed.length;
+    return affirmationFeed[safeIndex];
+  }, [activeAffirmationIndex, affirmationFeed]);
 
   if (!activeAffirmation) {
     return null;
@@ -117,7 +165,9 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicId, onSelectTopic }) =
             setIsTopicModalVisible(true);
           }}
         >
-          <Text style={styles.topicPickerButtonText}>Topic: {activeTopic.name}</Text>
+          <Text style={styles.topicPickerButtonText}>
+            Topic: {activeAffirmation.topicName}
+          </Text>
         </Pressable>
       </View>
       <Text style={styles.affirmationSwipeHint}>
@@ -135,7 +185,7 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicId, onSelectTopic }) =
         <View style={styles.topicModalBackdrop}>
           <View style={styles.topicModalSheet}>
             <View style={styles.topicModalHeader}>
-              <Text style={styles.topicModalTitle}>Select topic</Text>
+              <Text style={styles.topicModalTitle}>Select topics</Text>
               <Pressable
                 onPress={() => {
                   setIsTopicModalVisible(false);
@@ -146,15 +196,18 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicId, onSelectTopic }) =
             </View>
             <ScrollView contentContainerStyle={styles.topicList}>
               {AFFIRMATION_TOPICS.map(topic => {
-                const isSelected = topic.id === selectedTopicId;
+                const isSelected = normalizedSelectedTopicIds.includes(topic.id);
 
                 return (
                   <Pressable
                     key={topic.id}
                     style={[styles.topicCard, isSelected && styles.topicCardSelected]}
                     onPress={() => {
-                      onSelectTopic(topic.id);
-                      setIsTopicModalVisible(false);
+                      const nextTopicIds = isSelected
+                        ? normalizedSelectedTopicIds.filter(id => id !== topic.id)
+                        : [...normalizedSelectedTopicIds, topic.id];
+
+                      onSelectTopics(nextTopicIds);
                     }}
                   >
                     <Image

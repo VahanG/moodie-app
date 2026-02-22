@@ -91,7 +91,7 @@ export default StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
   },
   topicModalSheet: {
-    maxHeight: '75%',
+    height: '94%',
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     backgroundColor: '#0f172a',

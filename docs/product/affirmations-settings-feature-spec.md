@@ -25,13 +25,15 @@ Users currently see a single generic affirmation stream. The product now needs a
 ## Product requirements (high level)
 1. The default landing page remains Affirmations.
 2. Users can open topic selection quickly from Affirmations.
-3. Selected topic persists across sessions until the user changes it.
-4. Affirmations page displays only texts from the selected topic.
-5. On the Affirmations page, swipe up/down moves to next/previous topic text.
-6. Users can choose between fixed background mode and Free mode.
-7. Fixed background mode overrides topic/text background suggestions.
-8. Free mode uses affirmation-text-connected backgrounds.
-9. Calendar and Settings behavior from v1 remains unchanged by this update.
+3. Selected topic set persists across sessions until the user changes it.
+4. Affirmations page displays only texts from selected topics.
+5. If no topics are selected, Affirmations page displays texts from all topics.
+6. On the Affirmations page, swipe up/down moves to next/previous text from selected topics (or all topics when none are selected).
+7. When multiple topics are selected, adjacent texts should come from different topics whenever possible.
+8. Users can choose between fixed background mode and Free mode.
+9. Fixed background mode overrides topic/text background suggestions.
+10. Free mode uses affirmation-text-connected backgrounds.
+11. Calendar and Settings behavior from v1 remains unchanged by this update.
 
 ## Acceptance criteria
 - Requirement statement: Topic switching is discoverable and fast.
@@ -39,10 +41,10 @@ Users currently see a single generic affirmation stream. The product now needs a
   - Measurable success condition: QA can reach topic selection from Affirmations in one tap and return with updated content.
 - Requirement statement: Topic choice is sticky across restarts.
   - User impact: Users do not need to reconfigure every session.
-  - Measurable success condition: Relaunching the app preserves the last selected topic.
+  - Measurable success condition: Relaunching the app preserves the last selected topic set.
 - Requirement statement: Text navigation by gesture is predictable.
   - User impact: Users can browse affirmations quickly without opening another screen.
-  - Measurable success condition: QA can swipe up/down on Affirmations and observe next/previous text with wrap-around.
+  - Measurable success condition: QA can swipe up/down on Affirmations and observe next/previous text with wrap-around and topic alternation when multiple topics are selected.
 - Requirement statement: Background mode behavior is deterministic.
   - User impact: Users understand when custom vs adaptive visuals are used.
   - Measurable success condition: Fixed mode always shows chosen background; Free mode shows text-connected background.

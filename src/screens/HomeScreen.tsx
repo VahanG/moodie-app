@@ -14,9 +14,9 @@ import {
 } from '../features/notifications/storage';
 import { ReminderPreferences } from '../features/notifications/types';
 import {
-  DEFAULT_SELECTED_AFFIRMATION_TOPIC,
-  loadSelectedAffirmationTopic,
-  saveSelectedAffirmationTopic,
+  DEFAULT_SELECTED_AFFIRMATION_TOPICS,
+  loadSelectedAffirmationTopics,
+  saveSelectedAffirmationTopics,
 } from '../features/affirmations/storage';
 import { AffirmationTopicId } from '../features/affirmations/types';
 import styles from './HomeScreen.styles';
@@ -45,8 +45,8 @@ const HomeScreen: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activePage, setActivePage] = useState(0);
-  const [selectedTopicId, setSelectedTopicId] = useState<AffirmationTopicId>(
-    DEFAULT_SELECTED_AFFIRMATION_TOPIC,
+  const [selectedTopicIds, setSelectedTopicIds] = useState<AffirmationTopicId[]>(
+    DEFAULT_SELECTED_AFFIRMATION_TOPICS,
   );
 
   useEffect(() => {
@@ -55,9 +55,9 @@ const HomeScreen: React.FC = () => {
     const initialize = async () => {
       try {
         configureNotificationChannel();
-        const [storedPreferences, storedTopicId] = await Promise.all([
+        const [storedPreferences, storedTopicIds] = await Promise.all([
           loadReminderPreferences(),
-          loadSelectedAffirmationTopic(),
+          loadSelectedAffirmationTopics(),
         ]);
 
         if (!isMounted) {
@@ -65,7 +65,7 @@ const HomeScreen: React.FC = () => {
         }
 
         setPreferences(storedPreferences);
-        setSelectedTopicId(storedTopicId);
+        setSelectedTopicIds(storedTopicIds);
         setHourInput(storedPreferences.hour.toString());
         setMinuteInput(storedPreferences.minute.toString());
 
@@ -212,19 +212,19 @@ const HomeScreen: React.FC = () => {
   );
 
   const handleTopicSelect = useCallback(
-    async (topicId: AffirmationTopicId) => {
-      const previousTopicId = selectedTopicId;
+    async (topicIds: AffirmationTopicId[]) => {
+      const previousTopicIds = selectedTopicIds;
       setStatusMessage(null);
-      setSelectedTopicId(topicId);
+      setSelectedTopicIds(topicIds);
 
       try {
-        await saveSelectedAffirmationTopic(topicId);
+        await saveSelectedAffirmationTopics(topicIds);
       } catch {
-        setSelectedTopicId(previousTopicId);
+        setSelectedTopicIds(previousTopicIds);
         setStatusMessage('Failed to save selected topic.');
       }
     },
-    [selectedTopicId],
+    [selectedTopicIds],
   );
 
   return (
@@ -243,8 +243,8 @@ const HomeScreen: React.FC = () => {
       >
         <View style={[styles.page, styles.affirmationPage, { width }]}>
           <AffirmationPanel
-            selectedTopicId={selectedTopicId}
-            onSelectTopic={handleTopicSelect}
+            selectedTopicIds={selectedTopicIds}
+            onSelectTopics={handleTopicSelect}
           />
         </View>
         <View style={[styles.page, styles.calendarPage, { width }]}>
