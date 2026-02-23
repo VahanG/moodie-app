@@ -16,11 +16,14 @@ Users currently see a single generic affirmation stream. The product now needs a
   - Existing swipe navigation between Affirmations, Calendar, and Settings.
   - Topic-aware affirmations on the Affirmations screen.
   - Dedicated topic selection and background selection experiences.
+  - Tag-grouped background gallery with tag-based search.
   - Persistent user selections across app sessions.
+  - Prefetched/hardcoded background metadata for v1.
 - Out
   - Advanced personalization beyond topic and background mode.
   - Topic recommendation engine.
   - Gallery-image and affirmation-text strict one-to-one matching.
+  - Dynamic/remote background data flow.
 
 ## Product requirements (high level)
 1. The default landing page remains Affirmations.
@@ -33,7 +36,10 @@ Users currently see a single generic affirmation stream. The product now needs a
 8. Users can choose between fixed background mode and Free mode.
 9. Fixed background mode overrides topic/text background suggestions.
 10. Free mode uses affirmation-text-connected backgrounds.
-11. Calendar and Settings behavior from v1 remains unchanged by this update.
+11. Background gallery supports browsing by tags and searching by tags.
+12. Selecting a background from gallery/search sets fixed mode and applies to all affirmation texts.
+13. For v1, background list is prefetched/hardcoded.
+14. Calendar and Settings behavior from v1 remains unchanged by this update.
 
 ## Acceptance criteria
 - Requirement statement: Topic switching is discoverable and fast.

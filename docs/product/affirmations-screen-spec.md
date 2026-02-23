@@ -25,6 +25,12 @@ Deliver a focused affirmation experience that users can personalize by topic and
 3. When multiple topics are selected, adjacent affirmations should come from different topics whenever possible.
 4. Navigation wraps around at boundaries (last -> first, first -> last).
 
+## Swipe transition animation
+1. Swipe navigation should animate the affirmation page content to match gesture direction.
+2. Swiping up should transition the next affirmation by sliding content upward and fading in.
+3. Swiping down should transition the previous affirmation by sliding content downward and fading in.
+4. Animation should complete quickly to keep the flow responsive.
+
 ## Background behavior
 - Fixed mode
   - If the user selected a specific background, always render that background.
@@ -41,5 +47,6 @@ Deliver a focused affirmation experience that users can personalize by topic and
 ## Success checks
 - Topic change immediately updates eligible affirmation texts.
 - Swipe up/down always moves to next/previous text in the selected topic set.
+- Swipe up/down shows a direction-aware transition animation before the new affirmation fully settles.
 - Fixed mode always keeps the same background.
 - Free mode updates background according to displayed text.

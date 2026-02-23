@@ -1,4 +1,6 @@
-export type AffirmationTopicId = 'growth' | 'calm' | 'gratitude';
+export type AffirmationTopicId = string;//'growth' | 'calm' | 'gratitude';
+export type AffirmationBackgroundId = string;
+export type AffirmationBackgroundMode = 'free' | 'fixed';
 
 export type AffirmationCard = {
   imageUri: string;
@@ -10,4 +12,15 @@ export type AffirmationTopic = {
   name: string;
   imageUri: string;
   affirmations: AffirmationCard[];
+};
+
+export type AffirmationBackground = {
+  id: AffirmationBackgroundId;
+  imageUri: string;
+  tags: string[];
+};
+
+export type AffirmationBackgroundPreference = {
+  mode: AffirmationBackgroundMode;
+  backgroundId: AffirmationBackgroundId | null;
 };

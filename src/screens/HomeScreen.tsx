@@ -14,11 +14,17 @@ import {
 } from '../features/notifications/storage';
 import { ReminderPreferences } from '../features/notifications/types';
 import {
+  DEFAULT_AFFIRMATION_BACKGROUND_PREFERENCE,
   DEFAULT_SELECTED_AFFIRMATION_TOPICS,
+  loadAffirmationBackgroundPreference,
   loadSelectedAffirmationTopics,
+  saveAffirmationBackgroundPreference,
   saveSelectedAffirmationTopics,
 } from '../features/affirmations/storage';
-import { AffirmationTopicId } from '../features/affirmations/types';
+import {
+  AffirmationBackgroundPreference,
+  AffirmationTopicId,
+} from '../features/affirmations/types';
 import styles from './HomeScreen.styles';
 import SettingsPanel from './SettingsPanel';
 import AffirmationPanel from './AffirmationPanel';
@@ -48,6 +54,10 @@ const HomeScreen: React.FC = () => {
   const [selectedTopicIds, setSelectedTopicIds] = useState<AffirmationTopicId[]>(
     DEFAULT_SELECTED_AFFIRMATION_TOPICS,
   );
+  const [backgroundPreference, setBackgroundPreference] =
+    useState<AffirmationBackgroundPreference>(
+      DEFAULT_AFFIRMATION_BACKGROUND_PREFERENCE,
+    );
 
   useEffect(() => {
     let isMounted = true;
@@ -55,9 +65,11 @@ const HomeScreen: React.FC = () => {
     const initialize = async () => {
       try {
         configureNotificationChannel();
-        const [storedPreferences, storedTopicIds] = await Promise.all([
+        const [storedPreferences, storedTopicIds, storedBackgroundPreference] =
+          await Promise.all([
           loadReminderPreferences(),
           loadSelectedAffirmationTopics(),
+          loadAffirmationBackgroundPreference(),
         ]);
 
         if (!isMounted) {
@@ -66,6 +78,7 @@ const HomeScreen: React.FC = () => {
 
         setPreferences(storedPreferences);
         setSelectedTopicIds(storedTopicIds);
+        setBackgroundPreference(storedBackgroundPreference);
         setHourInput(storedPreferences.hour.toString());
         setMinuteInput(storedPreferences.minute.toString());
 
@@ -227,6 +240,22 @@ const HomeScreen: React.FC = () => {
     [selectedTopicIds],
   );
 
+  const handleBackgroundPreferenceChange = useCallback(
+    async (nextPreference: AffirmationBackgroundPreference) => {
+      const previousPreference = backgroundPreference;
+      setStatusMessage(null);
+      setBackgroundPreference(nextPreference);
+
+      try {
+        await saveAffirmationBackgroundPreference(nextPreference);
+      } catch {
+        setBackgroundPreference(previousPreference);
+        setStatusMessage('Failed to save background preference.');
+      }
+    },
+    [backgroundPreference],
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -245,6 +274,8 @@ const HomeScreen: React.FC = () => {
           <AffirmationPanel
             selectedTopicIds={selectedTopicIds}
             onSelectTopics={handleTopicSelect}
+            backgroundPreference={backgroundPreference}
+            onBackgroundPreferenceChange={handleBackgroundPreferenceChange}
           />
         </View>
         <View style={[styles.page, styles.calendarPage, { width }]}>

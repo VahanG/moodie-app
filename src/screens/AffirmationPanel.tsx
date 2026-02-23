@@ -1,23 +1,28 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, PanResponder, Pressable, Text, View } from 'react-native';
+import { AFFIRMATION_TOPICS, getAffirmationTopicById } from '../features/affirmations/data';
+import { getAffirmationBackgroundById } from '../features/affirmations/backgrounds';
 import {
-  Image,
-  Modal,
-  PanResponder,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
-import {
-  AFFIRMATION_TOPICS,
-  getAffirmationTopicById,
-} from '../features/affirmations/data';
-import { AffirmationTopicId } from '../features/affirmations/types';
+  AffirmationBackgroundPreference,
+  AffirmationTopicId,
+} from '../features/affirmations/types';
 import styles from './HomeScreen.styles';
+import TopicSelectionModal from './TopicSelectionModal';
+import BackgroundSelectionModal from './BackgroundSelectionModal';
 
 type Props = {
   selectedTopicIds: AffirmationTopicId[];
   onSelectTopics: (topicIds: AffirmationTopicId[]) => Promise<void> | void;
+  backgroundPreference: AffirmationBackgroundPreference;
+  onBackgroundPreferenceChange: (
+    preference: AffirmationBackgroundPreference,
+  ) => Promise<void> | void;
+};
+
+type TopicAffirmation = {
+  topicName: string;
+  imageUri: string;
+  text: string;
 };
 
 function getDailyIndex(length: number): number {
@@ -27,12 +32,6 @@ function getDailyIndex(length: number): number {
 
   return Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % length;
 }
-
-type TopicAffirmation = {
-  topicName: string;
-  imageUri: string;
-  text: string;
-};
 
 function buildAffirmationFeed(topicIds: AffirmationTopicId[]): TopicAffirmation[] {
   const topics = topicIds.map(getAffirmationTopicById);
@@ -45,7 +44,6 @@ function buildAffirmationFeed(topicIds: AffirmationTopicId[]): TopicAffirmation[
   for (let index = 0; index < maxAffirmationCount; index += 1) {
     topics.forEach(topic => {
       const affirmation = topic.affirmations[index];
-
       if (!affirmation) {
         return;
       }
@@ -61,19 +59,25 @@ function buildAffirmationFeed(topicIds: AffirmationTopicId[]): TopicAffirmation[
   return feed;
 }
 
-const AffirmationPanel: React.FC<Props> = ({ selectedTopicIds, onSelectTopics }) => {
+const AffirmationPanel: React.FC<Props> = ({
+  selectedTopicIds,
+  onSelectTopics,
+  backgroundPreference,
+  onBackgroundPreferenceChange,
+}) => {
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
+  const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false);
   const normalizedSelectedTopicIds = useMemo(
     () => [...new Set(selectedTopicIds)],
     [selectedTopicIds],
   );
-  const activeTopicIds = useMemo(() => {
-    if (normalizedSelectedTopicIds.length > 0) {
-      return normalizedSelectedTopicIds;
-    }
-
-    return AFFIRMATION_TOPICS.map(topic => topic.id);
-  }, [normalizedSelectedTopicIds]);
+  const activeTopicIds = useMemo(
+    () =>
+      normalizedSelectedTopicIds.length > 0
+        ? normalizedSelectedTopicIds
+        : AFFIRMATION_TOPICS.map(topic => topic.id),
+    [normalizedSelectedTopicIds],
+  );
   const affirmationFeed = useMemo(
     () => buildAffirmationFeed(activeTopicIds),
     [activeTopicIds],
@@ -86,6 +90,9 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicIds, onSelectTopics })
     dailyAffirmationIndex,
   );
   const totalAffirmations = affirmationFeed.length;
+  const affirmationTranslateY = useRef(new Animated.Value(0)).current;
+  const affirmationOpacity = useRef(new Animated.Value(1)).current;
+  const isAffirmationAnimating = useRef(false);
 
   useEffect(() => {
     setActiveAffirmationIndex(dailyAffirmationIndex);
@@ -106,10 +113,61 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicIds, onSelectTopics })
       return;
     }
 
-    setActiveAffirmationIndex(
-      currentIndex => (currentIndex + 1) % totalAffirmations,
-    );
+    setActiveAffirmationIndex(currentIndex => (currentIndex + 1) % totalAffirmations);
   }, [totalAffirmations]);
+
+  const animateAffirmationChange = useCallback(
+    (direction: 'up' | 'down') => {
+      if (isAffirmationAnimating.current || totalAffirmations === 0) {
+        return;
+      }
+
+      isAffirmationAnimating.current = true;
+      const outgoingOffset = direction === 'up' ? -28 : 28;
+
+      Animated.parallel([
+        Animated.timing(affirmationTranslateY, {
+          toValue: outgoingOffset,
+          duration: 170,
+          useNativeDriver: true,
+        }),
+        Animated.timing(affirmationOpacity, {
+          toValue: 0,
+          duration: 170,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        if (direction === 'up') {
+          showNextAffirmation();
+        } else {
+          showPreviousAffirmation();
+        }
+
+        affirmationTranslateY.setValue(-outgoingOffset);
+        Animated.parallel([
+          Animated.timing(affirmationTranslateY, {
+            toValue: 0,
+            duration: 170,
+            useNativeDriver: true,
+          }),
+          Animated.timing(affirmationOpacity, {
+            toValue: 1,
+            duration: 170,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          isAffirmationAnimating.current = false;
+        });
+      });
+    },
+    [
+      affirmationOpacity,
+      affirmationTranslateY,
+      showNextAffirmation,
+      showPreviousAffirmation,
+      totalAffirmations,
+    ],
+  );
 
   const panResponder = useMemo(
     () =>
@@ -123,14 +181,14 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicIds, onSelectTopics })
           }
 
           if (gestureState.dy < 0) {
-            showNextAffirmation();
+            animateAffirmationChange('up');
             return;
           }
 
-          showPreviousAffirmation();
+          animateAffirmationChange('down');
         },
       }),
-    [showNextAffirmation, showPreviousAffirmation],
+    [animateAffirmationChange],
   );
 
   const activeAffirmation = useMemo(() => {
@@ -144,90 +202,84 @@ const AffirmationPanel: React.FC<Props> = ({ selectedTopicIds, onSelectTopics })
     return affirmationFeed[safeIndex];
   }, [activeAffirmationIndex, affirmationFeed]);
 
-  if (!activeAffirmation) {
+  const selectedFixedBackground = useMemo(() => {
+    if (backgroundPreference.backgroundId === null) {
+      return undefined;
+    }
+
+    return getAffirmationBackgroundById(backgroundPreference.backgroundId);
+  }, [backgroundPreference.backgroundId]);
+
+  const activeImageUri =
+    backgroundPreference.mode === 'fixed' && selectedFixedBackground
+      ? selectedFixedBackground.imageUri
+      : activeAffirmation?.imageUri;
+  const shouldAnimateImage = backgroundPreference.mode !== 'fixed';
+
+  if (!activeAffirmation || !activeImageUri) {
     return null;
   }
 
   return (
     <View style={styles.affirmationContent} {...panResponder.panHandlers}>
-      <Image
-        source={{ uri: activeAffirmation.imageUri }}
-        style={styles.affirmationImage}
+      <Animated.Image
+        source={{ uri: activeImageUri }}
+        style={[
+          styles.affirmationImage,
+          shouldAnimateImage && {
+            transform: [{ translateY: affirmationTranslateY }],
+            opacity: affirmationOpacity,
+          },
+        ]}
         resizeMode="cover"
       />
-      <View style={styles.affirmationTextOverlay}>
+      <Animated.View
+        style={[
+          styles.affirmationTextOverlay,
+          {
+            transform: [{ translateY: affirmationTranslateY }],
+            opacity: affirmationOpacity,
+          },
+        ]}
+      >
         <Text style={styles.affirmationText}>{activeAffirmation.text}</Text>
-      </View>
+      </Animated.View>
       <View style={styles.affirmationHeader}>
+        <Pressable
+          style={styles.topicPickerButton}
+          accessibilityLabel="Select affirmation background"
+          onPress={() => {
+            setIsBackgroundModalVisible(true);
+          }}
+        >
+          <Text style={styles.topicPickerButtonIcon}>🖼</Text>
+        </Pressable>
         <Pressable
           style={styles.topicPickerButton}
           onPress={() => {
             setIsTopicModalVisible(true);
           }}
         >
-          <Text style={styles.topicPickerButtonText}>
-            Topic: {activeAffirmation.topicName}
-          </Text>
+          <Text style={styles.topicPickerButtonText}>Topic: {activeAffirmation.topicName}</Text>
         </Pressable>
       </View>
-      <Text style={styles.affirmationSwipeHint}>
-        Swipe up/down for next affirmation
-      </Text>
-
-      <Modal
-        animationType="fade"
-        transparent
+      <Text style={styles.affirmationSwipeHint}>Swipe up/down for next affirmation</Text>
+      <TopicSelectionModal
         visible={isTopicModalVisible}
-        onRequestClose={() => {
+        selectedTopicIds={normalizedSelectedTopicIds}
+        onClose={() => {
           setIsTopicModalVisible(false);
         }}
-      >
-        <View style={styles.topicModalBackdrop}>
-          <View style={styles.topicModalSheet}>
-            <View style={styles.topicModalHeader}>
-              <Text style={styles.topicModalTitle}>Select topics</Text>
-              <Pressable
-                onPress={() => {
-                  setIsTopicModalVisible(false);
-                }}
-              >
-                <Text style={styles.topicModalCloseText}>Done</Text>
-              </Pressable>
-            </View>
-            <ScrollView contentContainerStyle={styles.topicList}>
-              {AFFIRMATION_TOPICS.map(topic => {
-                const isSelected = normalizedSelectedTopicIds.includes(topic.id);
-
-                return (
-                  <Pressable
-                    key={topic.id}
-                    style={[styles.topicCard, isSelected && styles.topicCardSelected]}
-                    onPress={() => {
-                      const nextTopicIds = isSelected
-                        ? normalizedSelectedTopicIds.filter(id => id !== topic.id)
-                        : [...normalizedSelectedTopicIds, topic.id];
-
-                      onSelectTopics(nextTopicIds);
-                    }}
-                  >
-                    <Image
-                      source={{ uri: topic.imageUri }}
-                      style={styles.topicCardImage}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.topicCardOverlay}>
-                      <Text style={styles.topicCardTitle}>{topic.name}</Text>
-                      {isSelected ? (
-                        <Text style={styles.topicCardSelectionText}>Selected</Text>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        onSelectTopics={onSelectTopics}
+      />
+      <BackgroundSelectionModal
+        visible={isBackgroundModalVisible}
+        backgroundPreference={backgroundPreference}
+        onBackgroundPreferenceChange={onBackgroundPreferenceChange}
+        onClose={() => {
+          setIsBackgroundModalVisible(false);
+        }}
+      />
     </View>
   );
 };
