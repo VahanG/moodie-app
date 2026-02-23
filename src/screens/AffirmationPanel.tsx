@@ -243,6 +243,24 @@ const AffirmationPanel: React.FC<Props> = ({
         ]}
       >
         <Text style={styles.affirmationText}>{activeAffirmation.text}</Text>
+        <View style={styles.affirmationActionRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Like affirmation"
+            style={styles.affirmationActionButton}
+            onPress={() => {}}
+          >
+            <Text style={styles.affirmationActionIcon}>♡</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Share affirmation"
+            style={styles.affirmationActionButton}
+            onPress={() => {}}
+          >
+            <Text style={styles.affirmationActionIcon}>↗</Text>
+          </Pressable>
+        </View>
       </Animated.View>
       <View style={styles.affirmationHeader}>
         <Pressable

@@ -52,6 +52,27 @@ export default StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
+  affirmationActionRow: {
+    marginTop: 216,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 72,
+  },
+  affirmationActionButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
+  },
+  affirmationActionIcon: {
+    fontSize: 22,
+    color: '#ffffff',
+    lineHeight: 24,
+  },
   affirmationHeader: {
     position: 'absolute',
     top: 18,

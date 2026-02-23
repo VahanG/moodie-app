@@ -6,6 +6,9 @@ Deliver a focused affirmation experience that users can personalize by topic and
 ## Core UI
 - Full-screen visual background.
 - Centered affirmation text for readability.
+- Two action icons directly below the affirmation text:
+  - Heart-shaped Like icon.
+  - Share icon.
 - Vertical swipe gestures on the Affirmations page for text navigation.
 - Quick entry points to:
   - Topic selection screen.
@@ -43,6 +46,14 @@ Deliver a focused affirmation experience that users can personalize by topic and
 - The screen uses saved user preferences for:
   - Active topic set.
   - Background mode and selected fixed background (if applicable).
+- The screen stores liked affirmations so the liked state remains consistent across app restarts.
+
+## Affirmation actions behavior
+1. Tapping the heart icon toggles like/unlike for the currently displayed affirmation.
+2. The heart icon reflects state:
+   - Unfilled when the current affirmation is not liked.
+   - Filled when the current affirmation is liked.
+3. Tapping the share icon opens the native share sheet with the currently displayed affirmation text.
 
 ## Success checks
 - Topic change immediately updates eligible affirmation texts.
@@ -50,3 +61,6 @@ Deliver a focused affirmation experience that users can personalize by topic and
 - Swipe up/down shows a direction-aware transition animation before the new affirmation fully settles.
 - Fixed mode always keeps the same background.
 - Free mode updates background according to displayed text.
+- Heart and share icons are visible below the affirmation text.
+- Like toggle updates icon state immediately and persists between sessions.
+- Share action opens the native share UI with the current affirmation text.
