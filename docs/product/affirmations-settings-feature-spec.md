@@ -16,6 +16,7 @@ Users currently see a single generic affirmation stream. The product now needs a
   - Existing swipe navigation between Affirmations, Calendar, and Settings.
   - Topic-aware affirmations on the Affirmations screen.
   - Dedicated topic selection and background selection experiences.
+  - Persistent liked-affirmation state for future "My Favorites" consumption.
   - Tag-grouped background gallery with tag-based search.
   - Persistent user selections across app sessions.
   - Prefetched/hardcoded background metadata for v1.
@@ -39,7 +40,8 @@ Users currently see a single generic affirmation stream. The product now needs a
 11. Background gallery supports browsing by tags and searching by tags.
 12. Selecting a background from gallery/search sets fixed mode and applies to all affirmation texts.
 13. For v1, background list is prefetched/hardcoded.
-14. Calendar and Settings behavior from v1 remains unchanged by this update.
+14. Liked affirmations persist across sessions and are reserved for a future My Favorites section.
+15. Calendar and Settings behavior from v1 remains unchanged by this update.
 
 ## Acceptance criteria
 - Requirement statement: Topic switching is discoverable and fast.

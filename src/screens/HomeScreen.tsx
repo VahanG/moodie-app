@@ -14,12 +14,15 @@ import {
 } from '../features/notifications/storage';
 import { ReminderPreferences } from '../features/notifications/types';
 import {
+  buildAffirmationLikeKey,
   DEFAULT_AFFIRMATION_BACKGROUND_PREFERENCE,
   DEFAULT_SELECTED_AFFIRMATION_TOPICS,
   loadAffirmationBackgroundPreference,
+  loadLikedAffirmationKeys,
   loadSelectedAffirmationTopics,
   saveAffirmationBackgroundPreference,
   saveSelectedAffirmationTopics,
+  toggleLikedAffirmationKey,
 } from '../features/affirmations/storage';
 import {
   AffirmationBackgroundPreference,
@@ -58,6 +61,7 @@ const HomeScreen: React.FC = () => {
     useState<AffirmationBackgroundPreference>(
       DEFAULT_AFFIRMATION_BACKGROUND_PREFERENCE,
     );
+  const [likedAffirmationKeys, setLikedAffirmationKeys] = useState<string[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -65,12 +69,18 @@ const HomeScreen: React.FC = () => {
     const initialize = async () => {
       try {
         configureNotificationChannel();
-        const [storedPreferences, storedTopicIds, storedBackgroundPreference] =
+        const [
+          storedPreferences,
+          storedTopicIds,
+          storedBackgroundPreference,
+          storedLikedAffirmationKeys,
+        ] =
           await Promise.all([
-          loadReminderPreferences(),
-          loadSelectedAffirmationTopics(),
-          loadAffirmationBackgroundPreference(),
-        ]);
+            loadReminderPreferences(),
+            loadSelectedAffirmationTopics(),
+            loadAffirmationBackgroundPreference(),
+            loadLikedAffirmationKeys(),
+          ]);
 
         if (!isMounted) {
           return;
@@ -79,6 +89,7 @@ const HomeScreen: React.FC = () => {
         setPreferences(storedPreferences);
         setSelectedTopicIds(storedTopicIds);
         setBackgroundPreference(storedBackgroundPreference);
+        setLikedAffirmationKeys(storedLikedAffirmationKeys);
         setHourInput(storedPreferences.hour.toString());
         setMinuteInput(storedPreferences.minute.toString());
 
@@ -256,6 +267,26 @@ const HomeScreen: React.FC = () => {
     [backgroundPreference],
   );
 
+  const handleToggleAffirmationLike = useCallback(
+    async (topicId: AffirmationTopicId, affirmationText: string) => {
+      const likeKey = buildAffirmationLikeKey(topicId, affirmationText);
+      const previousLikeKeys = likedAffirmationKeys;
+      const nextLikeKeys = previousLikeKeys.includes(likeKey)
+        ? previousLikeKeys.filter(key => key !== likeKey)
+        : [...previousLikeKeys, likeKey];
+      setStatusMessage(null);
+      setLikedAffirmationKeys(nextLikeKeys);
+
+      try {
+        await toggleLikedAffirmationKey(likeKey);
+      } catch {
+        setLikedAffirmationKeys(previousLikeKeys);
+        setStatusMessage('Failed to save liked affirmation.');
+      }
+    },
+    [likedAffirmationKeys],
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -276,6 +307,8 @@ const HomeScreen: React.FC = () => {
             onSelectTopics={handleTopicSelect}
             backgroundPreference={backgroundPreference}
             onBackgroundPreferenceChange={handleBackgroundPreferenceChange}
+            likedAffirmationKeys={likedAffirmationKeys}
+            onToggleAffirmationLike={handleToggleAffirmationLike}
           />
         </View>
         <View style={[styles.page, styles.calendarPage, { width }]}>

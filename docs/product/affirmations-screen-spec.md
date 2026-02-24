@@ -47,6 +47,7 @@ Deliver a focused affirmation experience that users can personalize by topic and
   - Active topic set.
   - Background mode and selected fixed background (if applicable).
 - The screen stores liked affirmations so the liked state remains consistent across app restarts.
+- Liked affirmations are persisted now and will be surfaced in a dedicated "My Favorites" view in a later update.
 
 ## Affirmation actions behavior
 1. Tapping the heart icon toggles like/unlike for the currently displayed affirmation.

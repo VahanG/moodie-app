@@ -7,6 +7,7 @@
   - `docs/product/affirmations-screen-spec.md`
   - `docs/product/topic-selection-screen-spec.md`
   - `docs/product/background-selection-screen-spec.md`
+- Persist liked affirmations now so they can power a future My Favorites section.
 - Define product analog schema for future catalog rollout.
 - Define commerce and content-delivery contracts before implementation.
 

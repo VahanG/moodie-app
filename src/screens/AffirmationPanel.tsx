@@ -6,6 +6,7 @@ import {
   AffirmationBackgroundPreference,
   AffirmationTopicId,
 } from '../features/affirmations/types';
+import { buildAffirmationLikeKey } from '../features/affirmations/storage';
 import styles from './HomeScreen.styles';
 import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
@@ -17,9 +18,15 @@ type Props = {
   onBackgroundPreferenceChange: (
     preference: AffirmationBackgroundPreference,
   ) => Promise<void> | void;
+  likedAffirmationKeys: string[];
+  onToggleAffirmationLike: (
+    topicId: AffirmationTopicId,
+    affirmationText: string,
+  ) => Promise<void> | void;
 };
 
 type TopicAffirmation = {
+  topicId: AffirmationTopicId;
   topicName: string;
   imageUri: string;
   text: string;
@@ -49,6 +56,7 @@ function buildAffirmationFeed(topicIds: AffirmationTopicId[]): TopicAffirmation[
       }
 
       feed.push({
+        topicId: topic.id,
         topicName: topic.name,
         imageUri: affirmation.imageUri,
         text: affirmation.text,
@@ -64,6 +72,8 @@ const AffirmationPanel: React.FC<Props> = ({
   onSelectTopics,
   backgroundPreference,
   onBackgroundPreferenceChange,
+  likedAffirmationKeys,
+  onToggleAffirmationLike,
 }) => {
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
   const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false);
@@ -210,6 +220,17 @@ const AffirmationPanel: React.FC<Props> = ({
     return getAffirmationBackgroundById(backgroundPreference.backgroundId);
   }, [backgroundPreference.backgroundId]);
 
+  const activeAffirmationLikeKey = useMemo(() => {
+    if (!activeAffirmation) {
+      return null;
+    }
+
+    return buildAffirmationLikeKey(activeAffirmation.topicId, activeAffirmation.text);
+  }, [activeAffirmation]);
+  const isActiveAffirmationLiked =
+    activeAffirmationLikeKey !== null &&
+    likedAffirmationKeys.includes(activeAffirmationLikeKey);
+
   const activeImageUri =
     backgroundPreference.mode === 'fixed' && selectedFixedBackground
       ? selectedFixedBackground.imageUri
@@ -246,11 +267,20 @@ const AffirmationPanel: React.FC<Props> = ({
         <View style={styles.affirmationActionRow}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Like affirmation"
+            accessibilityLabel={
+              isActiveAffirmationLiked ? 'Unlike affirmation' : 'Like affirmation'
+            }
             style={styles.affirmationActionButton}
-            onPress={() => {}}
+            onPress={() => {
+              onToggleAffirmationLike(
+                activeAffirmation.topicId,
+                activeAffirmation.text,
+              );
+            }}
           >
-            <Text style={styles.affirmationActionIcon}>♡</Text>
+            <Text style={styles.affirmationActionIcon}>
+              {isActiveAffirmationLiked ? '♥' : '♡'}
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
