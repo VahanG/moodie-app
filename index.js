@@ -2,11 +2,10 @@
  * @format
  */
 
-import { AppRegistry } from 'react-native';
+import { registerRootComponent } from 'expo';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import PushNotification from 'react-native-push-notification';
 import App from './App';
-import { name as appName } from './app.json';
 
 PushNotification.configure({
   onNotification(notification) {
@@ -18,4 +17,4 @@ PushNotification.configure({
   requestPermissions: false,
 });
 
-AppRegistry.registerComponent(appName, () => App);
+registerRootComponent(App);

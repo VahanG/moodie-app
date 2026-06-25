@@ -1,4 +1,30 @@
 {
-  "name": "moodie_app",
-  "displayName": "moodie_app"
+  "expo": {
+    "name": "moodie_app",
+    "slug": "moodie-app",
+    "scheme": "moodie-app",
+    "version": "1.0.0",
+    "runtimeVersion": "1.0.0",
+    "orientation": "portrait",
+    "updates": {
+      "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "ios": {
+      "bundleIdentifier": "com.moodie_app"
+    },
+    "android": {
+      "package": "com.moodie_app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    },
+    "plugins": [
+      "expo-updates"
+    ]
+  }
 }
