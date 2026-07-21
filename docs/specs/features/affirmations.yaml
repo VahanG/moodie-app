@@ -1,0 +1,200 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-AFFIRMATIONS
+  name: Affirmations Experience
+  lifecycle: current
+  purpose: Deliver a focused affirmation experience personalized by topic and background behavior.
+  entry_route: moodie://affirmations
+  default_landing_page: true
+  dependencies:
+    - FEATURE-TOPIC-SELECTION
+    - FEATURE-BACKGROUND-SELECTION
+
+test_fixtures:
+  - id: affirmation-a
+    topic_id: topic-a
+    text: Fixture affirmation A
+  - id: affirmation-b
+    topic_id: topic-b
+    text: Fixture affirmation B
+
+requirements:
+  - id: AFF-001
+    title: Immersive Affirmation Layout
+    description: The default landing page presents an affirmation over a full-screen visual background.
+    priority: MUST
+    acceptance_criteria:
+      - The application lands on Affirmations by default.
+      - A full-screen background and centered readable affirmation text are visible.
+      - Like and Share icons are visible directly below the affirmation text.
+      - Topic and background selection are each reachable in one tap.
+    verification:
+      test_id: affirmations_default_layout
+      steps:
+        - action: goto
+          url: moodie://launch
+        - action: expect_url_match
+          regex: /affirmations$/
+        - action: expect_visible
+          selector: "[data-testid='screen-affirmations']"
+        - action: expect_visible
+          selector: "[data-testid='image-affirmation-background']"
+        - action: expect_visible
+          selector: "[data-testid='text-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='btn-like-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='btn-share-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='btn-open-topic-selection']"
+        - action: expect_visible
+          selector: "[data-testid='btn-open-background-selection']"
+
+  - id: AFF-002
+    title: Topic-Aware Affirmation Eligibility
+    description: Displayed text is drawn from the active topic set.
+    priority: MUST
+    acceptance_criteria:
+      - Only affirmations belonging to selected topics are eligible.
+      - When zero topics are selected, affirmations from all topics are eligible.
+      - The topic button displays the topic of the current affirmation.
+    verification:
+      test_id: affirmations_follow_active_topics
+      preconditions:
+        - Select only topic-a through FEATURE-TOPIC-SELECTION.
+      steps:
+        - action: goto
+          url: moodie://affirmations
+        - action: expect_visible
+          selector: "[data-testid='text-current-topic'][data-value='topic-a']"
+        - action: expect_not_visible
+          selector: "[data-testid='text-current-topic'][data-value='topic-b']"
+
+  - id: AFF-003
+    title: Bidirectional Wrapped Text Navigation
+    description: Vertical gestures navigate forward and backward through eligible affirmations.
+    priority: MUST
+    acceptance_criteria:
+      - Swipe up shows the next eligible affirmation.
+      - Swipe down shows the previous eligible affirmation.
+      - Navigation wraps from last to first and first to last.
+      - With multiple selected topics, adjacent affirmations use different topics whenever possible.
+    verification:
+      test_id: affirmations_vertical_navigation
+      preconditions:
+        - Select topic-a and topic-b fixtures.
+        - Start with affirmation-a visible.
+      steps:
+        - action: goto
+          url: moodie://affirmations
+        - action: expect_visible
+          selector: "[data-testid='text-affirmation'][data-value='Fixture affirmation A']"
+        - action: click
+          selector: "[data-testid='gesture-affirmation-next']"
+        - action: expect_visible
+          selector: "[data-testid='text-affirmation'][data-value='Fixture affirmation B']"
+        - action: click
+          selector: "[data-testid='gesture-affirmation-previous']"
+        - action: expect_visible
+          selector: "[data-testid='text-affirmation'][data-value='Fixture affirmation A']"
+      notes:
+        - Gesture selectors are E2E adapter controls that perform native swipe gestures.
+        - Boundary wrap-around must be covered by repeating this test with first and last fixture positions.
+
+  - id: AFF-004
+    title: Direction-Aware Swipe Animation
+    description: Text navigation animates content in the same direction as the gesture.
+    priority: MUST
+    acceptance_criteria:
+      - Swipe up slides outgoing content upward and fades the next content in.
+      - Swipe down slides outgoing content downward and fades the previous content in.
+      - The transition completes quickly enough to keep navigation responsive.
+      - Exact maximum duration is TBD.
+    verification:
+      test_id: affirmations_direction_aware_animation
+      steps:
+        - action: goto
+          url: moodie://affirmations
+        - action: click
+          selector: "[data-testid='gesture-affirmation-next']"
+        - action: expect_visible
+          selector: "[data-testid='animation-affirmation'][data-direction='up']"
+        - action: click
+          selector: "[data-testid='gesture-affirmation-previous']"
+        - action: expect_visible
+          selector: "[data-testid='animation-affirmation'][data-direction='down']"
+
+  - id: AFF-005
+    title: Deterministic Background Mode
+    description: Fixed and Free modes determine which visual accompanies affirmation text.
+    priority: MUST
+    acceptance_criteria:
+      - Fixed mode always renders the selected fixed background regardless of topic or text changes.
+      - Free mode renders a background weakly connected to the current affirmation text.
+      - Topic selection controls text eligibility while background mode controls the image.
+    verification:
+      test_id: affirmations_background_mode
+      preconditions:
+        - Configure background-a as the fixed background.
+      steps:
+        - action: goto
+          url: moodie://affirmations
+        - action: expect_visible
+          selector: "[data-testid='image-affirmation-background'][data-background-id='background-a']"
+        - action: click
+          selector: "[data-testid='gesture-affirmation-next']"
+        - action: expect_visible
+          selector: "[data-testid='image-affirmation-background'][data-background-id='background-a']"
+
+  - id: AFF-006
+    title: Persistent Like State
+    description: The current affirmation can be liked or unliked and that state survives application restarts.
+    priority: MUST
+    acceptance_criteria:
+      - Tapping the heart toggles the current affirmation between liked and unliked.
+      - The heart is unfilled when unliked and filled when liked.
+      - Visual state updates immediately.
+      - Liked affirmations persist across sessions.
+      - Persisted likes are reserved for a future My Favorites view.
+    verification:
+      test_id: affirmation_like_persistence
+      steps:
+        - action: goto
+          url: moodie://affirmations?fixture=affirmation-a&fresh=true
+        - action: click
+          selector: "[data-testid='btn-like-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='btn-like-affirmation'][data-state='liked']"
+        - action: goto
+          url: moodie://affirmations?fixture=affirmation-a&relaunch=true
+        - action: expect_visible
+          selector: "[data-testid='btn-like-affirmation'][data-state='liked']"
+        - action: click
+          selector: "[data-testid='btn-like-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='btn-like-affirmation'][data-state='unliked']"
+
+  - id: AFF-007
+    title: Native Affirmation Sharing
+    description: Share opens the native share surface with the current affirmation text.
+    priority: MUST
+    acceptance_criteria:
+      - Tapping Share opens the operating-system share UI.
+      - The share payload contains the currently displayed affirmation text.
+    verification:
+      test_id: share_current_affirmation
+      steps:
+        - action: goto
+          url: moodie://affirmations?fixture=affirmation-a
+        - action: click
+          selector: "[data-testid='btn-share-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='native-share-sheet'][data-content='Fixture affirmation A']"
+
+future_behavior:
+  - id: AFF-TBD-001
+    title: My Favorites View
+    status: TBD
+    statement: Persisted likes will be surfaced in a dedicated view in a later update.
+

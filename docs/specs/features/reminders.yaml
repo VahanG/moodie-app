@@ -1,0 +1,119 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-REMINDERS
+  name: Daily Reminders
+  lifecycle: current
+  purpose: Provide a reliable device-local daily reminder experience.
+  entry_route: moodie://settings
+  provenance:
+    product_intent: docs/product/requirements.md
+    detailed_current_behavior: current React Native implementation
+
+requirements:
+  - id: REM-001
+    title: Configure Daily Reminder Time
+    description: A device session can enable a daily reminder and select a local hour and minute.
+    priority: MUST
+    acceptance_criteria:
+      - Settings exposes a daily-reminder enable control.
+      - Hour accepts an integer from 0 through 23.
+      - Minute accepts an integer from 0 through 59.
+      - Saving a valid time persists the preference and schedules a repeating daily local notification.
+      - The default preference is disabled at 09:00 local time.
+    verification:
+      test_id: configure_daily_reminder
+      steps:
+        - action: goto
+          url: moodie://settings?fresh=true
+        - action: expect_visible
+          selector: "[data-testid='toggle-daily-reminders'][data-state='off']"
+        - action: type
+          selector: "[data-testid='input-reminder-hour']"
+          value: "8"
+        - action: type
+          selector: "[data-testid='input-reminder-minute']"
+          value: "30"
+        - action: click
+          selector: "[data-testid='btn-save-reminder-time']"
+        - action: expect_visible
+          selector: "[data-testid='text-reminder-status'][data-state='saved']"
+
+  - id: REM-002
+    title: Notification Permission Gate
+    description: Enabling reminders requires operating-system notification permission when the platform requires it.
+    priority: MUST
+    acceptance_criteria:
+      - Enabling requests notification permission on supported platforms when permission is not already granted.
+      - A denied permission leaves reminders disabled.
+      - A denied permission produces a clear status message.
+    verification:
+      test_id: reminder_permission_denied
+      preconditions:
+        - Notification permission is not granted and the test harness will deny the request.
+      steps:
+        - action: goto
+          url: moodie://settings
+        - action: click
+          selector: "[data-testid='toggle-daily-reminders']"
+        - action: expect_visible
+          selector: "[data-testid='native-notification-permission']"
+        - action: click
+          selector: "[data-testid='native-notification-permission-deny']"
+        - action: expect_visible
+          selector: "[data-testid='toggle-daily-reminders'][data-state='off']"
+        - action: expect_visible
+          selector: "[data-testid='text-reminder-status'][data-state='permission-required']"
+
+  - id: REM-003
+    title: Disable Daily Reminder
+    description: Disabling the preference cancels the scheduled daily notification.
+    priority: MUST
+    acceptance_criteria:
+      - Turning the enable control off persists the disabled state.
+      - The scheduled daily reminder is canceled.
+      - The UI confirms that daily reminders are off.
+    verification:
+      test_id: disable_daily_reminder
+      preconditions:
+        - Daily reminders are enabled.
+      steps:
+        - action: goto
+          url: moodie://settings
+        - action: click
+          selector: "[data-testid='toggle-daily-reminders']"
+        - action: expect_visible
+          selector: "[data-testid='toggle-daily-reminders'][data-state='off']"
+        - action: expect_visible
+          selector: "[data-testid='text-reminder-status'][data-state='disabled']"
+
+  - id: REM-004
+    title: Persistent Reminder Preference
+    description: Reminder state and time survive application restarts.
+    priority: MUST
+    acceptance_criteria:
+      - Enabled state, hour, and minute persist on the device.
+      - Relaunch restores the displayed preference.
+      - Relaunch reschedules the reminder when the stored preference is enabled.
+    verification:
+      test_id: reminder_preference_survives_relaunch
+      preconditions:
+        - Enable reminders at 08:30 and grant permission.
+      steps:
+        - action: goto
+          url: moodie://settings?relaunch=true
+        - action: expect_visible
+          selector: "[data-testid='toggle-daily-reminders'][data-state='on']"
+        - action: expect_visible
+          selector: "[data-testid='input-reminder-hour'][data-value='8']"
+        - action: expect_visible
+          selector: "[data-testid='input-reminder-minute'][data-value='30']"
+
+open_decisions:
+  - id: REM-TBD-001
+    question: What reliability service level defines a successful reminder experience?
+    status: TBD
+  - id: REM-TBD-002
+    question: How should time-zone and daylight-saving changes affect existing schedules?
+    status: TBD
+

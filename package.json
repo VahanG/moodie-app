@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "expo:start": "expo start",
     "eas:update:configure": "eas update:configure",
     "eas:build:development": "eas build --profile development",
@@ -14,7 +14,7 @@
     "eas:update:preview": "eas update --channel preview",
     "eas:update:production": "eas update --channel production",
     "lint": "eslint .",
-    "start": "react-native start",
+    "start": "expo start",
     "test": "jest",
     "validate:docs": "node scripts/validate-doc-links.js"
   },

@@ -1,0 +1,254 @@
+schema_version: "1.0.0"
+
+document:
+  id: COMPONENTS
+  title: Moodie UI Component Contracts
+  status: approved
+  source_of_truth: true
+
+test_identifier_contract:
+  react_native_property: testID
+  perfect_docs_selector: "[data-testid='<test_id>']"
+  naming:
+    format: kebab-case
+    prefixes:
+      screen: screen-
+      modal: modal-
+      button: btn-
+      input: input-
+      toggle: toggle-
+      item: item-
+      text: text-
+      image: image-
+      native_surface: native-
+  requirement: Every interactive element must expose a stable testID.
+
+components:
+  - id: COMP-001
+    name: HomePager
+    kind: screen_container
+    purpose: Host horizontal navigation between Affirmations, Calendar, and Settings.
+    test_ids:
+      - test_id: screen-home
+        element: root
+        interactive: false
+      - test_id: pager-home
+        element: horizontal pager
+        interactive: true
+      - test_id: btn-nav-affirmations
+        element: Affirmations navigation control
+        interactive: true
+      - test_id: btn-nav-calendar
+        element: Calendar navigation control
+        interactive: true
+      - test_id: btn-nav-settings
+        element: Settings navigation control
+        interactive: true
+
+  - id: COMP-002
+    name: AffirmationPanel
+    kind: screen_panel
+    purpose: Display and navigate the active affirmation and its visual background.
+    test_ids:
+      - test_id: screen-affirmations
+        element: panel root
+        interactive: true
+        notes: Gesture target for vertical swipes.
+      - test_id: image-affirmation-background
+        element: active background
+        interactive: false
+      - test_id: text-affirmation
+        element: active affirmation text
+        interactive: false
+      - test_id: btn-like-affirmation
+        element: like or unlike control
+        interactive: true
+      - test_id: btn-share-affirmation
+        element: native share control
+        interactive: true
+      - test_id: btn-open-topic-selection
+        element: topic selection entry
+        interactive: true
+      - test_id: btn-open-background-selection
+        element: background selection entry
+        interactive: true
+      - test_id: text-current-topic
+        element: current affirmation topic label
+        interactive: false
+      - test_id: hint-affirmation-swipe
+        element: swipe instruction
+        interactive: false
+
+  - id: COMP-003
+    name: TopicSelectionModal
+    kind: modal
+    purpose: Let the device session select zero, one, or more affirmation topics.
+    test_ids:
+      - test_id: modal-topic-selection
+        element: modal root
+        interactive: false
+      - test_id: btn-close-topic-selection
+        element: close control
+        interactive: true
+      - test_id: list-topics
+        element: topic list or grid
+        interactive: false
+      - test_id: item-topic-<topic_id>
+        element: topic selection tile
+        interactive: true
+        dynamic: true
+        state_contract:
+          selected: selected visual state is exposed to the test harness
+          unselected: unselected visual state is exposed to the test harness
+
+  - id: COMP-004
+    name: BackgroundSelectionModal
+    kind: modal
+    purpose: Select Free mode or a fixed background and browse backgrounds by tag.
+    test_ids:
+      - test_id: modal-background-selection
+        element: modal root
+        interactive: false
+      - test_id: btn-close-background-selection
+        element: close control
+        interactive: true
+      - test_id: toggle-background-mode
+        element: Free or Fixed mode control
+        interactive: true
+      - test_id: btn-background-mode-free
+        element: explicit Free mode control
+        interactive: true
+      - test_id: btn-background-mode-fixed
+        element: explicit Fixed mode control
+        interactive: true
+      - test_id: input-background-tag-search
+        element: tag-only search input
+        interactive: true
+      - test_id: list-background-tags
+        element: tag group list
+        interactive: false
+      - test_id: item-background-tag-<tag>
+        element: tag group control
+        interactive: true
+        dynamic: true
+      - test_id: btn-background-tags-back
+        element: return to tag groups control
+        interactive: true
+      - test_id: list-backgrounds
+        element: background results list
+        interactive: false
+      - test_id: item-background-<background_id>
+        element: background selection tile
+        interactive: true
+        dynamic: true
+
+  - id: COMP-005
+    name: CalendarPanel
+    kind: screen_panel
+    purpose: Preserve the existing Calendar page in the three-page experience.
+    test_ids:
+      - test_id: screen-calendar
+        element: panel root
+        interactive: false
+      - test_id: text-calendar-date
+        element: displayed date
+        interactive: false
+      - test_id: text-calendar-message
+        element: calendar message
+        interactive: false
+
+  - id: COMP-006
+    name: SettingsPanel
+    kind: screen_panel
+    purpose: Preserve the existing Settings page and expose reminder configuration.
+    test_ids:
+      - test_id: screen-settings
+        element: panel root
+        interactive: false
+      - test_id: toggle-daily-reminders
+        element: daily reminder enable control
+        interactive: true
+      - test_id: input-reminder-hour
+        element: reminder hour input
+        interactive: true
+      - test_id: input-reminder-minute
+        element: reminder minute input
+        interactive: true
+      - test_id: btn-save-reminder-time
+        element: reminder save control
+        interactive: true
+      - test_id: text-reminder-status
+        element: reminder status or error message
+        interactive: false
+
+  - id: COMP-007
+    name: CatalogScreen
+    kind: planned_screen
+    purpose: Display Moodie product analogs and eligible purchasable details.
+    test_ids:
+      - test_id: screen-catalog
+        element: screen root
+        interactive: false
+      - test_id: list-product-analogs
+        element: catalog list
+        interactive: false
+      - test_id: item-product-analog-<product_id>
+        element: product analog entry
+        interactive: true
+        dynamic: true
+      - test_id: screen-product-details
+        element: product analog details
+        interactive: false
+      - test_id: btn-purchase-<product_id>
+        element: native purchase entry
+        interactive: true
+        dynamic: true
+
+  - id: COMP-008
+    name: NativeTestSurfaces
+    kind: e2e_adapter_contract
+    purpose: Expose system-owned UI to Perfect Docs verification without redefining native UI.
+    test_ids:
+      - test_id: native-share-sheet
+        element: operating-system share sheet
+        interactive: false
+      - test_id: native-purchase-sheet
+        element: iOS or Android purchase sheet
+        interactive: false
+      - test_id: native-notification-permission
+        element: operating-system notification permission prompt
+        interactive: true
+      - test_id: native-notification-permission-deny
+        element: deny notification permission adapter control
+        interactive: true
+      - test_id: native-purchase-confirm
+        element: confirm sandbox native purchase adapter control
+        interactive: true
+      - test_id: gesture-affirmation-next
+        element: upward affirmation swipe adapter control
+        interactive: true
+      - test_id: gesture-affirmation-previous
+        element: downward affirmation swipe adapter control
+        interactive: true
+      - test_id: gesture-home-next
+        element: next-page horizontal swipe adapter control
+        interactive: true
+      - test_id: gesture-home-previous
+        element: previous-page horizontal swipe adapter control
+        interactive: true
+      - test_id: animation-affirmation
+        element: observable affirmation animation state
+        interactive: false
+      - test_id: purchase-status
+        element: observable purchase state
+        interactive: false
+      - test_id: commerce-audit-event
+        element: observable commerce audit sink
+        interactive: false
+      - test_id: content-payload-status
+        element: observable content delivery state
+        interactive: false
+      - test_id: analytics-event
+        element: observable analytics test sink event
+        interactive: false
+

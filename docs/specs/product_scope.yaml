@@ -1,0 +1,101 @@
+schema_version: "1.0.0"
+
+document:
+  id: PRODUCT-SCOPE
+  title: Moodie Product Scope
+  status: approved
+  source_of_truth: true
+
+overview:
+  statement: Moodie pairs digital product analogs with in-app purchase and remote content delivery.
+  primary_user_outcomes:
+    - Discover Moodie products and their digital analog details.
+    - Purchase eligible offerings through compliant mobile flows.
+    - Receive fresh content without forced application upgrades when no native change is required.
+    - Use a focused affirmation experience personalized by topic and background behavior.
+
+current_priorities:
+  - id: PRIORITY-001
+    statement: Provide a reliable daily reminder experience.
+  - id: PRIORITY-002
+    statement: Deliver a three-page Affirmations, Calendar, and Settings experience with configurable affirmations.
+  - id: PRIORITY-003
+    statement: Persist liked affirmations so they can power a future My Favorites section.
+  - id: PRIORITY-004
+    statement: Define the product analog schema for a future catalog rollout.
+  - id: PRIORITY-005
+    statement: Define commerce and content-delivery contracts before implementation.
+
+affirmation_experience:
+  problem: >-
+    A single generic affirmation stream does not provide the desired lightweight
+    personalization while preserving Moodie's immersive visual style.
+  summary: >-
+    Keep the three-page swipe experience and add configurable topics,
+    backgrounds, persistent likes, and persistent selections.
+  in_scope:
+    - Existing swipe navigation between Affirmations, Calendar, and Settings.
+    - Topic-aware affirmations.
+    - Dedicated topic and background selection experiences.
+    - Persistent liked-affirmation state for later My Favorites consumption.
+    - Tag-grouped background gallery with tag-only search.
+    - Persistent selections across application sessions.
+    - Prefetched or hardcoded background metadata for v1.
+  out_of_scope:
+    - Advanced personalization beyond topic and background mode.
+    - Topic recommendation engine.
+    - Strict one-to-one matching between gallery images and affirmation text.
+    - Dynamic or remote background data for v1.
+
+documentation_delivery_scope:
+  in_scope:
+    - Documentation-first planning for product, domain, and engineering changes.
+    - Lightweight enforcement through PR checks and validation.
+  out_of_scope:
+    - Automatic code generation from specifications in the current phase.
+  acceptance_criteria_shape:
+    required_fields:
+      - requirement_statement
+      - user_impact
+      - measurable_success_condition
+
+feature_inventory:
+  - id: FEATURE-AFFIRMATIONS
+    path: docs/specs/features/affirmations.yaml
+    lifecycle: current
+  - id: FEATURE-TOPIC-SELECTION
+    path: docs/specs/features/topic_selection.yaml
+    lifecycle: current
+  - id: FEATURE-BACKGROUND-SELECTION
+    path: docs/specs/features/background_selection.yaml
+    lifecycle: current
+  - id: FEATURE-NAVIGATION-CALENDAR-SETTINGS
+    path: docs/specs/features/navigation_calendar_settings.yaml
+    lifecycle: current
+  - id: FEATURE-REMINDERS
+    path: docs/specs/features/reminders.yaml
+    lifecycle: current
+  - id: FEATURE-CATALOG
+    path: docs/specs/features/catalog.yaml
+    lifecycle: planned
+  - id: FEATURE-COMMERCE
+    path: docs/specs/features/commerce.yaml
+    lifecycle: planned
+  - id: FEATURE-CONTENT-DELIVERY
+    path: docs/specs/features/content_delivery.yaml
+    lifecycle: planned
+  - id: FEATURE-ANALYTICS
+    path: docs/specs/features/analytics.yaml
+    lifecycle: planned
+
+unresolved_scope:
+  - id: SCOPE-TBD-001
+    topic: Calendar behavior
+    decision: TBD
+  - id: SCOPE-TBD-002
+    topic: Settings behavior beyond reminder configuration
+    decision: TBD
+  - id: SCOPE-TBD-003
+    topic: My Favorites delivery milestone and UI
+    decision: TBD
+

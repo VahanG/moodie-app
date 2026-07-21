@@ -1,0 +1,151 @@
+schema_version: "1.0.0"
+
+document:
+  id: DOCS-MANIFEST
+  title: Moodie Perfect Docs Manifest
+  status: approved
+  source_of_truth: true
+  canonical_since: "2026-07-22"
+
+authority:
+  canonical_root: docs/specs
+  canonical_format: yaml
+  precedence:
+    - docs/specs/manifest.yaml
+    - docs/specs/domain_model.yaml
+    - docs/specs/access_control.yaml
+    - docs/specs/components.yaml
+    - docs/specs/product_scope.yaml
+    - docs/specs/engineering.yaml
+    - docs/specs/roadmap.yaml
+    - docs/specs/features/*.yaml
+  legacy_markdown:
+    status: retained_noncanonical
+    mutation_policy: unchanged_for_now
+    authority: none
+    rule: When legacy Markdown conflicts with YAML, the YAML specification wins.
+
+product:
+  name: Moodie
+  summary: >-
+    Moodie pairs digital analogs of Moodie products with in-app purchasing,
+    remotely delivered content, and a personalized affirmation experience.
+  pillars:
+    - id: digital_twins
+      description: Curate accurate, media-rich analogs for every Moodie product line.
+    - id: commerce_compliance
+      description: Support native iOS and Android IAP with receipt validation and audit trails.
+    - id: dynamic_content
+      description: Deliver remotely managed catalog, campaign, and theme updates without unnecessary forced upgrades.
+    - id: insights_loop
+      description: Capture engagement and conversion telemetry to guide future content drops.
+
+specification_index:
+  core:
+    - path: docs/specs/product_scope.yaml
+      purpose: Product outcomes, priorities, boundaries, and feature inventory.
+    - path: docs/specs/domain_model.yaml
+      purpose: Canonical entity, field, constraint, and relationship definitions.
+    - path: docs/specs/access_control.yaml
+      purpose: Current access posture and unresolved future identity model.
+    - path: docs/specs/components.yaml
+      purpose: Reusable UI and stable test identifier contracts.
+    - path: docs/specs/engineering.yaml
+      purpose: Architecture, integration, documentation, and release rules.
+    - path: docs/specs/roadmap.yaml
+      purpose: Forward-looking docs-to-code-generation proposal.
+  features:
+    - docs/specs/features/affirmations.yaml
+    - docs/specs/features/topic_selection.yaml
+    - docs/specs/features/background_selection.yaml
+    - docs/specs/features/navigation_calendar_settings.yaml
+    - docs/specs/features/reminders.yaml
+    - docs/specs/features/catalog.yaml
+    - docs/specs/features/commerce.yaml
+    - docs/specs/features/content_delivery.yaml
+    - docs/specs/features/analytics.yaml
+
+verification_contract:
+  platform: react_native
+  selector_notation: "[data-testid='<test_id>']"
+  runtime_mapping:
+    react_native_property: testID
+    rule: >-
+      The value inside data-testid is the exact React Native testID. The E2E
+      adapter must translate Perfect Docs selector notation to the native query.
+  navigation:
+    action: goto
+    rule: A moodie:// URL means launch or navigate through the configured test harness.
+  allowed_actions:
+    - goto
+    - click
+    - type
+    - expect_visible
+    - expect_not_visible
+    - expect_url_match
+    - expect_count
+  native_surfaces:
+    rule: >-
+      System UI such as share sheets, store purchase sheets, and notification
+      permission dialogs must be exposed by the E2E harness through the virtual
+      test identifiers declared in components.yaml.
+
+requirement_rules:
+  id_uniqueness: global
+  priorities:
+    - MUST
+    - SHOULD
+    - COULD
+  unresolved_value: TBD
+  unresolved_rule: TBD values are explicit gaps and must not be interpreted as permission to invent behavior.
+
+legacy_source_map:
+  docs/product/overview.md:
+    - docs/specs/manifest.yaml
+    - docs/specs/product_scope.yaml
+  docs/product/scope.md:
+    - docs/specs/product_scope.yaml
+    - docs/specs/roadmap.yaml
+  docs/product/requirements.md:
+    - docs/specs/product_scope.yaml
+    - docs/specs/features/reminders.yaml
+    - docs/specs/features/affirmations.yaml
+  docs/product/affirmations-settings-feature-spec.md:
+    - docs/specs/product_scope.yaml
+    - docs/specs/features/affirmations.yaml
+    - docs/specs/features/topic_selection.yaml
+    - docs/specs/features/background_selection.yaml
+    - docs/specs/features/navigation_calendar_settings.yaml
+  docs/product/affirmations-screen-spec.md:
+    - docs/specs/features/affirmations.yaml
+  docs/product/topic-selection-screen-spec.md:
+    - docs/specs/features/topic_selection.yaml
+  docs/product/background-selection-screen-spec.md:
+    - docs/specs/features/background_selection.yaml
+  docs/domain/catalog-model.md:
+    - docs/specs/domain_model.yaml
+    - docs/specs/features/catalog.yaml
+  docs/domain/commerce-flows.md:
+    - docs/specs/domain_model.yaml
+    - docs/specs/features/commerce.yaml
+  docs/domain/content-delivery.md:
+    - docs/specs/domain_model.yaml
+    - docs/specs/features/content_delivery.yaml
+  docs/domain/analytics-events.md:
+    - docs/specs/domain_model.yaml
+    - docs/specs/features/analytics.yaml
+  docs/engineering/architecture.md:
+    - docs/specs/engineering.yaml
+  docs/engineering/implementation-guidelines.md:
+    - docs/specs/engineering.yaml
+  docs/engineering/integration-contracts.md:
+    - docs/specs/engineering.yaml
+  docs/engineering/eas-updates.md:
+    - docs/specs/engineering.yaml
+  docs/roadmap/docs-to-codegen-phase2.md:
+    - docs/specs/roadmap.yaml
+
+known_migration_gaps:
+  - id: MIGRATION-TBD-001
+    description: Existing React Native components do not yet implement every testID declared in components.yaml.
+    required_resolution: Add the declared testID values during implementation work.

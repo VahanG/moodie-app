@@ -1,0 +1,114 @@
+schema_version: "1.0.0"
+
+document:
+  id: ENGINEERING
+  title: Moodie Engineering and Delivery Contracts
+  status: approved
+  source_of_truth: true
+
+architecture:
+  application: React Native
+  module_layout:
+    - path: src/screens
+      responsibility: UI composition
+    - path: src/features
+      responsibility: Business logic and services
+    - path: src/types
+      responsibility: Shared types
+  rules:
+    - Keep screens thin and move side effects and business logic into feature services.
+    - Document new module boundaries before implementation.
+    - Keep files short and focused, preferring components below approximately 300 lines when feasible.
+    - Keep one component per file for non-trivial components.
+    - Keep styles in sibling *.styles.ts files.
+    - Export shared types from src/types and prefer small composable functions.
+
+documentation_workflow:
+  canonical_path_pattern: docs/specs/**/*.yaml
+  rules:
+    - Update specifications before implementation.
+    - Reference canonical YAML source documents in pull request descriptions.
+    - Prefer incremental changes with explicit acceptance criteria.
+    - Keep documentation and code changes in the same pull request when behavior changes.
+    - If documentation is unaffected, provide an explicit rationale using "No docs impact: <reason>".
+    - Update AGENTS.MD when agent responsibilities or workflows change.
+  validation_tooling:
+    validator: scripts/validate-doc-links.js
+    recognized_path_pattern: docs/specs/*.yaml
+    status: implemented
+
+quality_workflow:
+  rules:
+    - Run type checks and basic smoke tests before opening a pull request.
+    - Add unit tests for validation logic and critical flows such as time validation and scheduling.
+    - Prefer a brief RFC or small pull request when design uncertainty remains.
+
+integration_contract_template:
+  rule: Document API, CMS, and store contracts before implementing integration code.
+  required_fields:
+    - endpoint_or_operation
+    - request_schema
+    - response_schema
+    - authentication_constraints
+    - security_constraints
+    - error_handling
+
+content_drop_workflow:
+  - order: 1
+    owner: dynamic_content_and_cms
+    action: Stage new catalog entries.
+  - order: 2
+    owner: product_analog
+    action: Validate assets and metadata.
+  - order: 3
+    owner: infra_and_release
+    action: Trigger an OTA or app-store release only when required by the change type.
+  - order: 4
+    owner: data_and_insights
+    action: Update experiment dashboards.
+
+eas_updates:
+  provider: Expo Updates
+  purpose: Over-the-air delivery of JavaScript and asset updates.
+  current_configuration:
+    expo_installed: true
+    expo_updates_installed: true
+    native_autolinking: true
+    eas_profiles_file: eas.json
+    runtime_version: "1.0.0"
+    channels:
+      - development
+      - preview
+      - production
+    project_binding:
+      status: placeholder
+      placeholder_uuid: "00000000-0000-0000-0000-000000000000"
+      fields:
+        - app.json:expo.updates.url
+        - app.json:expo.extra.eas.projectId
+  setup:
+    prerequisites:
+      any_of:
+        - eas login
+        - EXPO_TOKEN
+    configure_command: npm run eas:update:configure
+    effect: Replace placeholder update URL and EAS project ID with a real Expo project binding.
+    native_sync_commands:
+      - npx expo-updates configuration:syncnative --platform android --workflow generic
+      - npx expo-updates configuration:syncnative --platform ios --workflow generic
+    native_sync_condition: Run if EAS CLI does not synchronize native metadata automatically.
+  publishing:
+    native_change:
+      command: npm run eas:build:production -- --platform all
+      rule: Build and submit native binaries after native code or update-configuration changes.
+    javascript_or_asset_only:
+      command: npm run eas:update:production -- --message "Describe the update"
+      rule: Publish to the channel matching the target environment.
+
+incident_management:
+  p0:
+    initial_owner: infra_and_release
+    handoff_sla_minutes: 15
+    handoff_target: responsible_owner
+  postmortem_path: docs/incidents/
+  migration_note: Incident documents should be YAML when created under the canonical YAML-only policy.

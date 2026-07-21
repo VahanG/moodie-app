@@ -1,0 +1,78 @@
+schema_version: "1.0.0"
+
+document:
+  id: ACCESS-CONTROL
+  title: Moodie Access Control
+  status: incomplete
+  source_of_truth: true
+
+identity_model:
+  current_state: undefined
+  authentication_required: false
+  statement: No product-level user identity or authenticated role model is currently defined.
+  future_state: A user model is planned but its identity provider, lifecycle, and roles are TBD.
+
+current_actors:
+  - id: anonymous_device_session
+    kind: technical_actor
+    description: A local application session before a product-level user model exists.
+    is_product_user_role: false
+
+roles: []
+
+permission_matrix:
+  - actor: anonymous_device_session
+    resource: local_affirmation_experience
+    permissions:
+      - view
+      - select_topics
+      - select_background
+      - like
+      - share
+    basis: Current features are device-local and no authentication boundary is documented.
+  - actor: anonymous_device_session
+    resource: local_reminder_preferences
+    permissions:
+      - view
+      - update
+    basis: Current reminder configuration is device-local and no authentication boundary is documented.
+
+undefined_permissions:
+  - resource: product_catalog_management
+    roles: TBD
+  - resource: remote_content_publishing
+    roles: TBD
+  - resource: purchase_entitlements
+    roles: TBD
+  - resource: receipt_validation
+    roles: TBD
+  - resource: analytics_data
+    roles: TBD
+  - resource: release_management
+    roles: TBD
+
+security_requirements:
+  - id: ACCESS-001
+    priority: MUST
+    statement: Authentication and authorization behavior must not be inferred until the user and role model is approved.
+  - id: ACCESS-002
+    priority: MUST
+    statement: Store, CMS, and API contracts must document authentication and security constraints before implementation.
+  - id: ACCESS-003
+    priority: MUST
+    statement: Receipt validation and entitlement granting must occur through a trusted backend boundary once commerce is implemented.
+
+open_decisions:
+  - id: ACCESS-TBD-001
+    question: What constitutes a Moodie user?
+    status: TBD
+  - id: ACCESS-TBD-002
+    question: Which authentication methods and identity provider will be used?
+    status: TBD
+  - id: ACCESS-TBD-003
+    question: Which end-user and operational roles exist?
+    status: TBD
+  - id: ACCESS-TBD-004
+    question: Which preferences and entitlements synchronize across devices?
+    status: TBD
+

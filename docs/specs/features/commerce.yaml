@@ -1,0 +1,84 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-COMMERCE
+  name: Native Commerce and Fulfillment
+  lifecycle: planned
+  purpose: Purchase eligible offerings through compliant iOS and Android in-app purchase flows.
+  entry_route: moodie://catalog/products/<product_id>
+
+requirements:
+  - id: COM-001
+    title: Compliant Purchase and Entitlement Flow
+    description: A purchase moves through native checkout, backend validation, entitlement, and audit recording.
+    priority: MUST
+    acceptance_criteria:
+      - Purchasable item details are displayed before checkout.
+      - Purchase starts through the native platform purchase flow.
+      - A backend service validates the receipt.
+      - Entitlement is granted only after successful validation.
+      - An audit event records the outcome.
+    verification:
+      test_id: successful_native_purchase
+      preconditions:
+        - product-a maps to an approved sandbox store product.
+        - The receipt-verification test backend returns valid.
+      steps:
+        - action: goto
+          url: moodie://catalog/products/product-a
+        - action: click
+          selector: "[data-testid='btn-purchase-product-a']"
+        - action: expect_visible
+          selector: "[data-testid='native-purchase-sheet']"
+        - action: click
+          selector: "[data-testid='native-purchase-confirm']"
+        - action: expect_visible
+          selector: "[data-testid='purchase-status'][data-state='entitled']"
+        - action: expect_visible
+          selector: "[data-testid='commerce-audit-event'][data-state='recorded']"
+
+  - id: COM-002
+    title: Store Product Mapping
+    description: Moodie products map explicitly to platform store product identifiers and price tiers.
+    priority: MUST
+    acceptance_criteria:
+      - Each purchasable Moodie product has an iOS and/or Android store-product mapping.
+      - Store listings and price tiers are documented before release.
+      - Sandbox coverage exists for every supported store mapping.
+    verification:
+      test_id: store_product_mapping_coverage
+      steps:
+        - action: goto
+          url: moodie://catalog/products/product-a?environment=sandbox
+        - action: expect_visible
+          selector: "[data-testid='btn-purchase-product-a'][data-store-mapping='valid']"
+
+  - id: COM-003
+    title: Commerce Failure Contracts
+    description: Error states, retries, and receipt-verification contracts must be approved before implementation.
+    priority: MUST
+    acceptance_criteria:
+      - The receipt verification endpoint, request, response, auth, security, and errors are defined.
+      - User-visible store and validation error states are defined.
+      - Retry and idempotency behavior is defined.
+      - Implementation must not infer unresolved behavior.
+    verification:
+      test_id: commerce_failure_contracts
+      status: blocked
+      steps: []
+      blockers:
+        - Receipt verification contract is TBD.
+        - Error states and retry policy are TBD.
+        - Future user identity and entitlement ownership are TBD.
+
+open_decisions:
+  - id: COM-TBD-001
+    question: What is the receipt-verification service contract?
+    status: TBD
+  - id: COM-TBD-002
+    question: What error, cancellation, pending, refund, and retry states are supported?
+    status: TBD
+  - id: COM-TBD-003
+    question: How are entitlements associated with a future Moodie user?
+    status: TBD
+

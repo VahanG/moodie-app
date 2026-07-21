@@ -1,0 +1,23 @@
+schema_version: "1.0.0"
+
+document:
+  id: ROADMAP
+  title: Moodie Documentation Roadmap
+  status: proposal
+  source_of_truth: true
+
+initiatives:
+  - id: ROADMAP-001
+    name: Docs-to-Code Generation Phase 2
+    status: proposed
+    goal: Generate strongly typed scaffolding from approved YAML specification artifacts.
+    scope:
+      - Generate TypeScript interfaces from docs/specs/domain_model.yaml and integration contracts.
+      - Generate stub services and integration contracts.
+      - Validate generated files against schema changes in CI.
+    prerequisites:
+      - Stable YAML templates and naming conventions.
+      - Explicit schema sections in domain specifications.
+      - Resolution of all domain-model TBDs needed by a generator.
+    current_phase_exclusion: Automatic code generation is out of scope until this initiative is approved.
+

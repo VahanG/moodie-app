@@ -31,7 +31,7 @@ const textArg = getArgValue('--text');
 const body =
   textArg ?? process.env.PR_BODY ?? (fromEvent ? readPrBodyFromEvent() : '');
 
-const hasDocPath = /docs\/[A-Za-z0-9_./-]+\.md\b/.test(body);
+const hasDocPath = /docs\/specs\/[A-Za-z0-9_./-]+\.ya?ml\b/.test(body);
 const hasNoDocsRationale = /No docs impact:\s*\S+/i.test(body);
 
 if (hasDocPath || hasNoDocsRationale) {
@@ -40,7 +40,7 @@ if (hasDocPath || hasNoDocsRationale) {
 }
 
 const message =
-  'Missing docs linkage. Add at least one docs/*.md path or include "No docs impact: <reason>" in PR body.';
+  'Missing docs linkage. Add at least one docs/specs/*.yaml path or include "No docs impact: <reason>" in PR body.';
 
 if (strict) {
   console.error(message);

@@ -1,0 +1,161 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-BACKGROUND-SELECTION
+  name: Background Selection
+  lifecycle: current
+  purpose: Control affirmation background behavior and locate a preferred image in a large gallery.
+  entry_route: moodie://affirmations/backgrounds
+
+v1_content_policy:
+  source: prefetched_or_hardcoded_in_app
+  remote_feed: out_of_scope
+  background_fields:
+    - id
+    - image_uri
+    - tags
+
+test_fixtures:
+  - id: background-a
+    image_uri: fixture://background-a.jpg
+    tags:
+      - calm
+      - nature
+  - id: background-b
+    image_uri: fixture://background-b.jpg
+    tags:
+      - focus
+      - nature
+
+requirements:
+  - id: BG-001
+    title: Immediate Entry and Exit
+    description: Background selection is directly accessible from Affirmations and applies changes immediately.
+    priority: MUST
+    acceptance_criteria:
+      - Background selection opens from Affirmations.
+      - Returning to Affirmations immediately shows the selected mode behavior.
+    verification:
+      test_id: open_and_close_background_selection
+      steps:
+        - action: goto
+          url: moodie://affirmations
+        - action: click
+          selector: "[data-testid='btn-open-background-selection']"
+        - action: expect_visible
+          selector: "[data-testid='modal-background-selection']"
+        - action: click
+          selector: "[data-testid='btn-close-background-selection']"
+        - action: expect_not_visible
+          selector: "[data-testid='modal-background-selection']"
+
+  - id: BG-002
+    title: Free and Fixed Modes
+    description: A clear control switches between adaptive Free mode and a constant Fixed background.
+    priority: MUST
+    acceptance_criteria:
+      - Free mode displays an affirmation-text-connected background.
+      - Fixed mode displays the chosen background for all affirmation text and topics.
+      - Switching modes applies immediately.
+      - Switching to Free and back to Fixed does not require reselecting the previous fixed background.
+    verification:
+      test_id: switch_background_modes
+      preconditions:
+        - background-a was previously selected as the fixed background.
+      steps:
+        - action: goto
+          url: moodie://affirmations/backgrounds
+        - action: click
+          selector: "[data-testid='btn-background-mode-free']"
+        - action: expect_visible
+          selector: "[data-testid='toggle-background-mode'][data-mode='free']"
+        - action: click
+          selector: "[data-testid='btn-background-mode-fixed']"
+        - action: expect_visible
+          selector: "[data-testid='item-background-background-a'][data-state='selected']"
+
+  - id: BG-003
+    title: Tag-Grouped Gallery
+    description: Backgrounds are grouped by tags so a large catalog remains browsable.
+    priority: MUST
+    acceptance_criteria:
+      - Gallery browsing supports large background catalogs.
+      - Backgrounds are grouped by tags.
+      - A background with multiple tags appears in each applicable group.
+    verification:
+      test_id: browse_background_tag_groups
+      steps:
+        - action: goto
+          url: moodie://affirmations/backgrounds?fixtures=background-a,background-b
+        - action: click
+          selector: "[data-testid='item-background-tag-nature']"
+        - action: expect_count
+          selector: "[data-testid^='item-background-'][data-tag='nature']"
+          count: 2
+        - action: click
+          selector: "[data-testid='btn-background-tags-back']"
+        - action: expect_visible
+          selector: "[data-testid='list-background-tags']"
+
+  - id: BG-004
+    title: Tag-Only Background Search
+    description: Search matches background tags and no other background field.
+    priority: MUST
+    acceptance_criteria:
+      - Users can search backgrounds by tag.
+      - Search results are based only on tag matches.
+    verification:
+      test_id: search_backgrounds_by_tag
+      steps:
+        - action: goto
+          url: moodie://affirmations/backgrounds?fixtures=background-a,background-b
+        - action: type
+          selector: "[data-testid='input-background-tag-search']"
+          value: calm
+        - action: expect_visible
+          selector: "[data-testid='item-background-background-a']"
+        - action: expect_not_visible
+          selector: "[data-testid='item-background-background-b']"
+
+  - id: BG-005
+    title: Background Selection Activates Fixed Mode
+    description: Selecting any gallery or search result makes it the global fixed background.
+    priority: MUST
+    acceptance_criteria:
+      - Selecting a background from a tag group activates Fixed mode.
+      - Selecting a background from search activates Fixed mode.
+      - The chosen background applies to all affirmation texts immediately.
+    verification:
+      test_id: selected_background_becomes_fixed
+      steps:
+        - action: goto
+          url: moodie://affirmations/backgrounds?fixtures=background-a,background-b
+        - action: click
+          selector: "[data-testid='item-background-background-a']"
+        - action: expect_visible
+          selector: "[data-testid='toggle-background-mode'][data-mode='fixed']"
+        - action: click
+          selector: "[data-testid='btn-close-background-selection']"
+        - action: expect_visible
+          selector: "[data-testid='image-affirmation-background'][data-background-id='background-a']"
+
+  - id: BG-006
+    title: Persistent Background Preference
+    description: The selected mode and last fixed background remain active across application sessions.
+    priority: MUST
+    acceptance_criteria:
+      - Background mode is persisted locally.
+      - The selected fixed background is persisted locally.
+      - The preference remains active until changed.
+    verification:
+      test_id: background_preference_survives_relaunch
+      steps:
+        - action: goto
+          url: moodie://affirmations/backgrounds?fixtures=background-a&fresh=true
+        - action: click
+          selector: "[data-testid='item-background-background-a']"
+        - action: goto
+          url: moodie://affirmations?relaunch=true
+        - action: expect_visible
+          selector: "[data-testid='image-affirmation-background'][data-background-id='background-a']"
+

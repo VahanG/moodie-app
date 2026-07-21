@@ -1,0 +1,88 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-NAVIGATION-CALENDAR-SETTINGS
+  name: Home Navigation, Calendar, and Settings
+  lifecycle: current
+  purpose: Preserve the three-page Affirmations, Calendar, and Settings experience.
+  entry_route: moodie://affirmations
+
+requirements:
+  - id: NAV-001
+    title: Three-Page Home Navigation
+    description: The home experience provides horizontal navigation among Affirmations, Calendar, and Settings.
+    priority: MUST
+    acceptance_criteria:
+      - Exactly three primary pages are present in this order: Affirmations, Calendar, Settings.
+      - Affirmations is the default landing page.
+      - Horizontal swiping moves between adjacent pages.
+      - Navigation controls expose the active page.
+    verification:
+      test_id: navigate_three_home_pages
+      steps:
+        - action: goto
+          url: moodie://launch
+        - action: expect_visible
+          selector: "[data-testid='screen-affirmations']"
+        - action: click
+          selector: "[data-testid='gesture-home-next']"
+        - action: expect_visible
+          selector: "[data-testid='screen-calendar']"
+        - action: click
+          selector: "[data-testid='gesture-home-next']"
+        - action: expect_visible
+          selector: "[data-testid='screen-settings']"
+        - action: click
+          selector: "[data-testid='gesture-home-previous']"
+        - action: expect_visible
+          selector: "[data-testid='screen-calendar']"
+      notes:
+        - Gesture selectors are E2E adapter controls that perform native horizontal swipes.
+
+  - id: CAL-001
+    title: Preserve Calendar Page
+    description: Calendar behavior from v1 remains unchanged by the configurable-affirmations update.
+    priority: MUST
+    acceptance_criteria:
+      - The Calendar page remains reachable from the home pager.
+      - No Calendar behavior is added, removed, or changed by affirmation personalization work.
+      - The complete Calendar product contract is TBD.
+    verification:
+      test_id: calendar_page_remains_available
+      coverage: partial_until_calendar_contract_is_defined
+      steps:
+        - action: goto
+          url: moodie://calendar
+        - action: expect_visible
+          selector: "[data-testid='screen-calendar']"
+      blockers:
+        - Baseline Calendar behaviors and acceptance criteria are not yet specified.
+
+  - id: SET-001
+    title: Preserve Settings Page
+    description: Settings behavior from v1 remains unchanged except where reminder requirements explicitly apply.
+    priority: MUST
+    acceptance_criteria:
+      - The Settings page remains reachable from the home pager.
+      - Reminder behavior follows docs/specs/features/reminders.yaml.
+      - Other Settings behavior is unchanged.
+      - The complete non-reminder Settings contract is TBD.
+    verification:
+      test_id: settings_page_remains_available
+      coverage: partial_until_settings_contract_is_defined
+      steps:
+        - action: goto
+          url: moodie://settings
+        - action: expect_visible
+          selector: "[data-testid='screen-settings']"
+      blockers:
+        - Baseline non-reminder Settings behaviors and acceptance criteria are not yet specified.
+
+open_decisions:
+  - id: NAV-TBD-001
+    question: What are the complete Calendar behaviors and states?
+    status: TBD
+  - id: NAV-TBD-002
+    question: Which Settings capabilities exist beyond reminders?
+    status: TBD
+

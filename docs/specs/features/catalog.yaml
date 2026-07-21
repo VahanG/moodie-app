@@ -1,0 +1,60 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-CATALOG
+  name: Product Catalog and Digital Analogs
+  lifecycle: planned
+  purpose: Let people discover Moodie products through accurate media-rich digital analogs.
+  entry_route: moodie://catalog
+
+requirements:
+  - id: CAT-001
+    title: Browse Product Analogs
+    description: The catalog presents Moodie product analogs that can be opened for details.
+    priority: MUST
+    acceptance_criteria:
+      - Available product analogs are displayed in a browsable collection.
+      - Selecting an analog opens its user-facing details.
+      - Details include title, description, media, and availability information.
+    verification:
+      test_id: browse_product_analogs
+      preconditions:
+        - The catalog fixture contains product-a.
+      steps:
+        - action: goto
+          url: moodie://catalog?fixture=product-a
+        - action: expect_visible
+          selector: "[data-testid='screen-catalog']"
+        - action: click
+          selector: "[data-testid='item-product-analog-product-a']"
+        - action: expect_visible
+          selector: "[data-testid='screen-product-details'][data-product-id='product-a']"
+
+  - id: CAT-002
+    title: Canonical Product Analog Data
+    description: Each product analog follows the ProductAnalog entity contract.
+    priority: MUST
+    acceptance_criteria:
+      - Each analog has a stable unique id and a store or back-office SKU.
+      - Each analog has a title and short description.
+      - Media supports images, video, and 3D or AR placeholders.
+      - Availability captures market and platform constraints.
+      - Catalog data can serve as input to future TypeScript model generation.
+    verification:
+      test_id: product_analog_required_fields
+      steps:
+        - action: goto
+          url: moodie://catalog?fixture=product-a
+        - action: click
+          selector: "[data-testid='item-product-analog-product-a']"
+        - action: expect_visible
+          selector: "[data-testid='screen-product-details'][data-schema-valid='true']"
+
+open_decisions:
+  - id: CAT-TBD-001
+    question: Which remote CMS or content source owns the catalog?
+    status: TBD
+  - id: CAT-TBD-002
+    question: What are the precise media metadata and availability schemas?
+    status: TBD
+

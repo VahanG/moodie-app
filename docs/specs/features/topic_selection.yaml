@@ -1,0 +1,110 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-TOPIC-SELECTION
+  name: Topic Selection
+  lifecycle: current
+  purpose: Let a device session choose the affirmation topics that form the active text source set.
+  entry_route: moodie://affirmations/topics
+
+test_fixtures:
+  - id: topic-a
+    name: Topic A
+    image_uri: fixture://topic-a.jpg
+  - id: topic-b
+    name: Topic B
+    image_uri: fixture://topic-b.jpg
+
+requirements:
+  - id: TOP-001
+    title: Fast Near-Full-Screen Entry
+    description: Topic selection is directly accessible from Affirmations and optimized for browsing.
+    priority: MUST
+    acceptance_criteria:
+      - Topic selection opens from Affirmations in one tap.
+      - The selection surface targets at least approximately 90 percent of screen height.
+      - Closing the surface returns to Affirmations.
+      - Updated topic choices affect eligible text immediately on return.
+    verification:
+      test_id: open_and_close_topic_selection
+      steps:
+        - action: goto
+          url: moodie://affirmations
+        - action: click
+          selector: "[data-testid='btn-open-topic-selection']"
+        - action: expect_visible
+          selector: "[data-testid='modal-topic-selection'][data-min-height-percent='90']"
+        - action: click
+          selector: "[data-testid='btn-close-topic-selection']"
+        - action: expect_not_visible
+          selector: "[data-testid='modal-topic-selection']"
+        - action: expect_visible
+          selector: "[data-testid='screen-affirmations']"
+
+  - id: TOP-002
+    title: Scannable Topic Cards
+    description: Topics are presented in a list or grid with recognizable content and selection state.
+    priority: MUST
+    acceptance_criteria:
+      - Every topic card includes its name and a topic-related image.
+      - Selected topics are visually distinguishable at a glance.
+      - Multiple topics may be selected.
+    verification:
+      test_id: topic_card_content_and_state
+      steps:
+        - action: goto
+          url: moodie://affirmations/topics?fixtures=topic-a,topic-b
+        - action: expect_visible
+          selector: "[data-testid='item-topic-topic-a'][data-name='Topic A'][data-has-image='true']"
+        - action: click
+          selector: "[data-testid='item-topic-topic-a']"
+        - action: expect_visible
+          selector: "[data-testid='item-topic-topic-a'][data-state='selected']"
+        - action: click
+          selector: "[data-testid='item-topic-topic-b']"
+        - action: expect_count
+          selector: "[data-state='selected'][data-kind='topic']"
+          count: 2
+
+  - id: TOP-003
+    title: Toggle and Empty-Selection Semantics
+    description: Tapping a topic toggles it and an empty selection activates all topics.
+    priority: MUST
+    acceptance_criteria:
+      - Tapping an unselected topic selects it.
+      - Tapping a selected topic unselects it.
+      - Zero selected topics is valid and means all topics are active for affirmation text.
+    verification:
+      test_id: empty_topic_selection_activates_all
+      steps:
+        - action: goto
+          url: moodie://affirmations/topics?fixtures=topic-a,topic-b&selected=topic-a
+        - action: click
+          selector: "[data-testid='item-topic-topic-a']"
+        - action: expect_count
+          selector: "[data-state='selected'][data-kind='topic']"
+          count: 0
+        - action: click
+          selector: "[data-testid='btn-close-topic-selection']"
+        - action: expect_visible
+          selector: "[data-testid='screen-affirmations'][data-active-topic-mode='all']"
+
+  - id: TOP-004
+    title: Persistent Topic Selection
+    description: The selected topic set remains in effect until changed.
+    priority: MUST
+    acceptance_criteria:
+      - Selected topic identifiers are saved on the device.
+      - Relaunching the app restores the last selected set, including an empty set.
+    verification:
+      test_id: selected_topics_survive_relaunch
+      steps:
+        - action: goto
+          url: moodie://affirmations/topics?fixtures=topic-a,topic-b&fresh=true
+        - action: click
+          selector: "[data-testid='item-topic-topic-b']"
+        - action: goto
+          url: moodie://affirmations/topics?fixtures=topic-a,topic-b&relaunch=true
+        - action: expect_visible
+          selector: "[data-testid='item-topic-topic-b'][data-state='selected']"
+

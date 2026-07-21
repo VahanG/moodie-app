@@ -1,0 +1,90 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-ANALYTICS
+  name: Analytics and Insights
+  lifecycle: planned
+  purpose: Capture engagement and conversion telemetry to guide future content drops.
+  analytics_provider: TBD
+  warehouse: TBD
+
+event_contract:
+  naming_pattern: domain_action_subject
+  example: commerce_start_purchase
+  required_documentation:
+    - trigger_point
+    - required_payload_fields
+    - privacy_classification
+    - downstream_dashboard_owner
+
+requirements:
+  - id: ANA-001
+    title: Stable Event Naming
+    description: Analytics events use the domain_action_subject naming convention.
+    priority: MUST
+    acceptance_criteria:
+      - Every event name follows domain_action_subject.
+      - Event names align between the application and data warehouse.
+      - Renames are treated as contract changes.
+    verification:
+      test_id: analytics_event_name_contract
+      preconditions:
+        - The E2E analytics sink is enabled.
+      steps:
+        - action: goto
+          url: moodie://affirmations?fixture=affirmation-a
+        - action: click
+          selector: "[data-testid='btn-like-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='analytics-event'][data-name='affirmations_toggle_like'][data-name-valid='true']"
+
+  - id: ANA-002
+    title: Complete Event Documentation
+    description: Each emitted event has a reviewable privacy-aware contract.
+    priority: MUST
+    acceptance_criteria:
+      - Trigger point is documented.
+      - Required payload fields are documented.
+      - Privacy classification is documented.
+      - Downstream dashboard owner is documented.
+    verification:
+      test_id: analytics_event_metadata_contract
+      preconditions:
+        - The E2E analytics sink is enabled.
+      steps:
+        - action: goto
+          url: moodie://affirmations?fixture=affirmation-a
+        - action: click
+          selector: "[data-testid='btn-like-affirmation']"
+        - action: expect_visible
+          selector: "[data-testid='analytics-event'][data-contract-valid='true']"
+
+  - id: ANA-003
+    title: Engagement and Conversion Insights Loop
+    description: Product engagement and purchase conversion telemetry informs future content releases.
+    priority: MUST
+    acceptance_criteria:
+      - Engagement and conversion event coverage is defined before production instrumentation.
+      - Dashboard reporting has an explicit owner.
+      - Experiment dashboards are updated for relevant content drops.
+      - The Data and Insights owner reviews and flags anomalies during weekly reviews.
+    verification:
+      test_id: insights_loop_coverage
+      status: blocked
+      steps: []
+      blockers:
+        - Analytics provider is TBD.
+        - Event catalog is TBD.
+        - Privacy review and dashboard ownership are TBD.
+
+open_decisions:
+  - id: ANA-TBD-001
+    question: Which analytics collection and warehouse stack will be used?
+    status: TBD
+  - id: ANA-TBD-002
+    question: What is the approved event catalog and payload schema?
+    status: TBD
+  - id: ANA-TBD-003
+    question: What privacy classifications and retention rules apply?
+    status: TBD
+

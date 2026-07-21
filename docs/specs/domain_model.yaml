@@ -1,0 +1,387 @@
+schema_version: "1.0.0"
+
+document:
+  id: DOMAIN-MODEL
+  title: Moodie Canonical Domain Model
+  status: partially_defined
+  source_of_truth: true
+
+conventions:
+  entity_names: PascalCase
+  field_names: snake_case
+  identifier_type: string
+  unresolved_value: TBD
+  note: Types marked TBD are intentional gaps and are not implementation permission.
+
+entities:
+  - name: AffirmationTopic
+    status: defined
+    storage: bundled_content_v1
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+      - name: name
+        type: string
+        required: true
+      - name: image_uri
+        type: uri
+        required: true
+      - name: affirmations
+        type: list<Affirmation>
+        required: true
+        constraints:
+          min_items: 1
+    relationships:
+      - type: has_many
+        target: Affirmation
+        foreign_key: topic_id
+
+  - name: Affirmation
+    status: provisional
+    storage: bundled_content_v1
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+        derivation: TBD
+      - name: topic_id
+        type: string
+        required: true
+      - name: text
+        type: string
+        required: true
+        constraints:
+          min_length: 1
+      - name: background_suggestion_uris
+        type: list<uri>
+        required: true
+        constraints:
+          min_items: 1
+    relationships:
+      - type: belongs_to
+        target: AffirmationTopic
+        foreign_key: topic_id
+    notes:
+      - Text has one or more weakly connected background suggestions.
+      - Text is not strictly bound one-to-one to gallery backgrounds.
+
+  - name: AffirmationBackground
+    status: defined
+    storage: bundled_content_v1
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+      - name: image_uri
+        type: uri
+        required: true
+      - name: tags
+        type: list<string>
+        required: true
+        constraints:
+          min_items: 1
+          unique_items: true
+
+  - name: AffirmationPreferences
+    status: provisional
+    storage: device_local
+    fields:
+      - name: selected_topic_ids
+        type: list<string>
+        required: true
+        constraints:
+          unique_items: true
+          empty_means: all_topics_active
+      - name: background_mode
+        type: enum
+        required: true
+        allowed_values:
+          - free
+          - fixed
+      - name: fixed_background_id
+        type: string|null
+        required: true
+        constraints:
+          non_null_when: background_mode == fixed
+      - name: liked_affirmation_ids
+        type: list<string>
+        required: true
+        constraints:
+          unique_items: true
+    relationships:
+      - type: references_many
+        target: AffirmationTopic
+        field: selected_topic_ids
+      - type: references_one_optional
+        target: AffirmationBackground
+        field: fixed_background_id
+      - type: references_many
+        target: Affirmation
+        field: liked_affirmation_ids
+    unresolved:
+      - Stable affirmation identifier strategy is TBD.
+      - Ownership by a future user model is TBD.
+
+  - name: ReminderPreferences
+    status: provisional
+    storage: device_local
+    fields:
+      - name: enabled
+        type: boolean
+        required: true
+      - name: hour
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 23
+      - name: minute
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 59
+      - name: timezone
+        type: string
+        required: TBD
+    unresolved:
+      - Ownership by a future user model is TBD.
+      - Time-zone and daylight-saving behavior is TBD.
+
+  - name: ProductAnalog
+    status: provisional
+    storage: remote_cms_planned
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+        description: Stable unique identifier.
+      - name: sku
+        type: string
+        required: true
+        unique: TBD
+        description: Store or back-office SKU.
+      - name: title
+        type: string
+        required: true
+        description: User-facing name.
+      - name: description
+        type: string
+        required: true
+        description: Short product summary.
+      - name: media
+        type: list<MediaAsset>
+        required: true
+        description: Images, video, and 3D or AR placeholders.
+      - name: availability
+        type: list<ProductAvailability>
+        required: true
+        description: Market and platform constraints.
+    notes:
+      - This entity is the source for future TypeScript model generation.
+
+  - name: MediaAsset
+    status: provisional
+    storage: remote_cms_planned
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+      - name: type
+        type: enum
+        required: true
+        allowed_values:
+          - image
+          - video
+          - three_d_placeholder
+          - ar_placeholder
+      - name: uri
+        type: uri
+        required: true
+      - name: metadata
+        type: map
+        required: TBD
+
+  - name: ProductAvailability
+    status: provisional
+    storage: remote_cms_planned
+    fields:
+      - name: market
+        type: string
+        required: true
+      - name: platform
+        type: enum
+        required: true
+        allowed_values:
+          - ios
+          - android
+      - name: available
+        type: boolean
+        required: true
+      - name: constraints
+        type: map
+        required: TBD
+
+  - name: StoreProductMapping
+    status: TBD
+    storage: TBD
+    fields:
+      - name: product_analog_id
+        type: string
+        required: true
+      - name: platform
+        type: enum
+        required: true
+        allowed_values:
+          - ios
+          - android
+      - name: store_product_id
+        type: string
+        required: true
+        unique: TBD
+      - name: price_tier
+        type: string
+        required: TBD
+    relationships:
+      - type: belongs_to
+        target: ProductAnalog
+        foreign_key: product_analog_id
+
+  - name: Purchase
+    status: TBD
+    storage: backend_planned
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+      - name: store_product_id
+        type: string
+        required: true
+      - name: platform
+        type: enum
+        required: true
+        allowed_values:
+          - ios
+          - android
+      - name: receipt_reference
+        type: string
+        required: true
+        security: Must not expose raw receipt material to analytics or UI.
+      - name: validation_status
+        type: enum
+        required: true
+        allowed_values: TBD
+      - name: created_at
+        type: datetime
+        required: true
+      - name: user_id
+        type: string
+        required: TBD
+        description: Depends on the future user model.
+
+  - name: Entitlement
+    status: TBD
+    storage: backend_planned
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+      - name: purchase_id
+        type: string
+        required: true
+      - name: product_analog_id
+        type: string
+        required: true
+      - name: user_id
+        type: string
+        required: TBD
+      - name: granted_at
+        type: datetime
+        required: true
+      - name: status
+        type: enum
+        required: true
+        allowed_values: TBD
+    relationships:
+      - type: belongs_to
+        target: Purchase
+        foreign_key: purchase_id
+      - type: belongs_to
+        target: ProductAnalog
+        foreign_key: product_analog_id
+
+  - name: CommerceAuditEvent
+    status: TBD
+    storage: backend_planned
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+      - name: purchase_id
+        type: string
+        required: true
+      - name: event_type
+        type: string
+        required: true
+      - name: occurred_at
+        type: datetime
+        required: true
+      - name: metadata
+        type: map
+        required: TBD
+
+  - name: ContentPayload
+    status: provisional
+    storage: remote_source_planned
+    fields:
+      - name: version
+        type: string
+        required: true
+        unique: true
+      - name: schema_version
+        type: string
+        required: true
+      - name: content
+        type: map
+        required: true
+      - name: published_at
+        type: datetime
+        required: TBD
+      - name: release_notes
+        type: string
+        required: TBD
+    notes:
+      - Remote source may be Firebase, Supabase, a custom CMS, or another approved provider.
+
+  - name: AnalyticsEventDefinition
+    status: provisional
+    storage: specification
+    fields:
+      - name: name
+        type: string
+        required: true
+        unique: true
+        constraints:
+          naming_pattern: domain_action_subject
+      - name: trigger_point
+        type: string
+        required: true
+      - name: required_payload_fields
+        type: list<string>
+        required: true
+      - name: privacy_classification
+        type: string
+        required: true
+      - name: dashboard_owner
+        type: string
+        required: true
+

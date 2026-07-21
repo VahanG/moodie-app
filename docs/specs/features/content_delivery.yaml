@@ -1,0 +1,83 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-CONTENT-DELIVERY
+  name: Dynamic Content Delivery
+  lifecycle: planned
+  purpose: Deliver remotely managed catalog, campaign, and theme content without unnecessary forced upgrades.
+  content_source: TBD
+  candidate_sources:
+    - Firebase
+    - Supabase
+    - custom CMS
+
+requirements:
+  - id: CNT-001
+    title: Versioned Remote Content Lifecycle
+    description: Remote content is published, validated, downloaded, and cached through a defined lifecycle.
+    priority: MUST
+    acceptance_criteria:
+      - Content is published as a versioned payload in the approved remote source.
+      - The application validates payload version and schema compatibility before activation.
+      - Compatible payloads are downloaded and cached.
+      - Incompatible or invalid payloads do not replace working content.
+    verification:
+      test_id: activate_valid_remote_content
+      preconditions:
+        - The content test source provides a compatible payload at version fixture-v2.
+      steps:
+        - action: goto
+          url: moodie://__e2e/content?remote_version=fixture-v2
+        - action: expect_visible
+          selector: "[data-testid='content-payload-status'][data-version='fixture-v2'][data-state='active']"
+
+  - id: CNT-002
+    title: Last-Known-Good Offline Fallback
+    description: Offline operation falls back to the last compatible cached payload.
+    priority: MUST
+    acceptance_criteria:
+      - The last-known-good compatible content is retained in the cache.
+      - When the remote source is unavailable, the application uses last-known-good content.
+      - Cache invalidation rules are defined before production rollout.
+      - Behavior when no cached content exists is TBD.
+    verification:
+      test_id: offline_last_known_good_content
+      preconditions:
+        - Cache fixture-v1 as the last-known-good payload.
+        - Make the remote source unavailable.
+      steps:
+        - action: goto
+          url: moodie://__e2e/content?network=offline
+        - action: expect_visible
+          selector: "[data-testid='content-payload-status'][data-version='fixture-v1'][data-source='cache']"
+
+  - id: CNT-003
+    title: Content Drop Governance
+    description: Content drops are staged, validated, released appropriately, and measured.
+    priority: MUST
+    acceptance_criteria:
+      - Dynamic Content and CMS stages new catalog entries.
+      - Product Analog validates assets and metadata.
+      - Infra and Release triggers OTA or app-store release only when required by the change type.
+      - Data and Insights updates experiment dashboards.
+      - Every content push has release notes under docs/releases/*.yaml.
+    verification:
+      test_id: content_drop_governance_artifacts
+      status: manual_contract_check
+      steps:
+        - action: goto
+          url: moodie://__e2e/content?release=fixture-release
+        - action: expect_visible
+          selector: "[data-testid='content-payload-status'][data-assets-valid='true'][data-release-notes='true']"
+
+open_decisions:
+  - id: CNT-TBD-001
+    question: Which remote content provider is authoritative?
+    status: TBD
+  - id: CNT-TBD-002
+    question: What are the cache invalidation rules and storage limits?
+    status: TBD
+  - id: CNT-TBD-003
+    question: What bundled fallback is used when no last-known-good payload exists?
+    status: TBD
+
