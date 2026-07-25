@@ -5,7 +5,8 @@ import {
   AffirmationBackground,
   AffirmationBackgroundPreference,
 } from '../features/affirmations/types';
-import styles from './HomeScreen.styles';
+import { useHomeScreenStyles } from './HomeScreen.styles';
+import { useTheme } from '../theme';
 
 type BackgroundGroup = {
   tag: string;
@@ -48,6 +49,8 @@ const BackgroundSelectionModal: React.FC<Props> = ({
   onBackgroundPreferenceChange,
   onClose,
 }) => {
+  const styles = useHomeScreenStyles();
+  const { theme } = useTheme();
   const [backgroundTagSearch, setBackgroundTagSearch] = useState('');
   const [selectedBackgroundTag, setSelectedBackgroundTag] = useState<string | null>(
     null,
@@ -145,7 +148,8 @@ const BackgroundSelectionModal: React.FC<Props> = ({
             }}
             style={styles.backgroundSearchInput}
             placeholder="Search tags (e.g. calm, ocean)"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={theme.colors.placeholder}
+            selectionColor={theme.colors.accent}
             autoCapitalize="none"
             autoCorrect={false}
           />

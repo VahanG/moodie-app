@@ -1,0 +1,104 @@
+schema_version: "1.0.0"
+
+feature:
+  id: FEATURE-AUTHENTICATION
+  name: Inline User Authentication
+  lifecycle: current
+  purpose: Let existing Moodie users manage an optional Supabase session from Settings without adding a primary page, route, or application root.
+  placement:
+    parent: SettingsPanel
+    constraint: Authentication is an inline section of the existing Settings page.
+  methods:
+    - email_password
+    - email_otp
+    - google_oauth
+
+requirements:
+  - id: AUTH-001
+    title: Inline Email and Password Sign-In
+    description: A signed-out user can enter an email address and password in Settings and create a Supabase Auth session.
+    priority: MUST
+    acceptance_criteria:
+      - The account controls are rendered inside SettingsPanel.
+      - No authentication screen, home-pager page, navigation route, or alternate application root is introduced.
+      - Email and password are required before a request is submitted.
+      - The password is obscured while entered.
+      - A failed request leaves the user signed out and shows an actionable inline error.
+      - Authentication is unavailable with an explanatory inline state when Supabase client configuration is absent.
+    verification:
+      test_id: sign_in_from_settings
+      steps:
+        - action: goto
+          url: moodie://settings
+        - action: expect_visible
+          selector: "[data-testid='section-account']"
+        - action: type
+          selector: "[data-testid='input-auth-email']"
+          value: existing-user@example.com
+        - action: type
+          selector: "[data-testid='input-auth-password']"
+          value: valid-password
+        - action: click
+          selector: "[data-testid='btn-sign-in']"
+        - action: expect_visible
+          selector: "[data-testid='btn-sign-out']"
+
+  - id: AUTH-002
+    title: Persistent Session State and Sign-Out
+    description: The inline section reflects the persisted Supabase session and lets the current user sign out.
+    priority: MUST
+    acceptance_criteria:
+      - Session state is read when the account section mounts.
+      - Supabase auth-state changes update the section without app navigation.
+      - A signed-in state identifies the current account by email when available.
+      - Sign-out clears the Supabase session and restores the inline sign-in form.
+      - Signing in is not required to use existing device-local features.
+
+  - id: AUTH-003
+    title: Email One-Time Password
+    description: An existing user can request and verify a six-digit email code from the inline account section.
+    priority: MUST
+    acceptance_criteria:
+      - Requesting a code uses Supabase signInWithOtp with shouldCreateUser set to false.
+      - A six-digit numeric code is verified with the email verification type.
+      - Sending, verification, cancellation, and error states remain inline in Settings.
+      - The user can switch between password and OTP modes without navigation.
+
+  - id: AUTH-004
+    title: Google OAuth
+    description: A user can authenticate with Google through Supabase OAuth and return to the inline account section.
+    priority: MUST
+    acceptance_criteria:
+      - Google authentication opens a system browser session.
+      - The OAuth request redirects to moodie-app://auth/callback on native builds.
+      - A successful callback creates and persists the Supabase session.
+      - Canceling or failing the browser flow leaves the user signed out and shows inline status.
+      - No Google client secret is bundled in the application.
+
+supabase_dashboard_setup:
+  email:
+    - Enable the Email provider under Authentication providers.
+    - Change the Magic Link email template to include the {{ .Token }} variable so signInWithOtp sends a six-digit code instead of a magic link.
+    - Configure production SMTP before release.
+  google:
+    - Create a Web application OAuth client in Google Auth Platform.
+    - Add https://vwougnsbyqqeessdkbae.supabase.co/auth/v1/callback as an authorized Google redirect URI.
+    - Enable Google in Supabase Authentication providers and store the Google client ID and client secret there.
+  redirects:
+    - Add moodie-app://** to the Supabase Authentication URL Configuration redirect allow list.
+    - Add exact development and production web callback URLs ending in /auth/callback when web is deployed.
+
+out_of_scope:
+  - Account registration.
+  - Password recovery.
+  - OAuth providers other than Google.
+  - Authorization roles and protected application pages.
+  - Cross-device preference synchronization.
+
+open_decisions:
+  - id: AUTH-TBD-001
+    question: How will users receive or create their initial Moodie account?
+    status: TBD
+  - id: AUTH-TBD-002
+    question: Which password recovery flow will be supported?
+    status: TBD

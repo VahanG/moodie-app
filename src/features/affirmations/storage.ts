@@ -95,11 +95,14 @@ export async function loadAffirmationBackgroundPreference(): Promise<Affirmation
     mode?: unknown;
     backgroundId?: unknown;
   };
-  const isValidMode = isAffirmationBackgroundMode(candidate.mode);
-  const hasValidBackgroundId =
-    candidate.backgroundId === null || isAffirmationBackgroundId(candidate.backgroundId);
+  if (!isAffirmationBackgroundMode(candidate.mode)) {
+    throw new Error('Invalid affirmation background preference in storage.');
+  }
 
-  if (!isValidMode || !hasValidBackgroundId) {
+  if (
+    candidate.backgroundId !== null &&
+    !isAffirmationBackgroundId(candidate.backgroundId)
+  ) {
     throw new Error('Invalid affirmation background preference in storage.');
   }
 

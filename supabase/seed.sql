@@ -1,0 +1,1 @@
+-- Seed data will be added after the first application schema is approved.

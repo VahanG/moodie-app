@@ -1,0 +1,98 @@
+schema_version: "1.0.0"
+
+document:
+  id: SUPABASE-INTEGRATION
+  title: Moodie Supabase Integration
+  status: connected
+  source_of_truth: true
+
+project:
+  ref: vwougnsbyqqeessdkbae
+  url: https://vwougnsbyqqeessdkbae.supabase.co
+  provider: Supabase Cloud
+  cli_link_status: linked
+  local_stack_status: unavailable_until_docker_is_running
+  hosted_connectivity:
+    status: verified
+    verified_at: '2026-07-22'
+    endpoint: /auth/v1/settings
+
+client:
+  platform: Expo React Native with web support
+  package: '@supabase/supabase-js'
+  module: src/features/supabase/client.ts
+  url_polyfill: react-native-url-polyfill/auto
+  native_session_storage: '@react-native-async-storage/async-storage'
+  web_session_storage: supabase_js_default_web_storage
+  auth_options:
+    auto_refresh_token: true
+    persist_session: true
+    detect_session_in_url: false
+    lock: processLock
+  auth_methods:
+    - email_password
+    - email_otp
+    - google_oauth
+  native_oauth_redirect: moodie-app://auth/callback
+  app_state_behavior:
+    native_foreground: start token auto-refresh
+    native_background: stop token auto-refresh
+    web: use Supabase browser lifecycle
+
+environment:
+  local_file: .env
+  committed_template: .env.example
+  variables:
+    - name: EXPO_PUBLIC_SUPABASE_URL
+      required: true
+      classification: public_project_identifier
+      expected_value: https://vwougnsbyqqeessdkbae.supabase.co
+    - name: EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+      required: true
+      classification: public_client_key
+      expected_value: project_connect_panel_publishable_key
+  forbidden_client_variables:
+    - SUPABASE_SERVICE_ROLE_KEY
+    - SUPABASE_SECRET_KEY
+    - database_password
+    - SUPABASE_ACCESS_TOKEN
+
+security:
+  - id: SUP-SEC-001
+    priority: MUST
+    statement: Never ship service-role, secret, database-password, or management-access credentials in the client bundle.
+  - id: SUP-SEC-002
+    priority: MUST
+    statement: Enable Row Level Security on every application table exposed through the Data API.
+  - id: SUP-SEC-003
+    priority: MUST
+    statement: Grant only operations required by explicit anon or authenticated policies.
+  - id: SUP-SEC-004
+    priority: MUST
+    statement: Limit the current client auth surface to the optional email/password session behavior defined in docs/specs/features/authentication.yaml.
+
+connection_acceptance_criteria:
+  - The project URL is validated before client construction.
+  - Missing or malformed client configuration produces an actionable error without exposing credentials.
+  - Native auth sessions persist in AsyncStorage.
+  - Native token refresh follows application foreground and background state.
+  - Web uses the Supabase client browser storage behavior.
+  - Unit tests do not require live credentials.
+  - A hosted connectivity check succeeds after the publishable key is configured.
+
+database_workflow:
+  config_path: supabase/config.toml
+  migrations_path: supabase/migrations
+  rules:
+    - Commit config.toml and migrations.
+    - Do not commit supabase/.temp or environment secrets.
+    - Develop and verify migrations locally before pushing to the hosted project.
+    - Pass --local or --linked explicitly for database commands when target ambiguity is possible.
+
+open_decisions:
+  - id: SUP-TBD-001
+    question: Which tables, storage buckets, and Edge Functions are required first?
+    status: TBD
+  - id: SUP-TBD-002
+    question: Which anon and authenticated RLS policies are required for each resource?
+    status: TBD

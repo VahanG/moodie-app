@@ -341,7 +341,7 @@ entities:
 
   - name: ContentPayload
     status: provisional
-    storage: remote_source_planned
+    storage: supabase_planned
     fields:
       - name: version
         type: string
@@ -360,7 +360,8 @@ entities:
         type: string
         required: TBD
     notes:
-      - Remote source may be Firebase, Supabase, a custom CMS, or another approved provider.
+      - Supabase project vwougnsbyqqeessdkbae is the approved remote source.
+      - The table, storage bucket, and payload transport design remain TBD.
 
   - name: AnalyticsEventDefinition
     status: provisional
@@ -384,4 +385,3 @@ entities:
       - name: dashboard_owner
         type: string
         required: true
-

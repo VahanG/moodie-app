@@ -3,18 +3,9 @@
  */
 
 import { registerRootComponent } from 'expo';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import PushNotification from 'react-native-push-notification';
 import App from './App';
+import { configureNotifications } from './src/features/notifications/bootstrap';
 
-PushNotification.configure({
-  onNotification(notification) {
-    if (typeof notification.finish === 'function') {
-      notification.finish(PushNotificationIOS.FetchResult.NoData);
-    }
-  },
-  popInitialNotification: true,
-  requestPermissions: false,
-});
+configureNotifications();
 
 registerRootComponent(App);

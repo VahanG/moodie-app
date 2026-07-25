@@ -25,6 +25,8 @@ current_priorities:
     statement: Define the product analog schema for a future catalog rollout.
   - id: PRIORITY-005
     statement: Define commerce and content-delivery contracts before implementation.
+  - id: PRIORITY-006
+    statement: Let existing Moodie users sign in from Settings without interrupting the three-page home experience.
 
 affirmation_experience:
   problem: >-
@@ -75,6 +77,9 @@ feature_inventory:
   - id: FEATURE-REMINDERS
     path: docs/specs/features/reminders.yaml
     lifecycle: current
+  - id: FEATURE-AUTHENTICATION
+    path: docs/specs/features/authentication.yaml
+    lifecycle: current
   - id: FEATURE-CATALOG
     path: docs/specs/features/catalog.yaml
     lifecycle: planned
@@ -98,4 +103,3 @@ unresolved_scope:
   - id: SCOPE-TBD-003
     topic: My Favorites delivery milestone and UI
     decision: TBD
-

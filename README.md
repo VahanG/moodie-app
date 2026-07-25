@@ -27,10 +27,25 @@ npm run android
 npm run ios
 ```
 
+### Web
+
+```sh
+npm run web
+```
+
+Create a deployable static web build with:
+
+```sh
+npm run build:web
+```
+
 If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
 Use `npm start` only when you intentionally want to run Metro without rebuilding
 the native app.
+
+Daily local reminders are currently available on iOS and Android only. The web
+app keeps the reminder setting disabled until browser push delivery is added.
 
 This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 

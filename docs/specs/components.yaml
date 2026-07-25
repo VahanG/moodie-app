@@ -252,3 +252,70 @@ components:
         element: observable analytics test sink event
         interactive: false
 
+  - id: COMP-009
+    name: AccountSection
+    kind: inline_settings_section
+    purpose: Let a user manage a Supabase email/password session without introducing another page, route, or app root.
+    parent: COMP-006
+    test_ids:
+      - test_id: section-account
+        element: inline section root
+        interactive: false
+      - test_id: input-auth-email
+        element: email input
+        interactive: true
+      - test_id: input-auth-password
+        element: password input
+        interactive: true
+      - test_id: btn-sign-in
+        element: sign-in control
+        interactive: true
+      - test_id: btn-use-email-otp
+        element: switch to email OTP control
+        interactive: true
+      - test_id: btn-use-password
+        element: switch to password control
+        interactive: true
+      - test_id: btn-send-email-otp
+        element: send or resend email OTP control
+        interactive: true
+      - test_id: input-auth-otp
+        element: email OTP input
+        interactive: true
+      - test_id: btn-verify-email-otp
+        element: verify email OTP control
+        interactive: true
+      - test_id: btn-sign-in-google
+        element: Google OAuth control
+        interactive: true
+      - test_id: btn-sign-out
+        element: sign-out control
+        interactive: true
+      - test_id: text-auth-status
+        element: authentication status or error message
+        interactive: false
+
+  - id: COMP-010
+    name: AppearanceSection
+    kind: inline_settings_section
+    purpose: Let the user choose a persisted System, Light, or Dark application appearance.
+    parent: COMP-006
+    test_ids:
+      - test_id: section-appearance
+        element: inline appearance section root
+        interactive: false
+      - test_id: btn-theme-system
+        element: System appearance control
+        interactive: true
+      - test_id: btn-theme-light
+        element: Light appearance control
+        interactive: true
+      - test_id: btn-theme-dark
+        element: Dark appearance control
+        interactive: true
+      - test_id: theme-resolved-light
+        element: resolved light appearance marker
+        interactive: false
+      - test_id: theme-resolved-dark
+        element: resolved dark appearance marker
+        interactive: false

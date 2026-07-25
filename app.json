@@ -24,7 +24,19 @@
       }
     },
     "plugins": [
-      "expo-updates"
+      "expo-updates",
+      [
+        "expo-web-browser",
+        {
+          "experimentalLauncherActivity": false
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
+      ]
     ]
   }
 }

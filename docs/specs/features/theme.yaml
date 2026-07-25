@@ -1,0 +1,92 @@
+schema_version: '1.0.0'
+
+feature:
+  id: FEATURE-THEME
+  name: Application Appearance
+  lifecycle: current
+  purpose: Provide a consistent semantic color system with persisted light, dark, and system appearance modes.
+  entry_route: moodie://settings
+
+requirements:
+  - id: THEME-001
+    title: Appearance Preference
+    description: The user can choose System, Light, or Dark appearance from Settings.
+    priority: MUST
+    acceptance_criteria:
+      - System is the default preference when no saved value exists.
+      - System resolves to the current operating-system color scheme.
+      - Light always resolves to the light palette.
+      - Dark always resolves to the dark palette.
+      - The selected preference is persisted on the device and restored at launch.
+      - Changing the preference updates the visible app immediately.
+    verification:
+      test_id: select_appearance_preference
+      steps:
+        - action: goto
+          url: moodie://settings
+        - action: expect_visible
+          selector: "[data-testid='section-appearance']"
+        - action: click
+          selector: "[data-testid='btn-theme-dark']"
+        - action: expect_visible
+          selector: "[data-testid='theme-resolved-dark']"
+
+  - id: THEME-002
+    title: Semantic Theme Tokens
+    description: Application UI colors are selected through named semantic roles instead of screen-local palette values.
+    priority: MUST
+    acceptance_criteria:
+      - Light and dark palettes define background, surface, text, border, accent, input, overlay, and on-image roles.
+      - Screens, settings content, account controls, footer, and modal sheets consume the resolved semantic palette.
+      - Content displayed over photography uses dedicated on-image and overlay roles that remain readable in both modes.
+      - Form placeholders use the resolved placeholder role.
+    verification:
+      test_id: render_semantic_theme_surfaces
+      coverage: unit_and_visual
+
+  - id: THEME-003
+    title: System Chrome Synchronization
+    description: System-owned bars match the resolved application appearance.
+    priority: MUST
+    acceptance_criteria:
+      - Status-bar content is dark in light mode and light in dark mode.
+      - Status-bar background matches the resolved app background where the platform supports it.
+      - Android navigation-bar color and button appearance match the resolved app background.
+    verification:
+      test_id: synchronize_system_chrome
+      coverage: native_smoke_test
+
+storage:
+  key: '@moodie/theme-preference'
+  allowed_values:
+    - system
+    - light
+    - dark
+  invalid_value_behavior: Fall back to System without failing app startup.
+
+theme_contract:
+  preferences:
+    - system
+    - light
+    - dark
+  resolved_modes:
+    - light
+    - dark
+  semantic_color_roles:
+    - background
+    - surface
+    - surface_elevated
+    - text
+    - text_muted
+    - border
+    - accent
+    - accent_soft
+    - on_accent
+    - input_background
+    - placeholder
+    - scrim
+    - image_overlay
+    - image_control
+    - image_control_border
+    - on_image
+    - on_image_muted

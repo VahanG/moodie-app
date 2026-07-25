@@ -28,7 +28,7 @@ import {
   AffirmationBackgroundPreference,
   AffirmationTopicId,
 } from '../features/affirmations/types';
-import styles from './HomeScreen.styles';
+import { useHomeScreenStyles } from './HomeScreen.styles';
 import SettingsPanel from './SettingsPanel';
 import AffirmationPanel from './AffirmationPanel';
 import CalendarPanel from './CalendarPanel';
@@ -39,6 +39,7 @@ function formatTime(hour: number, minute: number): string {
 }
 
 const HomeScreen: React.FC = () => {
+  const styles = useHomeScreenStyles();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const { width } = useWindowDimensions();
   const [preferences, setPreferences] = useState<ReminderPreferences>(

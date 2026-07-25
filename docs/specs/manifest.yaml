@@ -52,13 +52,17 @@ specification_index:
       purpose: Reusable UI and stable test identifier contracts.
     - path: docs/specs/engineering.yaml
       purpose: Architecture, integration, documentation, and release rules.
+    - path: docs/specs/supabase.yaml
+      purpose: Supabase project, client, environment, and security integration contract.
     - path: docs/specs/roadmap.yaml
       purpose: Forward-looking docs-to-code-generation proposal.
   features:
+    - docs/specs/features/theme.yaml
     - docs/specs/features/affirmations.yaml
     - docs/specs/features/topic_selection.yaml
     - docs/specs/features/background_selection.yaml
     - docs/specs/features/navigation_calendar_settings.yaml
+    - docs/specs/features/authentication.yaml
     - docs/specs/features/reminders.yaml
     - docs/specs/features/catalog.yaml
     - docs/specs/features/commerce.yaml

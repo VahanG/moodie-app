@@ -7,7 +7,7 @@ import {
   AffirmationTopicId,
 } from '../features/affirmations/types';
 import { buildAffirmationLikeKey } from '../features/affirmations/storage';
-import styles from './HomeScreen.styles';
+import { useHomeScreenStyles } from './HomeScreen.styles';
 import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
 
@@ -75,6 +75,7 @@ const AffirmationPanel: React.FC<Props> = ({
   likedAffirmationKeys,
   onToggleAffirmationLike,
 }) => {
+  const styles = useHomeScreenStyles();
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
   const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false);
   const normalizedSelectedTopicIds = useMemo(

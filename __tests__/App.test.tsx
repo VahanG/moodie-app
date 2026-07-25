@@ -19,6 +19,10 @@ jest.mock('react-native-push-notification', () => ({
   cancelLocalNotification: jest.fn(),
 }));
 
+jest.mock('expo-navigation-bar', () => ({
+  NavigationBar: () => null,
+}));
+
 test('renders correctly', async () => {
   let renderer: ReturnType<typeof ReactTestRenderer.create> | null = null;
 

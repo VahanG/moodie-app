@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Image, Text, View } from 'react-native';
-import styles from './HomeScreen.styles';
+import { useHomeScreenStyles } from './HomeScreen.styles';
 
 const CALENDAR_BACKGROUND_URI =
   'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80';
@@ -13,6 +13,7 @@ function getDateParts(date: Date) {
 }
 
 const CalendarPanel: React.FC = () => {
+  const styles = useHomeScreenStyles();
   const { day, month, weekday } = useMemo(() => getDateParts(new Date()), []);
 
   return (

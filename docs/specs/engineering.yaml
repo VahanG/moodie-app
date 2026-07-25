@@ -13,6 +13,8 @@ architecture:
       responsibility: UI composition
     - path: src/features
       responsibility: Business logic and services
+    - path: src/theme
+      responsibility: Semantic theme tokens, persisted appearance preference, and resolved theme context
     - path: src/types
       responsibility: Shared types
   rules:
@@ -52,6 +54,19 @@ integration_contract_template:
     - authentication_constraints
     - security_constraints
     - error_handling
+
+supabase_integration:
+  specification: docs/specs/supabase.yaml
+  project_ref: vwougnsbyqqeessdkbae
+  project_url: https://vwougnsbyqqeessdkbae.supabase.co
+  client_module: src/features/supabase/client.ts
+  rules:
+    - Only the project URL and publishable key may be exposed through EXPO_PUBLIC_* variables.
+    - Service-role and secret keys must never be bundled into the application.
+    - All exposed tables must enable Row Level Security and use explicit least-privilege policies.
+    - Database changes must be represented as version-controlled Supabase migrations.
+    - The future user and authentication model remains undefined until access_control.yaml is approved.
+
 
 content_drop_workflow:
   - order: 1

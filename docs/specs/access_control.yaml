@@ -3,20 +3,29 @@ schema_version: "1.0.0"
 document:
   id: ACCESS-CONTROL
   title: Moodie Access Control
-  status: incomplete
+  status: partially_defined
   source_of_truth: true
 
 identity_model:
-  current_state: undefined
+  current_state: optional_end_user_identity
   authentication_required: false
-  statement: No product-level user identity or authenticated role model is currently defined.
-  future_state: A user model is planned but its identity provider, lifecycle, and roles are TBD.
+  statement: Moodie users may authenticate with email and password through Supabase Auth, while the local affirmation and reminder experience remains available without authentication.
+  identity_provider: Supabase Auth
+  supported_methods:
+    - email_password
+    - email_otp
+    - google_oauth
+  future_state: Authorization roles and cross-device ownership remain TBD.
 
 current_actors:
   - id: anonymous_device_session
     kind: technical_actor
     description: A local application session before a product-level user model exists.
     is_product_user_role: false
+  - id: authenticated_moodie_user
+    kind: product_user
+    description: An end user with an active Supabase Auth session.
+    is_product_user_role: true
 
 roles: []
 
@@ -36,6 +45,28 @@ permission_matrix:
       - view
       - update
     basis: Current reminder configuration is device-local and no authentication boundary is documented.
+  - actor: authenticated_moodie_user
+    resource: local_affirmation_experience
+    permissions:
+      - view
+      - select_topics
+      - select_background
+      - like
+      - share
+    basis: Authentication does not yet change access to device-local features.
+  - actor: authenticated_moodie_user
+    resource: local_reminder_preferences
+    permissions:
+      - view
+      - update
+    basis: Authentication does not yet change access to device-local features.
+  - actor: authenticated_moodie_user
+    resource: own_auth_session
+    permissions:
+      - view
+      - create
+      - delete
+    basis: The user can sign in and sign out through the inline Settings account section.
 
 undefined_permissions:
   - resource: product_catalog_management
@@ -54,7 +85,7 @@ undefined_permissions:
 security_requirements:
   - id: ACCESS-001
     priority: MUST
-    statement: Authentication and authorization behavior must not be inferred until the user and role model is approved.
+    statement: Authentication must use the approved Supabase email/password, email OTP, or Google OAuth flows and remain optional until a broader identity and authorization model is approved.
   - id: ACCESS-002
     priority: MUST
     statement: Store, CMS, and API contracts must document authentication and security constraints before implementation.
@@ -64,15 +95,11 @@ security_requirements:
 
 open_decisions:
   - id: ACCESS-TBD-001
-    question: What constitutes a Moodie user?
-    status: TBD
-  - id: ACCESS-TBD-002
-    question: Which authentication methods and identity provider will be used?
-    status: TBD
-  - id: ACCESS-TBD-003
     question: Which end-user and operational roles exist?
     status: TBD
-  - id: ACCESS-TBD-004
+  - id: ACCESS-TBD-002
     question: Which preferences and entitlements synchronize across devices?
     status: TBD
-
+  - id: ACCESS-TBD-003
+    question: How are Moodie accounts provisioned and recovered?
+    status: TBD
