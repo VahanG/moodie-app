@@ -67,6 +67,8 @@ ui_foundation:
       purpose: Select exactly one value from a short option list using an accessible radio group.
     - name: SettingsRow
       purpose: Align a settings label and description with its trailing control.
+    - name: SettingsSectionHeader
+      purpose: Give Settings cards a consistent icon, title, description, and optional trailing status.
     - name: Screen
       purpose: Provide a themed fixed or scrollable root surface for screen content.
     - name: ModalSheet
@@ -110,6 +112,18 @@ components:
     name: AffirmationPanel
     kind: screen_panel
     purpose: Display and navigate the active affirmation and its visual background.
+    anatomy:
+      - rounded media card with protective contrast overlay
+      - Today and current-date header
+      - one-tap background control
+      - current-topic selector
+      - centered affirmation statement
+      - like and share action dock
+      - swipe instruction and feed-position footer
+    responsive_behavior:
+      - Layout uses flexible vertical regions rather than hard-coded text offsets.
+      - The media card preserves a compact themed outer margin.
+      - Text and controls remain centered and reachable on narrow mobile viewports.
     test_ids:
       - test_id: screen-affirmations
         element: panel root
@@ -135,6 +149,12 @@ components:
         interactive: true
       - test_id: text-current-topic
         element: current affirmation topic label
+        interactive: false
+      - test_id: text-today-heading
+        element: Today card heading
+        interactive: false
+      - test_id: text-affirmation-position
+        element: current eligible affirmation position
         interactive: false
       - test_id: hint-affirmation-swipe
         element: swipe instruction
@@ -206,10 +226,25 @@ components:
   - id: COMP-005
     name: CalendarPanel
     kind: screen_panel
-    purpose: Preserve the existing Calendar page in the three-page experience.
+    purpose: Present the current local date and daily reflection in the three-page experience.
+    anatomy:
+      - Calendar page heading and description
+      - rounded background media card with contrast overlay
+      - Today indicator
+      - weekday, day, month, and year hierarchy
+      - daily reflection panel
+    responsive_behavior:
+      - Compact mobile heights reduce card padding and date typography.
+      - The daily reflection remains visible without fixed absolute offsets.
     test_ids:
       - test_id: screen-calendar
         element: panel root
+        interactive: false
+      - test_id: image-calendar-background
+        element: calendar media background
+        interactive: false
+      - test_id: text-calendar-heading
+        element: Calendar page heading
         interactive: false
       - test_id: text-calendar-date
         element: displayed date
@@ -221,10 +256,22 @@ components:
   - id: COMP-006
     name: SettingsPanel
     kind: screen_panel
-    purpose: Preserve the existing Settings page and expose reminder configuration.
+    purpose: Organize appearance, reminder, and account controls into a responsive settings surface.
+    anatomy:
+      - Settings heading and supporting description
+      - Appearance card
+      - Notifications card
+      - Account card
+    responsive_behavior:
+      - Cards use mobile-first spacing and stack vertically.
+      - Content is centered with a readable maximum width on larger viewports.
+      - Time inputs remain side-by-side while preserving minimum input width.
     test_ids:
       - test_id: screen-settings
         element: panel root
+        interactive: false
+      - test_id: section-notifications
+        element: notification settings card
         interactive: false
       - test_id: toggle-daily-reminders
         element: daily reminder enable control

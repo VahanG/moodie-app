@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { ActivityIndicator, View } from 'react-native';
 import {
   AuthUser,
@@ -12,16 +13,22 @@ import {
   verifyEmailOtp,
 } from '../features/auth';
 import { loadAdminStatus } from '../features/admin';
-import { useHomeScreenStyles } from './HomeScreen.styles';
-import { AppButton, AppText, AppTextField, Card } from '../components/ui';
+import {
+  AppButton,
+  AppText,
+  AppTextField,
+  Card,
+  SettingsSectionHeader,
+} from '../components/ui';
 import { useTheme } from '../theme';
+import { useSettingsPanelStyles } from './SettingsPanel.styles';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
 const AccountSection: React.FC = () => {
-  const styles = useHomeScreenStyles();
+  const styles = useSettingsPanelStyles();
   const { theme } = useTheme();
   const [authMode, setAuthMode] = useState<'password' | 'otp'>('password');
   const [email, setEmail] = useState('');
@@ -247,8 +254,18 @@ const AccountSection: React.FC = () => {
   }, []);
 
   return (
-    <Card variant="outlined" testID="section-account">
-      <AppText variant="heading">Account</AppText>
+    <Card style={styles.card} variant="elevated" testID="section-account">
+      <SettingsSectionHeader
+        description="Sign in and manage your Moodie identity."
+        icon={
+          <Ionicons
+            color={theme.colors.accent}
+            name="person-outline"
+            size={22}
+          />
+        }
+        title="Account"
+      />
 
       {!isConfigured ? (
         <AppText tone="muted" testID="text-auth-status">

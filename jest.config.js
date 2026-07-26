@@ -1,5 +1,20 @@
 module.exports = {
   preset: 'react-native',
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.styles.ts',
+    '!src/**/*.d.ts',
+    '!src/**/index.ts',
+    '!src/features/notifications/bootstrap.*',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 45,
+      functions: 55,
+      lines: 55,
+      statements: 55,
+    },
+  },
   moduleNameMapper: {
     '^expo/virtual/env$': '<rootDir>/test/mocks/expoVirtualEnv.js',
     '^expo-auth-session$': '<rootDir>/test/mocks/expoAuthSession.js',

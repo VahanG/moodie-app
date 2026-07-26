@@ -19,7 +19,9 @@ requirements:
       - Settings exposes a daily-reminder enable control.
       - Hour accepts an integer from 0 through 23.
       - Minute accepts an integer from 0 through 59.
+      - Boundary times 00:00 and 23:59 are valid and persist without modification.
       - Saving a valid time persists the preference and schedules a repeating daily local notification.
+      - If today's selected time has passed, the first notification is scheduled for the next local day.
       - The default preference is disabled at 09:00 local time.
     verification:
       test_id: configure_daily_reminder
@@ -95,6 +97,7 @@ requirements:
       - Enabled state, hour, and minute persist on the device.
       - Relaunch restores the displayed preference.
       - Relaunch reschedules the reminder when the stored preference is enabled.
+      - Missing preferences restore the documented default, while malformed or out-of-range stored preferences are rejected.
     verification:
       test_id: reminder_preference_survives_relaunch
       preconditions:
@@ -109,6 +112,24 @@ requirements:
         - action: expect_visible
           selector: "[data-testid='input-reminder-minute'][data-value='30']"
 
+automated_verification:
+  runner: Jest
+  command: npm test
+  coverage_command: npm run test:coverage
+  suites:
+    - path: src/features/notifications/storage.test.ts
+      covers:
+        - default preferences
+        - valid 00:00 and 23:59 boundaries
+        - malformed and out-of-range stored preferences
+        - preference persistence
+    - path: src/features/notifications/service.test.ts
+      covers:
+        - Android channel configuration
+        - Android and iOS permission decisions
+        - next-occurrence scheduling
+        - cancellation
+
 open_decisions:
   - id: REM-TBD-001
     question: What reliability service level defines a successful reminder experience?
@@ -116,4 +137,3 @@ open_decisions:
   - id: REM-TBD-002
     question: How should time-zone and daylight-saving changes affect existing schedules?
     status: TBD
-

@@ -1,6 +1,6 @@
 import React from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { ActivityIndicator, Switch, View } from 'react-native';
-import { useHomeScreenStyles } from './HomeScreen.styles';
 import { ReminderPreferences } from '../features/notifications/types';
 import AccountSection from './AccountSection';
 import AppearanceSection from './AppearanceSection';
@@ -12,7 +12,9 @@ import {
   Card,
   Screen,
   SettingsRow,
+  SettingsSectionHeader,
 } from '../components/ui';
+import { useSettingsPanelStyles } from './SettingsPanel.styles';
 
 type Props = {
   isLoading: boolean;
@@ -41,23 +43,38 @@ const SettingsPanel: React.FC<Props> = ({
   statusMessage,
   reminderTimeText,
 }) => {
-  const styles = useHomeScreenStyles();
+  const styles = useSettingsPanelStyles();
   const { theme } = useTheme();
 
   return (
     <Screen
       scroll
-      contentContainerStyle={styles.settingsContent}
+      contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       testID="screen-settings"
     >
-      <AppText variant="title">Settings</AppText>
+      <View style={styles.pageHeader}>
+        <AppText variant="title">Settings</AppText>
+        <AppText tone="muted">Personalize your experience and account.</AppText>
+      </View>
       <AppearanceSection />
-      <AccountSection />
 
-      <Card variant="outlined">
-        <AppText variant="heading">Notifications</AppText>
-        <AppText tone="muted">Set up your daily Moodie reminder.</AppText>
+      <Card
+        style={styles.card}
+        variant="elevated"
+        testID="section-notifications"
+      >
+        <SettingsSectionHeader
+          description="Choose when Moodie gently checks in."
+          icon={
+            <Ionicons
+              color={theme.colors.accent}
+              name="notifications-outline"
+              size={22}
+            />
+          }
+          title="Notifications"
+        />
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -69,6 +86,7 @@ const SettingsPanel: React.FC<Props> = ({
             <SettingsRow
               label="Daily reminders"
               description={`Current time: ${reminderTimeText} (local time)`}
+              style={styles.reminderRow}
               trailing={
                 <Switch
                   accessibilityLabel="Enable daily reminders"
@@ -124,15 +142,25 @@ const SettingsPanel: React.FC<Props> = ({
         )}
 
         {statusMessage ? (
-          <AppText
-            accessibilityLiveRegion="polite"
-            tone="accent"
-            testID="text-reminder-status"
-          >
-            {statusMessage}
-          </AppText>
+          <View style={styles.statusBanner}>
+            <Ionicons
+              color={theme.colors.accent}
+              name="information-circle-outline"
+              size={20}
+            />
+            <AppText
+              accessibilityLiveRegion="polite"
+              style={styles.statusMessage}
+              tone="accent"
+              testID="text-reminder-status"
+            >
+              {statusMessage}
+            </AppText>
+          </View>
         ) : null}
       </Card>
+
+      <AccountSection />
     </Screen>
   );
 };

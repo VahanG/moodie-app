@@ -46,6 +46,7 @@ export type MoodieTheme = {
     sm: number;
     md: number;
     lg: number;
+    xl: number;
     pill: number;
   };
   typography: {
@@ -70,6 +71,7 @@ const sharedThemeValues = {
     sm: 8,
     md: 12,
     lg: 18,
+    xl: 28,
     pill: 999,
   },
   typography: {

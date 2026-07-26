@@ -42,9 +42,32 @@ documentation_workflow:
     status: implemented
 
 quality_workflow:
+  unit_testing:
+    runner: Jest
+    development_command: npm test
+    coverage_command: npm run test:coverage
+    ci_workflow: .github/workflows/tests.yml
+    coverage_scope:
+      included:
+        - src/**/*.ts
+        - src/**/*.tsx
+      excluded:
+        - src/**/*.styles.ts
+        - src/**/*.d.ts
+        - src/**/index.ts
+        - src/features/notifications/bootstrap.*
+    minimum_global_coverage_percent:
+      statements: 55
+      branches: 45
+      functions: 55
+      lines: 55
   rules:
     - Run type checks and basic smoke tests before opening a pull request.
     - Add unit tests for validation logic and critical flows such as time validation and scheduling.
+    - Test observable behavior, boundary values, and failure paths rather than private implementation details.
+    - Run the source-wide coverage command before opening a pull request.
+    - Keep coverage above the enforced regression floor; raising the floor should follow sustained improvements in meaningful coverage.
+    - Require the coverage command to pass in continuous integration for pull requests and pushes to main.
     - Prefer a brief RFC or small pull request when design uncertainty remains.
 
 integration_contract_template:

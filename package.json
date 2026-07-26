@@ -18,6 +18,7 @@
     "lint": "eslint .",
     "start": "expo start",
     "test": "jest",
+    "test:coverage": "jest --runInBand --coverage",
     "validate:docs": "node scripts/validate-doc-links.js",
     "verify:supabase": "node scripts/verify-supabase-connection.js"
   },

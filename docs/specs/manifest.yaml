@@ -52,6 +52,8 @@ specification_index:
       purpose: Reusable UI and stable test identifier contracts.
     - path: docs/specs/engineering.yaml
       purpose: Architecture, integration, documentation, and release rules.
+    - path: docs/specs/ios_distribution.yaml
+      purpose: iOS identity, build, TestFlight, App Store, and release-gate contract.
     - path: docs/specs/supabase.yaml
       purpose: Supabase project, client, environment, and security integration contract.
     - path: docs/specs/roadmap.yaml

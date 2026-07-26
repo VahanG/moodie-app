@@ -53,48 +53,59 @@ requirements:
         - Gesture selectors are E2E adapter controls that perform native horizontal swipes.
 
   - id: CAL-001
-    title: Preserve Calendar Page
-    description: Calendar behavior from v1 remains unchanged by the configurable-affirmations update.
+    title: Daily Calendar Presentation
+    description: Calendar presents the current local date and a daily reflection in a focused, media-rich layout.
     priority: MUST
     acceptance_criteria:
       - The Calendar page remains reachable from the home pager.
-      - No Calendar behavior is added, removed, or changed by affirmation personalization work.
-      - The complete Calendar product contract is TBD.
+      - A Calendar heading and supporting description establish the page hierarchy.
+      - The current local weekday, day, month, and year are readable within a large rounded media card.
+      - A protective image overlay keeps the date and daily message readable over the background.
+      - The daily message remains visible and is visually separated from the date.
+      - The layout uses themed outer spacing and adapts typography and padding for compact mobile heights.
+      - No scheduling, event creation, or date-navigation behavior is implied.
     verification:
       test_id: calendar_page_remains_available
-      coverage: partial_until_calendar_contract_is_defined
       steps:
         - action: goto
           url: moodie://calendar
         - action: expect_visible
           selector: "[data-testid='screen-calendar']"
-      blockers:
-        - Baseline Calendar behaviors and acceptance criteria are not yet specified.
+        - action: expect_visible
+          selector: "[data-testid='text-calendar-date']"
+        - action: expect_visible
+          selector: "[data-testid='text-calendar-message']"
 
   - id: SET-001
-    title: Preserve Settings Page
-    description: Settings behavior from v1 remains unchanged except where reminder requirements explicitly apply.
+    title: Structured Settings Page
+    description: Settings organizes device appearance, notifications, and account controls into a clear mobile-first hierarchy.
     priority: MUST
     acceptance_criteria:
       - The Settings page remains reachable from the home pager.
+      - A Settings heading and supporting description establish the page hierarchy.
+      - Appearance, Notifications, and Account are presented as distinct themed cards in that order.
+      - Each settings card uses an icon, title, and short description to communicate its purpose.
+      - Settings content uses responsive outer spacing and a readable maximum width on larger viewports.
       - Reminder behavior follows docs/specs/features/reminders.yaml.
-      - Other Settings behavior is unchanged.
-      - The complete non-reminder Settings contract is TBD.
+      - Appearance and Account behavior remain unchanged.
     verification:
       test_id: settings_page_remains_available
-      coverage: partial_until_settings_contract_is_defined
       steps:
         - action: goto
           url: moodie://settings
         - action: expect_visible
           selector: "[data-testid='screen-settings']"
-      blockers:
-        - Baseline non-reminder Settings behaviors and acceptance criteria are not yet specified.
+        - action: expect_visible
+          selector: "[data-testid='section-appearance']"
+        - action: expect_visible
+          selector: "[data-testid='section-notifications']"
+        - action: expect_visible
+          selector: "[data-testid='section-account']"
 
 open_decisions:
   - id: NAV-TBD-001
-    question: What are the complete Calendar behaviors and states?
+    question: Should a future Calendar release add date navigation, saved reflections, or scheduled content?
     status: TBD
   - id: NAV-TBD-002
-    question: Which Settings capabilities exist beyond reminders?
+    question: Which additional Settings capabilities should be introduced beyond appearance, reminders, and account?
     status: TBD

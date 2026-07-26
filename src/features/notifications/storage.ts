@@ -18,9 +18,11 @@ function isValidReminderPreferences(
 
   const candidate = value as Partial<ReminderPreferences>;
 
-  return !!(
+  return (
     typeof candidate.enabled === 'boolean' &&
-    candidate.hour && candidate.minute && Number.isInteger(candidate.hour) &&
+    typeof candidate.hour === 'number' &&
+    typeof candidate.minute === 'number' &&
+    Number.isInteger(candidate.hour) &&
     Number.isInteger(candidate.minute) &&
     candidate.hour >= 0 &&
     candidate.hour <= 23 &&

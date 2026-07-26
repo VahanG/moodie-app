@@ -1,0 +1,107 @@
+schema_version: "1.0.0"
+
+document:
+  id: IOS-DISTRIBUTION
+  title: Moodie iOS Distribution Contract
+  status: draft
+  source_of_truth: true
+
+release:
+  version: "1.0.0"
+  initial_build_number: "1"
+  display_name: Moodie
+  bundle_identifier: com.vahanvg.moodie
+  bundle_identifier_freeze:
+    rule: The identifier must match the Apple App ID, App Store Connect record, Expo config, and Xcode target.
+    deadline: Before the first build is uploaded to App Store Connect.
+  platforms:
+    - iPhone
+    - iPad
+  deployment_target: "16.4"
+  distribution_path:
+    - EAS production build
+    - App Store Connect upload
+    - TestFlight internal testing
+    - App Review
+    - Manual App Store release
+
+build_contract:
+  toolchain:
+    minimum_sdk: iOS 26
+    local_xcode_verified: "26.6"
+  app_icon:
+    master_path: assets/icon.png
+    size: 1024x1024
+    alpha_allowed: false
+  versioning:
+    marketing_version_source: app.json expo.version
+    build_number_source: app.json expo.ios.buildNumber
+    eas_auto_increment_production_builds: true
+  updates:
+    provider: Expo Updates
+    channel: production
+    rule: A production build must use a real EAS project ID and matching update URL; placeholder UUIDs are forbidden.
+  encryption:
+    uses_non_exempt_encryption: false
+    basis: The current app only relies on operating-system and third-party standard transport encryption.
+
+app_review_gates:
+  required_before_testflight:
+    - A real EAS project is bound and native Expo Updates metadata is synchronized.
+    - The bundle identifier is registered to the selected Apple Developer team.
+    - An Apple Distribution certificate and App Store provisioning profile are available to EAS.
+    - A production archive builds successfully with the iOS 26 SDK or later.
+  required_before_review:
+    - App Store Connect app record exists and matches the bundle identifier.
+    - App name, subtitle, description, keywords, category, support URL, and privacy policy URL are complete.
+    - App privacy answers cover Supabase Auth and every bundled third-party SDK.
+    - Review notes explain optional account access and provide a working demo account when account-only behavior is reviewed.
+    - iPhone and iPad screenshots are uploaded because both device families are enabled.
+    - Age rating, content rights, export compliance, and availability are complete.
+    - Production Supabase authentication, OAuth redirects, and email delivery are verified.
+  authentication_review:
+    google_login:
+      current_state: implemented
+      requirement: Add an equivalent privacy-preserving login option such as Sign in with Apple, remove Google login from iOS, or document a valid App Review exception.
+    account_creation:
+      current_state: Must be verified in Supabase before review.
+      requirement: If any current flow creates an account, add in-app account deletion before submission.
+  privacy:
+    in_app_policy_link: required
+    app_store_policy_url: required
+    provisional_data_types:
+      - name: Email Address
+        linked_to_identity: true
+        purpose: App Functionality
+      - name: User ID
+        linked_to_identity: true
+        purpose: App Functionality
+    tracking: false
+
+release_commands:
+  validate:
+    - npm run lint
+    - npm test -- --runInBand
+    - npm run validate:docs
+    - npx expo export --platform ios
+  bind_eas: npx eas-cli init
+  configure_updates: npm run eas:update:configure
+  build: npm run eas:build:production -- --platform ios
+  submit: npx eas-cli submit --platform ios --profile production
+
+unresolved_inputs:
+  - id: IOS-RELEASE-TBD-001
+    value: Public privacy policy URL
+    owner: Product/Legal
+  - id: IOS-RELEASE-TBD-002
+    value: Public support URL and support contact
+    owner: Product
+  - id: IOS-RELEASE-TBD-003
+    value: Final App Store subtitle, description, keywords, and category
+    owner: Product/Marketing
+  - id: IOS-RELEASE-TBD-004
+    value: Apple Developer team and App Store Connect access
+    owner: Infra and Release
+  - id: IOS-RELEASE-TBD-005
+    value: Authentication compliance decision for Google login and account deletion
+    owner: Product/Experience

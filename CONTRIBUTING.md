@@ -17,4 +17,11 @@ Developer workflow
 - In implementation PRs, link the relevant `docs/*.md` paths or provide explicit rationale when docs are not affected (`No docs impact: ...`).
 - Keep documentation and code changes in the same PR when behavior changes.
 
+Testing
+- Run `npm test` for normal development and `npm run test:coverage` before opening a PR.
+- Prefer focused behavior tests over implementation-detail assertions.
+- Cover boundary values and failure paths for validation, persistence, permissions, and scheduling logic.
+- Source-wide coverage thresholds are enforced by Jest and CI. Treat them as a regression floor, not a target to game.
+- A behavior change should include a test that would fail without the change.
+
 If unsure, prefer a brief RFC or small PR so the team can review the change quickly.

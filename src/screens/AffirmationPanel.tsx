@@ -5,7 +5,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Animated, PanResponder, Pressable, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import {
+  Animated,
+  PanResponder,
+  Pressable,
+  Share,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import {
   AFFIRMATION_TOPICS,
   getAffirmationTopicById,
@@ -16,10 +24,11 @@ import {
   AffirmationTopicId,
 } from '../features/affirmations/types';
 import { buildAffirmationLikeKey } from '../features/affirmations/storage';
-import { useHomeScreenStyles } from './HomeScreen.styles';
 import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
 import { AppText, IconButton } from '../components/ui';
+import { useTheme } from '../theme';
+import { useAffirmationPanelStyles } from './AffirmationPanel.styles';
 
 type Props = {
   selectedTopicIds: AffirmationTopicId[];
@@ -87,7 +96,10 @@ const AffirmationPanel: React.FC<Props> = ({
   likedAffirmationKeys,
   onToggleAffirmationLike,
 }) => {
-  const styles = useHomeScreenStyles();
+  const styles = useAffirmationPanelStyles();
+  const { theme } = useTheme();
+  const { height: windowHeight } = useWindowDimensions();
+  const isCompactLayout = windowHeight < 700;
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
   const [isBackgroundModalVisible, setIsBackgroundModalVisible] =
     useState(false);
@@ -117,6 +129,15 @@ const AffirmationPanel: React.FC<Props> = ({
   const affirmationTranslateY = useRef(new Animated.Value(0)).current;
   const affirmationOpacity = useRef(new Animated.Value(1)).current;
   const isAffirmationAnimating = useRef(false);
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date()),
+    [],
+  );
 
   useEffect(() => {
     setActiveAffirmationIndex(dailyAffirmationIndex);
@@ -218,17 +239,18 @@ const AffirmationPanel: React.FC<Props> = ({
     [animateAffirmationChange],
   );
 
-  const activeAffirmation = useMemo(() => {
+  const safeActiveAffirmationIndex = useMemo(() => {
     if (affirmationFeed.length === 0) {
-      return undefined;
+      return 0;
     }
 
-    const safeIndex =
+    return (
       ((activeAffirmationIndex % affirmationFeed.length) +
         affirmationFeed.length) %
-      affirmationFeed.length;
-    return affirmationFeed[safeIndex];
+      affirmationFeed.length
+    );
   }, [activeAffirmationIndex, affirmationFeed]);
+  const activeAffirmation = affirmationFeed[safeActiveAffirmationIndex];
 
   const selectedFixedBackground = useMemo(() => {
     if (backgroundPreference.backgroundId === null) {
@@ -257,6 +279,19 @@ const AffirmationPanel: React.FC<Props> = ({
       ? selectedFixedBackground.imageUri
       : activeAffirmation?.imageUri;
   const shouldAnimateImage = backgroundPreference.mode !== 'fixed';
+  const handleShareAffirmation = useCallback(async () => {
+    if (!activeAffirmation) {
+      return;
+    }
+
+    try {
+      await Share.share({
+        message: `${activeAffirmation.text}\n\n— Moodie`,
+      });
+    } catch {
+      // Native share cancellation and unavailable share targets are non-fatal.
+    }
+  }, [activeAffirmation]);
 
   if (!activeAffirmation || !activeImageUri) {
     return null;
@@ -264,105 +299,192 @@ const AffirmationPanel: React.FC<Props> = ({
 
   return (
     <View
-      style={styles.affirmationContent}
+      style={styles.screen}
       testID="screen-affirmations"
       {...panResponder.panHandlers}
     >
-      <Animated.Image
-        source={{ uri: activeImageUri }}
-        style={[
-          styles.affirmationImage,
-          shouldAnimateImage && {
-            transform: [{ translateY: affirmationTranslateY }],
-            opacity: affirmationOpacity,
-          },
-        ]}
-        resizeMode="cover"
-        testID="image-affirmation-background"
-      />
-      <Animated.View
-        style={[
-          styles.affirmationTextOverlay,
-          {
-            transform: [{ translateY: affirmationTranslateY }],
-            opacity: affirmationOpacity,
-          },
-        ]}
-      >
-        <Text style={styles.affirmationText} testID="text-affirmation">
-          {activeAffirmation.text}
-        </Text>
-        <View style={styles.affirmationActionRow}>
-          <IconButton
-            accessibilityLabel={
-              isActiveAffirmationLiked
-                ? 'Unlike affirmation'
-                : 'Like affirmation'
-            }
-            icon={
-              <AppText
-                style={styles.affirmationActionIcon}
-                tone="onImage"
-                variant="heading"
-              >
-                {isActiveAffirmationLiked ? '♥' : '♡'}
-              </AppText>
-            }
-            onPress={() => {
-              onToggleAffirmationLike(
-                activeAffirmation.topicId,
-                activeAffirmation.text,
-              );
-            }}
-            testID="btn-like-affirmation"
-            variant="onImage"
-          />
-          <IconButton
-            accessibilityLabel="Share affirmation"
-            icon={
-              <AppText
-                style={styles.affirmationActionIcon}
-                tone="onImage"
-                variant="heading"
-              >
-                ↗
-              </AppText>
-            }
-            onPress={() => {}}
-            testID="btn-share-affirmation"
-            variant="onImage"
-          />
-        </View>
-      </Animated.View>
-      <View style={styles.affirmationHeader}>
-        <Pressable
-          style={styles.topicPickerButton}
-          accessibilityLabel="Select affirmation background"
-          onPress={() => {
-            setIsBackgroundModalVisible(true);
-          }}
-          testID="btn-open-background-selection"
+      <View style={styles.mediaCard}>
+        <Animated.Image
+          source={{ uri: activeImageUri }}
+          style={[
+            styles.image,
+            shouldAnimateImage && {
+              transform: [{ translateY: affirmationTranslateY }],
+              opacity: affirmationOpacity,
+            },
+          ]}
+          accessibilityIgnoresInvertColors
+          resizeMode="cover"
+          testID="image-affirmation-background"
+        />
+        <View pointerEvents="none" style={styles.imageOverlay} />
+        <View
+          style={[styles.content, isCompactLayout && styles.contentCompact]}
         >
-          <Text style={styles.topicPickerButtonIcon}>🖼</Text>
-        </Pressable>
-        <Pressable
-          style={styles.topicPickerButton}
-          onPress={() => {
-            setIsTopicModalVisible(true);
-          }}
-          testID="btn-open-topic-selection"
-        >
-          <Text
-            style={styles.topicPickerButtonText}
-            testID="text-current-topic"
+          <View style={styles.header}>
+            <View style={styles.headingBlock}>
+              <AppText style={styles.eyebrow} testID="text-today-heading">
+                Today
+              </AppText>
+              <AppText style={styles.date} tone="onImage" variant="caption">
+                {todayLabel}
+              </AppText>
+            </View>
+            <IconButton
+              accessibilityLabel="Choose affirmation background"
+              compact
+              icon={
+                <Ionicons
+                  color={theme.colors.onImage}
+                  name="images-outline"
+                  size={21}
+                />
+              }
+              onPress={() => {
+                setIsBackgroundModalVisible(true);
+              }}
+              testID="btn-open-background-selection"
+              variant="onImage"
+            />
+          </View>
+
+          <Animated.View
+            style={[
+              styles.body,
+              isCompactLayout && styles.bodyCompact,
+              {
+                transform: [{ translateY: affirmationTranslateY }],
+                opacity: affirmationOpacity,
+              },
+            ]}
           >
-            Topic: {activeAffirmation.topicName}
-          </Text>
-        </Pressable>
+            <Pressable
+              accessibilityLabel={`Choose affirmation topic. Current topic ${activeAffirmation.topicName}`}
+              accessibilityRole="button"
+              onPress={() => {
+                setIsTopicModalVisible(true);
+              }}
+              style={({ pressed }) => [
+                styles.topicChip,
+                pressed && { opacity: 0.72 },
+              ]}
+              testID="btn-open-topic-selection"
+            >
+              <Ionicons
+                color={theme.colors.onImage}
+                name="sparkles-outline"
+                size={16}
+              />
+              <AppText
+                style={styles.topicText}
+                testID="text-current-topic"
+                variant="label"
+              >
+                {activeAffirmation.topicName}
+              </AppText>
+              <Ionicons
+                color={theme.colors.onImageMuted}
+                name="chevron-down"
+                size={15}
+              />
+            </Pressable>
+
+            <AppText
+              style={[
+                styles.quoteMark,
+                isCompactLayout && styles.quoteMarkCompact,
+              ]}
+              tone="onImage"
+            >
+              “
+            </AppText>
+            <AppText
+              style={[
+                styles.affirmationText,
+                isCompactLayout && styles.affirmationTextCompact,
+              ]}
+              testID="text-affirmation"
+              tone="onImage"
+            >
+              {activeAffirmation.text}
+            </AppText>
+
+            <View
+              style={[
+                styles.actionDock,
+                isCompactLayout && styles.actionDockCompact,
+              ]}
+            >
+              <IconButton
+                accessibilityLabel={
+                  isActiveAffirmationLiked
+                    ? 'Unlike affirmation'
+                    : 'Like affirmation'
+                }
+                accessibilityState={{ selected: isActiveAffirmationLiked }}
+                compact
+                icon={
+                  <Ionicons
+                    color={theme.colors.onImage}
+                    name={isActiveAffirmationLiked ? 'heart' : 'heart-outline'}
+                    size={23}
+                  />
+                }
+                onPress={() => {
+                  onToggleAffirmationLike(
+                    activeAffirmation.topicId,
+                    activeAffirmation.text,
+                  );
+                }}
+                style={styles.actionButton}
+                testID="btn-like-affirmation"
+                variant="ghost"
+              />
+              <View style={styles.actionDivider} />
+              <IconButton
+                accessibilityLabel="Share affirmation"
+                compact
+                icon={
+                  <Ionicons
+                    color={theme.colors.onImage}
+                    name="share-outline"
+                    size={23}
+                  />
+                }
+                onPress={handleShareAffirmation}
+                style={styles.actionButton}
+                testID="btn-share-affirmation"
+                variant="ghost"
+              />
+            </View>
+          </Animated.View>
+
+          <View style={styles.footer}>
+            <View style={styles.swipeHint} testID="hint-affirmation-swipe">
+              <Ionicons
+                color={theme.colors.onImageMuted}
+                name="swap-vertical-outline"
+                size={18}
+              />
+              <AppText
+                style={styles.swipeHintText}
+                tone="onImage"
+                variant="caption"
+              >
+                Swipe for another
+              </AppText>
+            </View>
+            <AppText
+              style={styles.position}
+              testID="text-affirmation-position"
+              tone="onImage"
+              variant="caption"
+            >
+              {safeActiveAffirmationIndex + 1} / {totalAffirmations}
+            </AppText>
+          </View>
+        </View>
       </View>
-      <Text style={styles.affirmationSwipeHint} testID="hint-affirmation-swipe">
-        Swipe up/down for next affirmation
-      </Text>
       <TopicSelectionModal
         visible={isTopicModalVisible}
         selectedTopicIds={normalizedSelectedTopicIds}

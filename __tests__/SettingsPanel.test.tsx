@@ -8,7 +8,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(async () => undefined),
 }));
 
-test('nests account controls inside the existing Settings panel', async () => {
+test('renders the modern Settings section hierarchy', async () => {
   let renderer: ReactTestRenderer.ReactTestRenderer;
 
   await ReactTestRenderer.act(async () => {
@@ -34,5 +34,8 @@ test('nests account controls inside the existing Settings panel', async () => {
   const settings = renderer!.root.findByProps({ testID: 'screen-settings' });
 
   expect(settings.findByProps({ testID: 'section-appearance' })).toBeTruthy();
+  expect(
+    settings.findByProps({ testID: 'section-notifications' }),
+  ).toBeTruthy();
   expect(settings.findByProps({ testID: 'section-account' })).toBeTruthy();
 });

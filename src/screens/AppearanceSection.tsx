@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { View } from 'react-native';
 import { type ThemePreference, useTheme } from '../theme';
-import { useHomeScreenStyles } from './HomeScreen.styles';
 import {
   AppText,
   Card,
   SegmentedControl,
   type SegmentedControlOption,
+  SettingsSectionHeader,
 } from '../components/ui';
+import { useSettingsPanelStyles } from './SettingsPanel.styles';
 
 const appearanceOptions: SegmentedControlOption[] = [
   { label: 'System', value: 'system', testID: 'btn-theme-system' },
@@ -16,8 +18,8 @@ const appearanceOptions: SegmentedControlOption[] = [
 ];
 
 const AppearanceSection: React.FC = () => {
-  const styles = useHomeScreenStyles();
-  const { preference, resolvedMode, setPreference } = useTheme();
+  const styles = useSettingsPanelStyles();
+  const { preference, resolvedMode, setPreference, theme } = useTheme();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectPreference = async (nextPreference: ThemePreference) => {
@@ -31,18 +33,30 @@ const AppearanceSection: React.FC = () => {
   };
 
   return (
-    <Card variant="outlined" testID="section-appearance">
-      <View style={styles.appearanceHeader}>
-        <AppText variant="heading">Appearance</AppText>
-        <AppText
-          tone="muted"
-          variant="caption"
-          testID={`theme-resolved-${resolvedMode}`}
-        >
-          {resolvedMode === 'dark' ? 'Dark active' : 'Light active'}
-        </AppText>
-      </View>
-      <AppText tone="muted">Choose how Moodie looks on this device.</AppText>
+    <Card style={styles.card} variant="elevated" testID="section-appearance">
+      <SettingsSectionHeader
+        description="Choose how Moodie looks on this device."
+        icon={
+          <Ionicons
+            color={theme.colors.accent}
+            name="contrast-outline"
+            size={22}
+          />
+        }
+        title="Appearance"
+        trailing={
+          <View style={styles.statusPill}>
+            <View style={styles.statusDot} />
+            <AppText
+              tone="accent"
+              variant="caption"
+              testID={`theme-resolved-${resolvedMode}`}
+            >
+              {resolvedMode === 'dark' ? 'Dark' : 'Light'}
+            </AppText>
+          </View>
+        }
+      />
       <SegmentedControl
         accessibilityLabel="Application appearance"
         onChange={value => selectPreference(value as ThemePreference)}

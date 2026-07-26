@@ -15,3 +15,4 @@ export {
   type SegmentedControlOption,
 } from './SegmentedControl';
 export { SettingsRow } from './SettingsRow';
+export { SettingsSectionHeader } from './SettingsSectionHeader';
