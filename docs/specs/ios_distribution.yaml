@@ -10,7 +10,7 @@ release:
   version: "1.0.0"
   initial_build_number: "1"
   display_name: Moodie
-  bundle_identifier: com.vahanvg.moodie
+  bundle_identifier: com.moodie.am
   bundle_identifier_freeze:
     rule: The identifier must match the Apple App ID, App Store Connect record, Expo config, and Xcode target.
     deadline: Before the first build is uploaded to App Store Connect.

@@ -9,7 +9,7 @@
     <key>EXUpdatesLaunchWaitMs</key>
     <integer>0</integer>
     <key>EXUpdatesURL</key>
-    <string>https://u.expo.dev/00000000-0000-0000-0000-000000000000</string>
+    <string>https://u.expo.dev/24740c86-600a-470f-af63-b9f364d787a7</string>
     <key>EXUpdatesEnableBsdiffPatchSupport</key>
     <true/>
     <key>EXUpdatesRuntimeVersion</key>

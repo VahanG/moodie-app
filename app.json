@@ -16,8 +16,8 @@
       "fallbackToCacheTimeout": 0
     },
     "ios": {
-      "bundleIdentifier": "com.vahanvg.moodie",
-      "buildNumber": "1",
+      "bundleIdentifier": "com.moodie.am",
+      "buildNumber": "6",
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false

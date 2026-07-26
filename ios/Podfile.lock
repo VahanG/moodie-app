@@ -3,7 +3,7 @@ PODS:
     - ExpoModulesCore
   - EXApplication (56.0.3):
     - ExpoModulesCore
-  - EXConstants (56.0.21):
+  - EXConstants (56.0.22):
     - ExpoModulesCore
   - EXJSONUtils (56.0.0)
   - EXManifests (56.0.4):
@@ -34,7 +34,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (56.0.17):
+  - ExpoAsset (56.0.21):
     - ExpoModulesCore
   - ExpoCrypto (56.0.4):
     - ExpoModulesCore
@@ -160,7 +160,7 @@ PODS:
     - React-utils
     - ReactNativeDependencies
     - Yoga
-  - React-Core-prebuilt (0.85.0):
+  - React-Core-prebuilt (0.85.3):
     - ReactNativeDependencies
   - React-Core/CoreModulesHeaders (0.85.3):
     - hermes-engine
@@ -2000,15 +2000,15 @@ PODS:
 DEPENDENCIES:
   - EASClient (from `../node_modules/expo-eas-client/ios`)
   - EXApplication (from `../node_modules/expo-auth-session/node_modules/expo-application/ios`)
-  - EXConstants (from `../node_modules/expo-auth-session/node_modules/expo-constants/ios`)
+  - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
-  - ExpoAsset (from `../node_modules/expo/node_modules/expo-asset/ios`)
+  - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoCrypto (from `../node_modules/expo-auth-session/node_modules/expo-crypto/ios`)
   - "ExpoDomWebView (from `../node_modules/expo/node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../node_modules/expo/node_modules/expo-file-system/ios`)
-  - ExpoFont (from `../node_modules/expo/node_modules/expo-font/ios`)
+  - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoKeepAwake (from `../node_modules/expo/node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - "ExpoLogBox (from `../node_modules/expo/node_modules/@expo/log-box`)"
@@ -2108,7 +2108,7 @@ EXTERNAL SOURCES:
   EXApplication:
     :path: "../node_modules/expo-auth-session/node_modules/expo-application/ios"
   EXConstants:
-    :path: "../node_modules/expo-auth-session/node_modules/expo-constants/ios"
+    :path: "../node_modules/expo-constants/ios"
   EXJSONUtils:
     :path: "../node_modules/expo-json-utils/ios"
   EXManifests:
@@ -2116,7 +2116,7 @@ EXTERNAL SOURCES:
   Expo:
     :path: "../node_modules/expo"
   ExpoAsset:
-    :path: "../node_modules/expo/node_modules/expo-asset/ios"
+    :path: "../node_modules/expo-asset/ios"
   ExpoCrypto:
     :path: "../node_modules/expo-auth-session/node_modules/expo-crypto/ios"
   ExpoDomWebView:
@@ -2124,7 +2124,7 @@ EXTERNAL SOURCES:
   ExpoFileSystem:
     :path: "../node_modules/expo/node_modules/expo-file-system/ios"
   ExpoFont:
-    :path: "../node_modules/expo/node_modules/expo-font/ios"
+    :path: "../node_modules/expo-font/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo/node_modules/expo-keep-awake/ios"
   ExpoLinking:
@@ -2304,11 +2304,11 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   EASClient: 2321f8d99fa86c710a6f68e017f3b54366baed9f
   EXApplication: e6040c92edc5522accd62852342e6b14742d42c0
-  EXConstants: b761e3534d6066412c7c3276dd4f104d2275e6d4
+  EXConstants: 9fff81852f1d2e72502786a66f5ddb6d0eb76436
   EXJSONUtils: dba2755f4e24009eaf87a876b2d615ea06c16e42
   EXManifests: 7e19be8df665a338493060a419847dae76ffcd43
   Expo: 885ec78d4827b0abf9b87c0a0308fbdf00ef8b8a
-  ExpoAsset: 1e436e9aee7015d5c6d203c1ddfe1adbb521a623
+  ExpoAsset: 26f77f0cdaffe419b80e86f02cc5365722bc135e
   ExpoCrypto: b54a97c4357d46d7f8de079e69fa89029572244b
   ExpoDomWebView: 27205be8754f9992913b8a9a08e65019f2207075
   ExpoFileSystem: 9dc04ec1e11bc3c7b965d7feb2de12c789755c7b
@@ -2334,7 +2334,7 @@ SPEC CHECKSUMS:
   React: e2dc35338068bbd299c66f043ae0d7f25de8499e
   React-callinvoker: 28b25d21b124c26cebaea713ba7d801b9351dc48
   React-Core: 02ed7d2ffb70437bdf2aba074a13078a7b0b9ff0
-  React-Core-prebuilt: 6f70647a9453b94920350b955a30fd6ab580fd65
+  React-Core-prebuilt: 6920bd5ba4ba9fc0a5d438560d6f7b9e64ed45cd
   React-CoreModules: b3a5a42dadcde3b5d47b325bd912eb2ced89e146
   React-cxxreact: fe8f88dda044e5905e99a00f41b7a874c3908716
   React-debug: 92944dc4d89f56d640e75498266cbde557a48189
