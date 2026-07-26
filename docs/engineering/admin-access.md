@@ -14,6 +14,39 @@ operation that can grant, update, or revoke the role.
 - Future admin-only RLS policies should use `(select public.is_admin())`.
   Hiding controls in the app is not an authorization boundary.
 
+## Admin web application
+
+The web-only admin client lives in `apps/admin` as a React + Vite SPA and
+authenticates against the same Supabase project as the supporter app. It has
+its own Supabase browser client and environment configuration so it can be
+built and deployed independently.
+
+The initial shell supports existing-user email/password and Google sign-in. It
+checks `public.is_admin()` after session restoration and after every
+authentication change, and fails closed when the RPC is unavailable or returns
+anything other than `true`.
+
+The dashboard currently exposes no privileged mutations. Each future catalog,
+content, commerce, analytics, or release operation must have a documented
+contract and a database RLS policy or trusted server boundary before its UI is
+enabled.
+
+Required admin web environment values:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
+```
+
+Only the Supabase publishable key may be exposed to the browser. Service-role
+keys and direct database credentials must never be added to the admin web
+application.
+
+The static host serves the sign-in shell publicly. This does not grant access
+to admin data: every privileged database read and write must still derive the
+current Supabase user and enforce admin membership through RLS or a trusted
+function.
+
 ## Assign an administrator
 
 Run this in the Supabase SQL Editor or through an authorized direct database

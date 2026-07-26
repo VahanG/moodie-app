@@ -32,6 +32,32 @@ current_actors:
     description: An authenticated user whose Supabase Auth user ID has an active database-managed admin membership.
     is_product_user_role: true
 
+application_boundaries:
+  supporter_app:
+    path: /
+    surfaces:
+      - ios
+      - android
+      - supporter_web
+  admin_web:
+    path: apps/admin
+    surfaces:
+      - web
+    framework: react_vite_spa
+    hosting_target: render_static_site
+    production_domain: admin.moodie.am
+    server_side_rendering: false
+    independent_build: true
+    independent_deployment: true
+    prohibited_imports:
+      - supporter_app_ui
+      - supporter_app_navigation
+      - supporter_app_state
+      - supporter_app_theme
+    shared_contracts:
+      - supabase_auth_identity
+      - public.is_admin()
+
 roles:
   - id: admin
     assignment:
@@ -127,6 +153,12 @@ security_requirements:
   - id: ACCESS-006
     priority: MUST
     statement: Client and policy checks for admin access must derive the current user from auth.uid() and must not accept a caller-supplied user ID.
+  - id: ACCESS-007
+    priority: MUST
+    statement: The admin web application must fail closed when admin membership cannot be verified.
+  - id: ACCESS-008
+    priority: MUST
+    statement: Every privileged admin data operation must be protected by database RLS or a trusted backend authorization boundary.
 
 open_decisions:
   - id: ACCESS-TBD-002
