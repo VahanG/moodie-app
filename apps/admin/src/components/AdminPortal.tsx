@@ -66,17 +66,25 @@ export function AdminPortal() {
       }
     };
 
+    const evaluateSessionSafely = (session: Session | null) => {
+      evaluateSession(session).catch((error) => {
+        if (active) {
+          setPortal({ kind: "error", message: messageFrom(error) });
+        }
+      });
+    };
+
     let unsubscribe = () => {};
 
     try {
       const client = getAdminSupabaseClient();
       const { data } = client.auth.onAuthStateChange((_event, session) => {
-        void evaluateSession(session);
+        evaluateSessionSafely(session);
       });
       unsubscribe = () => data.subscription.unsubscribe();
 
-      void getCurrentSession()
-        .then(evaluateSession)
+      getCurrentSession()
+        .then(evaluateSessionSafely)
         .catch((error) => {
           if (active) {
             setPortal({ kind: "error", message: messageFrom(error) });

@@ -96,8 +96,10 @@ supabase_dashboard_setup:
     - Add https://vwougnsbyqqeessdkbae.supabase.co/auth/v1/callback as an authorized Google redirect URI.
     - Enable Google in Supabase Authentication providers and store the Google client ID and client secret there.
   redirects:
-    - Add moodie-app://** to the Supabase Authentication URL Configuration redirect allow list.
-    - Add exact development and production web callback URLs ending in /auth/callback when web is deployed.
+    - Add moodie-app://auth/callback to the Supabase Authentication URL Configuration redirect allow list.
+    - Add http://localhost:5173 for local admin development.
+    - Add https://admin.moodie.am for the production admin application.
+    - Keep production redirect entries exact; do not use a production-domain wildcard.
 
 out_of_scope:
   - Account registration.

@@ -31,7 +31,7 @@ database passwords, and other privileged credentials are prohibited.
 1. Deploy the Render Static Site from the repository.
 2. Set both Vite environment values in Render and trigger a clean build.
 3. Add the DNS records supplied by Render for `admin.moodie.am`.
-4. Add `https://admin.moodie.am/**` to the Supabase Auth redirect allowlist.
+4. Add `https://admin.moodie.am` to the Supabase Auth redirect allowlist.
 5. Verify email/password sign-in, Google sign-in, denied access, and a granted
    admin account.
 6. Retire the previous private prototype only after the Render deployment is

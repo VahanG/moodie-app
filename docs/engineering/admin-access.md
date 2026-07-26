@@ -38,9 +38,23 @@ VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
+For local development, the admin Vite config also reads the repository-root
+`.env` and maps the existing `EXPO_PUBLIC_SUPABASE_URL` and
+`EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values. This keeps one local public
+configuration for both clients. Render continues to supply the `VITE_` values
+independently at build time.
+
 Only the Supabase publishable key may be exposed to the browser. Service-role
 keys and direct database credentials must never be added to the admin web
 application.
+
+Supabase Auth URL Configuration must allow these exact redirects:
+
+```text
+http://localhost:5173
+https://admin.moodie.am
+moodie-app://auth/callback
+```
 
 The static host serves the sign-in shell publicly. This does not grant access
 to admin data: every privileged database read and write must still derive the

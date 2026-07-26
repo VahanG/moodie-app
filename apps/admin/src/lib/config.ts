@@ -25,8 +25,12 @@ function validateUrl(value: string): string {
 }
 
 export function readPublicSupabaseConfig(): PublicSupabaseConfig {
-  const url = readValue(import.meta.env.VITE_SUPABASE_URL);
-  const publishableKey = readValue(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+  const url =
+    readValue(import.meta.env.VITE_SUPABASE_URL) ??
+    readValue(import.meta.env.EXPO_PUBLIC_SUPABASE_URL);
+  const publishableKey =
+    readValue(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) ??
+    readValue(import.meta.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 
   if (!url || !publishableKey) {
     throw new Error(

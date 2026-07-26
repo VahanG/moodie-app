@@ -44,7 +44,9 @@ function readOAuthParameter(url: URL, name: string): string | null {
 async function createSessionFromOAuthUrl(url: string): Promise<AuthUser> {
   const callbackUrl = new URL(url);
   const errorDescription = readOAuthParameter(callbackUrl, 'error_description');
-  const errorCode = readOAuthParameter(callbackUrl, 'error');
+  const errorCode =
+    readOAuthParameter(callbackUrl, 'error_code') ??
+    readOAuthParameter(callbackUrl, 'error');
 
   if (errorDescription || errorCode) {
     throw new Error(errorDescription ?? errorCode ?? 'Google sign-in failed.');

@@ -14,8 +14,13 @@ project:
   local_stack_status: unavailable_until_docker_is_running
   hosted_connectivity:
     status: verified
-    verified_at: '2026-07-22'
+    verified_at: '2026-07-26'
     endpoint: /auth/v1/settings
+  hosted_auth:
+    email_provider: enabled
+    google_provider: enabled
+    native_google_oauth_start: verified
+    native_redirect: moodie-app://auth/callback
 
 client:
   platform: Expo React Native with web support
@@ -38,10 +43,25 @@ client:
     native_foreground: start token auto-refresh
     native_background: stop token auto-refresh
     web: use Supabase browser lifecycle
+  admin_web:
+    module: apps/admin/src/lib/supabase.ts
+    framework: React and Vite SPA
+    session_storage: supabase_js_default_web_storage
+    oauth_flow: pkce
+    oauth_callback:
+      local: http://localhost:5173
+      production: https://admin.moodie.am
+    local_environment_source: repository-root .env
+    production_environment_source: Render build environment
 
 environment:
   local_file: .env
   committed_template: .env.example
+  eas_project: "@vahan.vgs/moodie-app"
+  eas_environments:
+    development: configured
+    preview: configured
+    production: configured
   variables:
     - name: EXPO_PUBLIC_SUPABASE_URL
       required: true
@@ -83,6 +103,8 @@ connection_acceptance_criteria:
   - Native auth sessions persist in AsyncStorage.
   - Native token refresh follows application foreground and background state.
   - Web uses the Supabase client browser storage behavior.
+  - The admin Vite app can reuse the repository-root public Supabase values locally without copying credentials.
+  - Admin Google OAuth returns through its exact application origin and restores a persisted browser session.
   - Unit tests do not require live credentials.
   - A hosted connectivity check succeeds after the publishable key is configured.
 

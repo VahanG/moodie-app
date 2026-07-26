@@ -3,6 +3,7 @@ import { sendEmailOtp, signInWithGoogle, verifyEmailOtp } from './service';
 const mockSignInWithOtp = jest.fn();
 const mockVerifyOtp = jest.fn();
 const mockSignInWithOAuth = jest.fn();
+const mockExchangeCodeForSession = jest.fn();
 const mockSetSession = jest.fn();
 const mockOpenAuthSessionAsync = jest.fn();
 
@@ -12,6 +13,7 @@ jest.mock('../supabase', () => ({
       signInWithOtp: mockSignInWithOtp,
       verifyOtp: mockVerifyOtp,
       signInWithOAuth: mockSignInWithOAuth,
+      exchangeCodeForSession: mockExchangeCodeForSession,
       setSession: mockSetSession,
     },
   }),
@@ -96,5 +98,44 @@ describe('auth service passwordless methods', () => {
       access_token: 'access',
       refresh_token: 'refresh',
     });
+  });
+
+  test('exchanges a PKCE code from a Google OAuth callback', async () => {
+    mockSignInWithOAuth.mockResolvedValue({
+      data: { url: 'https://example.supabase.co/google' },
+      error: null,
+    });
+    mockOpenAuthSessionAsync.mockResolvedValue({
+      type: 'success',
+      url: 'moodie-app://auth/callback?code=pkce-code',
+    });
+    mockExchangeCodeForSession.mockResolvedValue({
+      data: {
+        session: {
+          user: { id: 'google-user', email: 'google@example.com' },
+        },
+      },
+      error: null,
+    });
+
+    await expect(signInWithGoogle()).resolves.toEqual({
+      id: 'google-user',
+      email: 'google@example.com',
+    });
+    expect(mockExchangeCodeForSession).toHaveBeenCalledWith('pkce-code');
+    expect(mockSetSession).not.toHaveBeenCalled();
+  });
+
+  test('surfaces an OAuth callback error code', async () => {
+    mockSignInWithOAuth.mockResolvedValue({
+      data: { url: 'https://example.supabase.co/google' },
+      error: null,
+    });
+    mockOpenAuthSessionAsync.mockResolvedValue({
+      type: 'success',
+      url: 'moodie-app://auth/callback?error_code=access_denied&error_description=Access%20denied',
+    });
+
+    await expect(signInWithGoogle()).rejects.toThrow('Access denied');
   });
 });

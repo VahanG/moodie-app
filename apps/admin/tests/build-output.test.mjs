@@ -16,16 +16,24 @@ test("builds a static admin entry document", async () => {
 });
 
 test("keeps the admin app independent and client-only", async () => {
-  const [portal, main, packageJson, viteConfig] = await Promise.all([
-    readFile(new URL("src/components/AdminPortal.tsx", adminRoot), "utf8"),
-    readFile(new URL("src/main.tsx", adminRoot), "utf8"),
-    readFile(new URL("package.json", adminRoot), "utf8"),
-    readFile(new URL("vite.config.ts", adminRoot), "utf8"),
-  ]);
+  const [auth, config, portal, main, packageJson, viteConfig] =
+    await Promise.all([
+      readFile(new URL("src/lib/auth.ts", adminRoot), "utf8"),
+      readFile(new URL("src/lib/config.ts", adminRoot), "utf8"),
+      readFile(new URL("src/components/AdminPortal.tsx", adminRoot), "utf8"),
+      readFile(new URL("src/main.tsx", adminRoot), "utf8"),
+      readFile(new URL("package.json", adminRoot), "utf8"),
+      readFile(new URL("vite.config.ts", adminRoot), "utf8"),
+    ]);
 
+  assert.match(auth, /redirectTo: window\.location\.origin/);
+  assert.match(config, /EXPO_PUBLIC_SUPABASE_URL/);
+  assert.match(config, /EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.match(portal, /verifyCurrentAdmin/);
   assert.match(main, /createRoot\(root\)\.render/);
   assert.match(packageJson, /"vite":/);
+  assert.match(viteConfig, /envDir: "\.\.\/\.\."/);
+  assert.match(viteConfig, /EXPO_PUBLIC_SUPABASE_/);
   assert.doesNotMatch(packageJson, /"next"|"vinext"|"wrangler"/);
   assert.doesNotMatch(portal, /src\/screens|src\/theme|react-native/);
   assert.doesNotMatch(viteConfig, /cloudflare|sites\(\)|vinext/);
