@@ -82,6 +82,9 @@ theme_contract:
     - accent
     - accent_soft
     - on_accent
+    - danger
+    - danger_soft
+    - on_danger
     - input_background
     - placeholder
     - scrim
@@ -90,3 +93,4 @@ theme_contract:
     - image_control_border
     - on_image
     - on_image_muted
+    - shadow

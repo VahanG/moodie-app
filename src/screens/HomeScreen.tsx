@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -33,15 +39,19 @@ import SettingsPanel from './SettingsPanel';
 import AffirmationPanel from './AffirmationPanel';
 import CalendarPanel from './CalendarPanel';
 import HomeFooter from './HomeFooter';
+import { getHomePageIndex, HOME_PAGE_COUNT } from './homePager';
 
 function formatTime(hour: number, minute: number): string {
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  return `${hour.toString().padStart(2, '0')}:${minute
+    .toString()
+    .padStart(2, '0')}`;
 }
 
 const HomeScreen: React.FC = () => {
   const styles = useHomeScreenStyles();
   const scrollViewRef = useRef<ScrollView | null>(null);
-  const { width } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  const [pagerWidth, setPagerWidth] = useState(windowWidth);
   const [preferences, setPreferences] = useState<ReminderPreferences>(
     DEFAULT_REMINDER_PREFERENCES,
   );
@@ -55,14 +65,16 @@ const HomeScreen: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activePage, setActivePage] = useState(0);
-  const [selectedTopicIds, setSelectedTopicIds] = useState<AffirmationTopicId[]>(
-    DEFAULT_SELECTED_AFFIRMATION_TOPICS,
-  );
+  const [selectedTopicIds, setSelectedTopicIds] = useState<
+    AffirmationTopicId[]
+  >(DEFAULT_SELECTED_AFFIRMATION_TOPICS);
   const [backgroundPreference, setBackgroundPreference] =
     useState<AffirmationBackgroundPreference>(
       DEFAULT_AFFIRMATION_BACKGROUND_PREFERENCE,
     );
-  const [likedAffirmationKeys, setLikedAffirmationKeys] = useState<string[]>([]);
+  const [likedAffirmationKeys, setLikedAffirmationKeys] = useState<string[]>(
+    [],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -75,13 +87,12 @@ const HomeScreen: React.FC = () => {
           storedTopicIds,
           storedBackgroundPreference,
           storedLikedAffirmationKeys,
-        ] =
-          await Promise.all([
-            loadReminderPreferences(),
-            loadSelectedAffirmationTopics(),
-            loadAffirmationBackgroundPreference(),
-            loadLikedAffirmationKeys(),
-          ]);
+        ] = await Promise.all([
+          loadReminderPreferences(),
+          loadSelectedAffirmationTopics(),
+          loadAffirmationBackgroundPreference(),
+          loadLikedAffirmationKeys(),
+        ]);
 
         if (!isMounted) {
           return;
@@ -95,7 +106,10 @@ const HomeScreen: React.FC = () => {
         setMinuteInput(storedPreferences.minute.toString());
 
         if (storedPreferences.enabled) {
-          scheduleDailyReminder(storedPreferences.hour, storedPreferences.minute);
+          scheduleDailyReminder(
+            storedPreferences.hour,
+            storedPreferences.minute,
+          );
         }
       } catch {
         if (isMounted) {
@@ -229,11 +243,47 @@ const HomeScreen: React.FC = () => {
   }, [hourInput, minuteInput, persistPreferences, preferences]);
 
   const handlePageChange = useCallback(
-    (offsetX: number) => {
-      const nextPage = Math.round(offsetX / width);
-      setActivePage(nextPage);
+    (offsetX: number, viewportWidth: number) => {
+      if (viewportWidth <= 0) {
+        return;
+      }
+
+      const nextPage = getHomePageIndex(offsetX, viewportWidth);
+      setActivePage(currentPage =>
+        currentPage === nextPage ? currentPage : nextPage,
+      );
     },
-    [width],
+    [],
+  );
+
+  const handlePagerLayout = useCallback(
+    (nextWidth: number) => {
+      if (nextWidth <= 0 || Math.abs(nextWidth - pagerWidth) < 1) {
+        return;
+      }
+
+      setPagerWidth(nextWidth);
+      scrollViewRef.current?.scrollTo({
+        x: activePage * nextWidth,
+        y: 0,
+        animated: false,
+      });
+    },
+    [activePage, pagerWidth],
+  );
+
+  const handlePageSelect = useCallback(
+    (page: number) => {
+      const nextPage = Math.min(HOME_PAGE_COUNT - 1, Math.max(0, page));
+
+      setActivePage(nextPage);
+      scrollViewRef.current?.scrollTo({
+        x: nextPage * pagerWidth,
+        y: 0,
+        animated: true,
+      });
+    },
+    [pagerWidth],
   );
 
   const handleTopicSelect = useCallback(
@@ -289,7 +339,7 @@ const HomeScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} testID="screen-home">
       <ScrollView
         ref={scrollViewRef}
         style={styles.pager}
@@ -298,11 +348,33 @@ const HomeScreen: React.FC = () => {
         bounces={false}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
-        onMomentumScrollEnd={event => {
-          handlePageChange(event.nativeEvent.contentOffset.x);
+        onLayout={event => {
+          handlePagerLayout(event.nativeEvent.layout.width);
         }}
+        onScroll={event => {
+          handlePageChange(
+            event.nativeEvent.contentOffset.x,
+            event.nativeEvent.layoutMeasurement.width,
+          );
+        }}
+        onScrollEndDrag={event => {
+          handlePageChange(
+            event.nativeEvent.contentOffset.x,
+            event.nativeEvent.layoutMeasurement.width,
+          );
+        }}
+        onMomentumScrollEnd={event => {
+          handlePageChange(
+            event.nativeEvent.contentOffset.x,
+            event.nativeEvent.layoutMeasurement.width,
+          );
+        }}
+        scrollEventThrottle={16}
+        testID="pager-home"
       >
-        <View style={[styles.page, styles.affirmationPage, { width }]}>
+        <View
+          style={[styles.page, styles.affirmationPage, { width: pagerWidth }]}
+        >
           <AffirmationPanel
             selectedTopicIds={selectedTopicIds}
             onSelectTopics={handleTopicSelect}
@@ -312,26 +384,26 @@ const HomeScreen: React.FC = () => {
             onToggleAffirmationLike={handleToggleAffirmationLike}
           />
         </View>
-        <View style={[styles.page, styles.calendarPage, { width }]}>
+        <View style={[styles.page, styles.calendarPage, { width: pagerWidth }]}>
           <CalendarPanel />
         </View>
-        <View style={[styles.page, { width }]}>
+        <View style={[styles.page, { width: pagerWidth }]}>
           <SettingsPanel
-              isLoading={isLoading}
-              isSaving={isSaving}
-              preferences={preferences}
-              hourInput={hourInput}
-              minuteInput={minuteInput}
-              setHourInput={setHourInput}
-              setMinuteInput={setMinuteInput}
-              onToggle={handleToggle}
-              onSaveTime={handleSaveTime}
-              statusMessage={statusMessage}
-              reminderTimeText={reminderTimeText}
+            isLoading={isLoading}
+            isSaving={isSaving}
+            preferences={preferences}
+            hourInput={hourInput}
+            minuteInput={minuteInput}
+            setHourInput={setHourInput}
+            setMinuteInput={setMinuteInput}
+            onToggle={handleToggle}
+            onSaveTime={handleSaveTime}
+            statusMessage={statusMessage}
+            reminderTimeText={reminderTimeText}
           />
         </View>
       </ScrollView>
-      <HomeFooter activePage={activePage} />
+      <HomeFooter activePage={activePage} onSelectPage={handlePageSelect} />
     </SafeAreaView>
   );
 };

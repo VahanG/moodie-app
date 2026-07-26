@@ -26,7 +26,7 @@ jest.mock('expo-navigation-bar', () => ({
 test('renders correctly', async () => {
   let renderer: ReturnType<typeof ReactTestRenderer.create> | null = null;
 
-  await ReactTestRenderer.act(() => {
+  await ReactTestRenderer.act(async () => {
     renderer = ReactTestRenderer.create(<App />);
   });
 

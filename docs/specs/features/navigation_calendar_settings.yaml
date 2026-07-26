@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 feature:
   id: FEATURE-NAVIGATION-CALENDAR-SETTINGS
@@ -16,7 +16,12 @@ requirements:
       - Exactly three primary pages are present in this order: Affirmations, Calendar, Settings.
       - Affirmations is the default landing page.
       - Horizontal swiping moves between adjacent pages.
-      - Navigation controls expose the active page.
+      - A persistent bottom navigation exposes Today (Affirmations), Calendar, and Settings with an icon and text label.
+      - Tapping a bottom-navigation item scrolls directly to its corresponding page.
+      - Horizontal swiping updates the active navigation item as the pager crosses the nearest-page midpoint and remains synchronized when scrolling settles.
+      - Direct tab selection keeps the pager and active navigation item on the same page.
+      - The active navigation item has a visible selected treatment.
+      - Every navigation item exposes a tab role, selected state, accessible label, and minimum 44-point touch target.
     verification:
       test_id: navigate_three_home_pages
       steps:
@@ -36,6 +41,14 @@ requirements:
           selector: "[data-testid='gesture-home-previous']"
         - action: expect_visible
           selector: "[data-testid='screen-calendar']"
+        - action: click
+          selector: "[data-testid='btn-nav-settings']"
+        - action: expect_visible
+          selector: "[data-testid='screen-settings']"
+        - action: click
+          selector: "[data-testid='btn-nav-affirmations']"
+        - action: expect_visible
+          selector: "[data-testid='screen-affirmations']"
       notes:
         - Gesture selectors are E2E adapter controls that perform native horizontal swipes.
 
@@ -85,4 +98,3 @@ open_decisions:
   - id: NAV-TBD-002
     question: Which Settings capabilities exist beyond reminders?
     status: TBD
-

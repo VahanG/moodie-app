@@ -11,6 +11,7 @@ const mockSignInWithGoogle = jest.fn();
 const mockSignOut = jest.fn();
 const mockSubscribeToAuthUser = jest.fn((_listener: unknown) => jest.fn());
 const mockVerifyEmailOtp = jest.fn();
+const mockLoadAdminStatus = jest.fn();
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(async () => null),
@@ -30,6 +31,10 @@ jest.mock('../src/features/auth', () => ({
     mockVerifyEmailOtp(email, token),
 }));
 
+jest.mock('../src/features/admin', () => ({
+  loadAdminStatus: () => mockLoadAdminStatus(),
+}));
+
 const renderAccountSection = () => (
   <ThemeProvider>
     <AccountSection />
@@ -44,6 +49,7 @@ describe('AccountSection', () => {
     mockSendEmailOtp.mockResolvedValue(undefined);
     mockSignInWithGoogle.mockResolvedValue(null);
     mockSignOut.mockResolvedValue(undefined);
+    mockLoadAdminStatus.mockResolvedValue(false);
   });
 
   test('signs in from the inline account section', async () => {
@@ -117,6 +123,24 @@ describe('AccountSection', () => {
 
     expect(mockSignOut).toHaveBeenCalledTimes(1);
     expect(renderer!.root.findByProps({ testID: 'btn-sign-in' })).toBeTruthy();
+  });
+
+  test('shows database-controlled admin status for an administrator', async () => {
+    mockLoadAuthUser.mockResolvedValue({
+      id: 'admin-user',
+      email: 'admin@example.com',
+    });
+    mockLoadAdminStatus.mockResolvedValue(true);
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(renderAccountSection());
+    });
+
+    expect(mockLoadAdminStatus).toHaveBeenCalledTimes(1);
+    expect(
+      renderer!.root.findByProps({ testID: 'text-admin-status' }).props.children,
+    ).toBe('Administrator');
   });
 
   test('sends and verifies an email one-time code', async () => {

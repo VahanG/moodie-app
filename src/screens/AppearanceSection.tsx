@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { type ThemePreference, useTheme } from '../theme';
 import { useHomeScreenStyles } from './HomeScreen.styles';
+import {
+  AppText,
+  Card,
+  SegmentedControl,
+  type SegmentedControlOption,
+} from '../components/ui';
 
-const appearanceOptions: Array<{
-  label: string;
-  value: ThemePreference;
-}> = [
-  { label: 'System', value: 'system' },
-  { label: 'Light', value: 'light' },
-  { label: 'Dark', value: 'dark' },
+const appearanceOptions: SegmentedControlOption[] = [
+  { label: 'System', value: 'system', testID: 'btn-theme-system' },
+  { label: 'Light', value: 'light', testID: 'btn-theme-light' },
+  { label: 'Dark', value: 'dark', testID: 'btn-theme-dark' },
 ];
 
 const AppearanceSection: React.FC = () => {
@@ -28,55 +31,30 @@ const AppearanceSection: React.FC = () => {
   };
 
   return (
-    <View style={styles.appearanceSection} testID="section-appearance">
+    <Card variant="outlined" testID="section-appearance">
       <View style={styles.appearanceHeader}>
-        <Text style={styles.sectionTitle}>Appearance</Text>
-        <Text
-          style={styles.appearanceResolvedText}
+        <AppText variant="heading">Appearance</AppText>
+        <AppText
+          tone="muted"
+          variant="caption"
           testID={`theme-resolved-${resolvedMode}`}
         >
           {resolvedMode === 'dark' ? 'Dark active' : 'Light active'}
-        </Text>
+        </AppText>
       </View>
-      <Text style={styles.subtitle}>
-        Choose how Moodie looks on this device.
-      </Text>
-      <View accessibilityRole="radiogroup" style={styles.appearanceOptions}>
-        {appearanceOptions.map(option => {
-          const isSelected = preference === option.value;
-
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: isSelected }}
-              onPress={() => {
-                selectPreference(option.value);
-              }}
-              style={[
-                styles.appearanceOption,
-                isSelected && styles.appearanceOptionSelected,
-              ]}
-              testID={`btn-theme-${option.value}`}
-            >
-              <Text
-                style={[
-                  styles.appearanceOptionText,
-                  isSelected && styles.appearanceOptionTextSelected,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <AppText tone="muted">Choose how Moodie looks on this device.</AppText>
+      <SegmentedControl
+        accessibilityLabel="Application appearance"
+        onChange={value => selectPreference(value as ThemePreference)}
+        options={appearanceOptions}
+        value={preference}
+      />
       {errorMessage ? (
-        <Text accessibilityLiveRegion="polite" style={styles.status}>
+        <AppText accessibilityLiveRegion="polite" tone="danger">
           {errorMessage}
-        </Text>
+        </AppText>
       ) : null}
-    </View>
+    </Card>
   );
 };
 

@@ -75,6 +75,17 @@ requirements:
       - Canceling or failing the browser flow leaves the user signed out and shows inline status.
       - No Google client secret is bundled in the application.
 
+  - id: AUTH-005
+    title: Database-Controlled Admin Status
+    description: A signed-in user can see when the current account has been assigned the admin role directly in Supabase.
+    priority: MUST
+    acceptance_criteria:
+      - Admin status is resolved from the current authenticated user ID through a database function.
+      - The client cannot provide a user ID to the admin-status operation.
+      - A failed or missing admin lookup never grants admin access.
+      - The Settings account section identifies an administrator after the database check succeeds.
+      - No role-assignment, role-update, or role-revocation control exists in the app.
+
 supabase_dashboard_setup:
   email:
     - Enable the Email provider under Authentication providers.
@@ -92,7 +103,8 @@ out_of_scope:
   - Account registration.
   - Password recovery.
   - OAuth providers other than Google.
-  - Authorization roles and protected application pages.
+  - Admin management UI.
+  - Protected admin application pages until an administrative feature is specified.
   - Cross-device preference synchronization.
 
 open_decisions:

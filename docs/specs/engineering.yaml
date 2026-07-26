@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: ENGINEERING
@@ -9,6 +9,8 @@ document:
 architecture:
   application: React Native
   module_layout:
+    - path: src/components
+      responsibility: Reusable presentation components and themed UI primitives
     - path: src/screens
       responsibility: UI composition
     - path: src/features
@@ -67,7 +69,6 @@ supabase_integration:
     - Database changes must be represented as version-controlled Supabase migrations.
     - The future user and authentication model remains undefined until access_control.yaml is approved.
 
-
 content_drop_workflow:
   - order: 1
     owner: dynamic_content_and_cms
@@ -90,14 +91,14 @@ eas_updates:
     expo_updates_installed: true
     native_autolinking: true
     eas_profiles_file: eas.json
-    runtime_version: "1.0.0"
+    runtime_version: '1.0.0'
     channels:
       - development
       - preview
       - production
     project_binding:
       status: placeholder
-      placeholder_uuid: "00000000-0000-0000-0000-000000000000"
+      placeholder_uuid: '00000000-0000-0000-0000-000000000000'
       fields:
         - app.json:expo.updates.url
         - app.json:expo.extra.eas.projectId

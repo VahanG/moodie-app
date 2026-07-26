@@ -1,0 +1,1 @@
+export { loadAdminStatus } from './service';

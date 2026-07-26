@@ -1,6 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Animated, PanResponder, Pressable, Text, View } from 'react-native';
-import { AFFIRMATION_TOPICS, getAffirmationTopicById } from '../features/affirmations/data';
+import {
+  AFFIRMATION_TOPICS,
+  getAffirmationTopicById,
+} from '../features/affirmations/data';
 import { getAffirmationBackgroundById } from '../features/affirmations/backgrounds';
 import {
   AffirmationBackgroundPreference,
@@ -10,6 +19,7 @@ import { buildAffirmationLikeKey } from '../features/affirmations/storage';
 import { useHomeScreenStyles } from './HomeScreen.styles';
 import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
+import { AppText, IconButton } from '../components/ui';
 
 type Props = {
   selectedTopicIds: AffirmationTopicId[];
@@ -40,7 +50,9 @@ function getDailyIndex(length: number): number {
   return Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % length;
 }
 
-function buildAffirmationFeed(topicIds: AffirmationTopicId[]): TopicAffirmation[] {
+function buildAffirmationFeed(
+  topicIds: AffirmationTopicId[],
+): TopicAffirmation[] {
   const topics = topicIds.map(getAffirmationTopicById);
   const maxAffirmationCount = topics.reduce(
     (maxCount, topic) => Math.max(maxCount, topic.affirmations.length),
@@ -77,7 +89,8 @@ const AffirmationPanel: React.FC<Props> = ({
 }) => {
   const styles = useHomeScreenStyles();
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
-  const [isBackgroundModalVisible, setIsBackgroundModalVisible] = useState(false);
+  const [isBackgroundModalVisible, setIsBackgroundModalVisible] =
+    useState(false);
   const normalizedSelectedTopicIds = useMemo(
     () => [...new Set(selectedTopicIds)],
     [selectedTopicIds],
@@ -115,7 +128,8 @@ const AffirmationPanel: React.FC<Props> = ({
     }
 
     setActiveAffirmationIndex(
-      currentIndex => (currentIndex - 1 + totalAffirmations) % totalAffirmations,
+      currentIndex =>
+        (currentIndex - 1 + totalAffirmations) % totalAffirmations,
     );
   }, [totalAffirmations]);
 
@@ -124,7 +138,9 @@ const AffirmationPanel: React.FC<Props> = ({
       return;
     }
 
-    setActiveAffirmationIndex(currentIndex => (currentIndex + 1) % totalAffirmations);
+    setActiveAffirmationIndex(
+      currentIndex => (currentIndex + 1) % totalAffirmations,
+    );
   }, [totalAffirmations]);
 
   const animateAffirmationChange = useCallback(
@@ -208,7 +224,8 @@ const AffirmationPanel: React.FC<Props> = ({
     }
 
     const safeIndex =
-      ((activeAffirmationIndex % affirmationFeed.length) + affirmationFeed.length) %
+      ((activeAffirmationIndex % affirmationFeed.length) +
+        affirmationFeed.length) %
       affirmationFeed.length;
     return affirmationFeed[safeIndex];
   }, [activeAffirmationIndex, affirmationFeed]);
@@ -226,7 +243,10 @@ const AffirmationPanel: React.FC<Props> = ({
       return null;
     }
 
-    return buildAffirmationLikeKey(activeAffirmation.topicId, activeAffirmation.text);
+    return buildAffirmationLikeKey(
+      activeAffirmation.topicId,
+      activeAffirmation.text,
+    );
   }, [activeAffirmation]);
   const isActiveAffirmationLiked =
     activeAffirmationLikeKey !== null &&
@@ -243,7 +263,11 @@ const AffirmationPanel: React.FC<Props> = ({
   }
 
   return (
-    <View style={styles.affirmationContent} {...panResponder.panHandlers}>
+    <View
+      style={styles.affirmationContent}
+      testID="screen-affirmations"
+      {...panResponder.panHandlers}
+    >
       <Animated.Image
         source={{ uri: activeImageUri }}
         style={[
@@ -254,6 +278,7 @@ const AffirmationPanel: React.FC<Props> = ({
           },
         ]}
         resizeMode="cover"
+        testID="image-affirmation-background"
       />
       <Animated.View
         style={[
@@ -264,33 +289,49 @@ const AffirmationPanel: React.FC<Props> = ({
           },
         ]}
       >
-        <Text style={styles.affirmationText}>{activeAffirmation.text}</Text>
+        <Text style={styles.affirmationText} testID="text-affirmation">
+          {activeAffirmation.text}
+        </Text>
         <View style={styles.affirmationActionRow}>
-          <Pressable
-            accessibilityRole="button"
+          <IconButton
             accessibilityLabel={
-              isActiveAffirmationLiked ? 'Unlike affirmation' : 'Like affirmation'
+              isActiveAffirmationLiked
+                ? 'Unlike affirmation'
+                : 'Like affirmation'
             }
-            style={styles.affirmationActionButton}
+            icon={
+              <AppText
+                style={styles.affirmationActionIcon}
+                tone="onImage"
+                variant="heading"
+              >
+                {isActiveAffirmationLiked ? '♥' : '♡'}
+              </AppText>
+            }
             onPress={() => {
               onToggleAffirmationLike(
                 activeAffirmation.topicId,
                 activeAffirmation.text,
               );
             }}
-          >
-            <Text style={styles.affirmationActionIcon}>
-              {isActiveAffirmationLiked ? '♥' : '♡'}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
+            testID="btn-like-affirmation"
+            variant="onImage"
+          />
+          <IconButton
             accessibilityLabel="Share affirmation"
-            style={styles.affirmationActionButton}
+            icon={
+              <AppText
+                style={styles.affirmationActionIcon}
+                tone="onImage"
+                variant="heading"
+              >
+                ↗
+              </AppText>
+            }
             onPress={() => {}}
-          >
-            <Text style={styles.affirmationActionIcon}>↗</Text>
-          </Pressable>
+            testID="btn-share-affirmation"
+            variant="onImage"
+          />
         </View>
       </Animated.View>
       <View style={styles.affirmationHeader}>
@@ -300,6 +341,7 @@ const AffirmationPanel: React.FC<Props> = ({
           onPress={() => {
             setIsBackgroundModalVisible(true);
           }}
+          testID="btn-open-background-selection"
         >
           <Text style={styles.topicPickerButtonIcon}>🖼</Text>
         </Pressable>
@@ -308,11 +350,19 @@ const AffirmationPanel: React.FC<Props> = ({
           onPress={() => {
             setIsTopicModalVisible(true);
           }}
+          testID="btn-open-topic-selection"
         >
-          <Text style={styles.topicPickerButtonText}>Topic: {activeAffirmation.topicName}</Text>
+          <Text
+            style={styles.topicPickerButtonText}
+            testID="text-current-topic"
+          >
+            Topic: {activeAffirmation.topicName}
+          </Text>
         </Pressable>
       </View>
-      <Text style={styles.affirmationSwipeHint}>Swipe up/down for next affirmation</Text>
+      <Text style={styles.affirmationSwipeHint} testID="hint-affirmation-swipe">
+        Swipe up/down for next affirmation
+      </Text>
       <TopicSelectionModal
         visible={isTopicModalVisible}
         selectedTopicIds={normalizedSelectedTopicIds}

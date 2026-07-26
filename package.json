@@ -22,6 +22,7 @@
     "verify:supabase": "node scripts/verify-supabase-connection.js"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/push-notification-ios": "^1.12.0",
     "@react-native/new-app-screen": "0.85.3",

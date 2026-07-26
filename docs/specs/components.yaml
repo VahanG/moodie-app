@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: COMPONENTS
@@ -23,11 +23,72 @@ test_identifier_contract:
       native_surface: native-
   requirement: Every interactive element must expose a stable testID.
 
+ui_foundation:
+  source_path: src/components/ui
+  minimum_touch_target: 44
+  principles:
+    - Reusable controls consume semantic theme tokens and must not define screen-local palette values.
+    - Interactive controls expose pressed, disabled, loading, selected, and error states when applicable.
+    - Consumer-provided testID values are attached to the native interactive element.
+    - Text inputs provide visible labels when their meaning is not already unambiguous.
+    - Buttons use explicit variants so primary, secondary, ghost, and destructive actions remain consistent.
+  primitives:
+    - name: AppText
+      purpose: Apply shared typography variants and semantic text tones.
+      variants:
+        - display
+        - title
+        - heading
+        - body
+        - label
+        - caption
+    - name: AppButton
+      purpose: Render a consistent accessible action with optional loading state.
+      variants:
+        - primary
+        - secondary
+        - ghost
+        - danger
+    - name: IconButton
+      purpose: Render a minimum-size icon action on normal or photographic surfaces.
+      variants:
+        - surface
+        - on_image
+        - ghost
+    - name: AppTextField
+      purpose: Render a labeled themed text input with helper or error feedback.
+    - name: Card
+      purpose: Group related content on a semantic surface.
+      variants:
+        - default
+        - elevated
+        - outlined
+    - name: SegmentedControl
+      purpose: Select exactly one value from a short option list using an accessible radio group.
+    - name: SettingsRow
+      purpose: Align a settings label and description with its trailing control.
+    - name: Screen
+      purpose: Provide a themed fixed or scrollable root surface for screen content.
+    - name: ModalSheet
+      purpose: Present themed bottom-sheet content with a standard title and close action.
+    - name: BottomNavigation
+      purpose: Provide accessible primary navigation with synchronized selected state.
+
 components:
   - id: COMP-001
     name: HomePager
     kind: screen_container
     purpose: Host horizontal navigation between Affirmations, Calendar, and Settings.
+    behavior:
+      default_item: affirmations
+      item_order:
+        - affirmations
+        - calendar
+        - settings
+      selection:
+        - Swipe completion updates the selected item.
+        - Tapping an item animates the pager to its page.
+        - Tapping the selected item keeps the current page stable.
     test_ids:
       - test_id: screen-home
         element: root
@@ -319,3 +380,16 @@ components:
       - test_id: theme-resolved-dark
         element: resolved dark appearance marker
         interactive: false
+
+  - id: COMP-011
+    name: UIPrimitives
+    kind: reusable_component_system
+    purpose: Supply consistent themed building blocks for current and planned Moodie screens.
+    source_path: src/components/ui
+    acceptance_criteria:
+      - Buttons and icon buttons meet the minimum touch target.
+      - Disabled controls cannot invoke their action.
+      - Loading buttons expose a busy accessibility state.
+      - Segmented controls expose radio roles and checked state.
+      - Fields expose their label and error text to assistive technology.
+      - Modal sheets use the resolved background, surface, border, text, and scrim tokens.

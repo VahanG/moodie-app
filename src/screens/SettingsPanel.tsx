@@ -1,18 +1,18 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Button,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Switch, View } from 'react-native';
 import { useHomeScreenStyles } from './HomeScreen.styles';
 import { ReminderPreferences } from '../features/notifications/types';
 import AccountSection from './AccountSection';
 import AppearanceSection from './AppearanceSection';
 import { useTheme } from '../theme';
+import {
+  AppButton,
+  AppText,
+  AppTextField,
+  Card,
+  Screen,
+  SettingsRow,
+} from '../components/ui';
 
 type Props = {
   isLoading: boolean;
@@ -45,92 +45,95 @@ const SettingsPanel: React.FC<Props> = ({
   const { theme } = useTheme();
 
   return (
-    <ScrollView
+    <Screen
+      scroll
       contentContainerStyle={styles.settingsContent}
       keyboardShouldPersistTaps="handled"
       testID="screen-settings"
     >
-      <Text style={styles.title}>Settings</Text>
+      <AppText variant="title">Settings</AppText>
       <AppearanceSection />
       <AccountSection />
 
-      <View style={styles.settingsSection}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <Text style={styles.subtitle}>Set up your daily Moodie reminder.</Text>
+      <Card variant="outlined">
+        <AppText variant="heading">Notifications</AppText>
+        <AppText tone="muted">Set up your daily Moodie reminder.</AppText>
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator color={theme.colors.accent} />
-            <Text style={styles.loadingText}>Loading reminder settings...</Text>
+            <AppText tone="muted">Loading reminder settings...</AppText>
           </View>
         ) : (
           <>
-            <View style={styles.row}>
-              <View>
-                <Text style={styles.label}>Enable daily reminders</Text>
-                <Text style={styles.value}>
-                  Current time: {reminderTimeText} (local time)
-                </Text>
-              </View>
-              <Switch
-                value={preferences.enabled}
-                onValueChange={value => onToggle(value)}
-                disabled={isSaving}
-                trackColor={{
-                  false: theme.colors.border,
-                  true: theme.colors.accent,
-                }}
-                ios_backgroundColor={theme.colors.border}
-              />
-            </View>
+            <SettingsRow
+              label="Daily reminders"
+              description={`Current time: ${reminderTimeText} (local time)`}
+              trailing={
+                <Switch
+                  accessibilityLabel="Enable daily reminders"
+                  value={preferences.enabled}
+                  onValueChange={value => onToggle(value)}
+                  disabled={isSaving}
+                  trackColor={{
+                    false: theme.colors.border,
+                    true: theme.colors.accent,
+                  }}
+                  ios_backgroundColor={theme.colors.border}
+                  testID="toggle-daily-reminders"
+                />
+              }
+            />
 
             <View style={styles.timeInputs}>
               <View style={styles.inputBlock}>
-                <Text style={styles.label}>Hour (0-23)</Text>
-                <TextInput
+                <AppTextField
+                  label="Hour"
+                  helperText="0–23"
                   value={hourInput}
                   onChangeText={text =>
                     setHourInput(text.replace(/[^0-9]/g, ''))
                   }
                   keyboardType="number-pad"
-                  style={styles.input}
-                  placeholderTextColor={theme.colors.placeholder}
-                  selectionColor={theme.colors.accent}
                   maxLength={2}
+                  testID="input-reminder-hour"
                 />
               </View>
               <View style={styles.inputBlock}>
-                <Text style={styles.label}>Minute (0-59)</Text>
-                <TextInput
+                <AppTextField
+                  label="Minute"
+                  helperText="0–59"
                   value={minuteInput}
                   onChangeText={text =>
                     setMinuteInput(text.replace(/[^0-9]/g, ''))
                   }
                   keyboardType="number-pad"
-                  style={styles.input}
-                  placeholderTextColor={theme.colors.placeholder}
-                  selectionColor={theme.colors.accent}
                   maxLength={2}
+                  testID="input-reminder-minute"
                 />
               </View>
             </View>
 
-            <Button
-              title={isSaving ? 'Saving...' : 'Save reminder time'}
-              onPress={() => {
-                onSaveTime();
-              }}
-              disabled={isSaving}
-              color={theme.colors.accent}
+            <AppButton
+              label={isSaving ? 'Saving...' : 'Save reminder time'}
+              loading={isSaving}
+              onPress={onSaveTime}
+              testID="btn-save-reminder-time"
             />
           </>
         )}
 
         {statusMessage ? (
-          <Text style={styles.status}>{statusMessage}</Text>
+          <AppText
+            accessibilityLiveRegion="polite"
+            tone="accent"
+            testID="text-reminder-status"
+          >
+            {statusMessage}
+          </AppText>
         ) : null}
-      </View>
-    </ScrollView>
+      </Card>
+    </Screen>
   );
 };
 

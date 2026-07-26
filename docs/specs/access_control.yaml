@@ -3,7 +3,7 @@ schema_version: "1.0.0"
 document:
   id: ACCESS-CONTROL
   title: Moodie Access Control
-  status: partially_defined
+  status: defined_for_current_features
   source_of_truth: true
 
 identity_model:
@@ -15,7 +15,8 @@ identity_model:
     - email_password
     - email_otp
     - google_oauth
-  future_state: Authorization roles and cross-device ownership remain TBD.
+  authorization_source: Admin membership is stored only in the private Supabase database schema and cannot be changed by an app client.
+  future_state: Resource-specific admin permissions and cross-device ownership will be added as their features are implemented.
 
 current_actors:
   - id: anonymous_device_session
@@ -26,8 +27,21 @@ current_actors:
     kind: product_user
     description: An end user with an active Supabase Auth session.
     is_product_user_role: true
+  - id: moodie_admin
+    kind: operational_user
+    description: An authenticated user whose Supabase Auth user ID has an active database-managed admin membership.
+    is_product_user_role: true
 
-roles: []
+roles:
+  - id: admin
+    assignment:
+      source: private.admin_users
+      permitted_path: direct_database_sql_only
+      client_mutation_allowed: false
+    evaluation:
+      operation: public.is_admin()
+      scope: current_authenticated_user_only
+      fail_closed: true
 
 permission_matrix:
   - actor: anonymous_device_session
@@ -67,12 +81,24 @@ permission_matrix:
       - create
       - delete
     basis: The user can sign in and sign out through the inline Settings account section.
+  - actor: authenticated_moodie_user
+    resource: own_admin_membership
+    permissions:
+      - view
+    basis: The authenticated client can evaluate only whether its current session belongs to an administrator.
+  - actor: moodie_admin
+    resource: own_admin_membership
+    permissions:
+      - view
+    basis: Admin membership is visible to the current account but cannot be assigned, changed, or revoked by the app.
 
 undefined_permissions:
   - resource: product_catalog_management
-    roles: TBD
+    roles:
+      - admin
   - resource: remote_content_publishing
-    roles: TBD
+    roles:
+      - admin
   - resource: purchase_entitlements
     roles: TBD
   - resource: receipt_validation
@@ -92,11 +118,17 @@ security_requirements:
   - id: ACCESS-003
     priority: MUST
     statement: Receipt validation and entitlement granting must occur through a trusted backend boundary once commerce is implemented.
+  - id: ACCESS-004
+    priority: MUST
+    statement: Admin membership must be assigned or revoked only through direct database SQL by an authorized operator.
+  - id: ACCESS-005
+    priority: MUST
+    statement: No anonymous or authenticated client may insert, update, or delete admin memberships.
+  - id: ACCESS-006
+    priority: MUST
+    statement: Client and policy checks for admin access must derive the current user from auth.uid() and must not accept a caller-supplied user ID.
 
 open_decisions:
-  - id: ACCESS-TBD-001
-    question: Which end-user and operational roles exist?
-    status: TBD
   - id: ACCESS-TBD-002
     question: Which preferences and entitlements synchronize across devices?
     status: TBD

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { AFFIRMATION_TOPICS } from '../features/affirmations/data';
 import { AffirmationTopicId } from '../features/affirmations/types';
 import { useHomeScreenStyles } from './HomeScreen.styles';
+import { AppText, ModalSheet } from '../components/ui';
 
 type Props = {
   visible: boolean;
@@ -20,49 +21,52 @@ const TopicSelectionModal: React.FC<Props> = ({
   const styles = useHomeScreenStyles();
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.topicModalBackdrop}>
-        <View style={styles.topicModalSheet}>
-          <View style={styles.topicModalHeader}>
-            <Text style={styles.topicModalTitle}>Select topics</Text>
-            <Pressable onPress={onClose}>
-              <Text style={styles.topicModalCloseText}>Done</Text>
+    <ModalSheet
+      closeTestID="btn-close-topic-selection"
+      onClose={onClose}
+      testID="modal-topic-selection"
+      title="Select topics"
+      visible={visible}
+    >
+      <ScrollView contentContainerStyle={styles.topicList} testID="list-topics">
+        {AFFIRMATION_TOPICS.map(topic => {
+          const isSelected = selectedTopicIds.includes(topic.id);
+
+          return (
+            <Pressable
+              key={topic.id}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: isSelected }}
+              style={[styles.topicCard, isSelected && styles.topicCardSelected]}
+              onPress={() => {
+                const nextTopicIds = isSelected
+                  ? selectedTopicIds.filter(id => id !== topic.id)
+                  : [...selectedTopicIds, topic.id];
+
+                onSelectTopics(nextTopicIds);
+              }}
+              testID={`item-topic-${topic.id}`}
+            >
+              <Image
+                source={{ uri: topic.imageUri }}
+                style={styles.topicCardImage}
+                resizeMode="cover"
+              />
+              <View style={styles.topicCardOverlay}>
+                <AppText tone="onImage" variant="heading">
+                  {topic.name}
+                </AppText>
+                {isSelected ? (
+                  <AppText tone="onImage" variant="caption">
+                    Selected
+                  </AppText>
+                ) : null}
+              </View>
             </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.topicList}>
-            {AFFIRMATION_TOPICS.map(topic => {
-              const isSelected = selectedTopicIds.includes(topic.id);
-
-              return (
-                <Pressable
-                  key={topic.id}
-                  style={[styles.topicCard, isSelected && styles.topicCardSelected]}
-                  onPress={() => {
-                    const nextTopicIds = isSelected
-                      ? selectedTopicIds.filter(id => id !== topic.id)
-                      : [...selectedTopicIds, topic.id];
-
-                    onSelectTopics(nextTopicIds);
-                  }}
-                >
-                  <Image
-                    source={{ uri: topic.imageUri }}
-                    style={styles.topicCardImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.topicCardOverlay}>
-                    <Text style={styles.topicCardTitle}>{topic.name}</Text>
-                    {isSelected ? (
-                      <Text style={styles.topicCardSelectionText}>Selected</Text>
-                    ) : null}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+          );
+        })}
+      </ScrollView>
+    </ModalSheet>
   );
 };
 

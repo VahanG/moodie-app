@@ -1,36 +1,58 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { useHomeScreenStyles } from './HomeScreen.styles';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { BottomNavigation, type BottomNavigationItem } from '../components/ui';
 
 type Props = {
   activePage: number;
+  onSelectPage: (page: number) => void;
 };
 
-const HomeFooter: React.FC<Props> = ({ activePage }) => {
-  const styles = useHomeScreenStyles();
+const navigationItems: BottomNavigationItem<number>[] = [
+  {
+    key: 0,
+    label: 'Today',
+    testID: 'btn-nav-affirmations',
+    renderIcon: ({ color, selected, size }) => (
+      <Ionicons
+        color={color}
+        name={selected ? 'sparkles' : 'sparkles-outline'}
+        size={size}
+      />
+    ),
+  },
+  {
+    key: 1,
+    label: 'Calendar',
+    testID: 'btn-nav-calendar',
+    renderIcon: ({ color, selected, size }) => (
+      <Ionicons
+        color={color}
+        name={selected ? 'calendar-clear' : 'calendar-clear-outline'}
+        size={size}
+      />
+    ),
+  },
+  {
+    key: 2,
+    label: 'Settings',
+    testID: 'btn-nav-settings',
+    renderIcon: ({ color, selected, size }) => (
+      <Ionicons
+        color={color}
+        name={selected ? 'options' : 'options-outline'}
+        size={size}
+      />
+    ),
+  },
+];
 
-  return (
-    <View style={styles.footer}>
-      <View style={styles.pageIcons}>
-        <Text style={[styles.pageIcon, activePage === 0 && styles.pageIconActive]}>
-          A
-        </Text>
-        <Text style={[styles.pageIcon, activePage === 1 && styles.pageIconActive]}>
-          C
-        </Text>
-        <Text style={[styles.pageIcon, activePage === 2 && styles.pageIconActive]}>
-          ⚙
-        </Text>
-      </View>
-      <Text style={styles.footerText}>
-        {activePage === 0
-          ? 'Swipe left for calendar'
-          : activePage === 1
-            ? 'Swipe for affirmations or settings'
-            : 'Swipe right for calendar'}
-      </Text>
-    </View>
-  );
-};
+const HomeFooter: React.FC<Props> = ({ activePage, onSelectPage }) => (
+  <BottomNavigation
+    activeKey={activePage}
+    items={navigationItems}
+    onSelect={onSelectPage}
+    testID="navigation-home"
+  />
+);
 
 export default HomeFooter;

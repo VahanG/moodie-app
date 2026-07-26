@@ -70,6 +70,12 @@ security:
   - id: SUP-SEC-004
     priority: MUST
     statement: Limit the current client auth surface to the optional email/password session behavior defined in docs/specs/features/authentication.yaml.
+  - id: SUP-SEC-005
+    priority: MUST
+    statement: Store admin memberships in a private schema that is not exposed by the Data API.
+  - id: SUP-SEC-006
+    priority: MUST
+    statement: Expose only a current-session is_admin check to authenticated clients; do not expose admin membership mutations or caller-selected identity checks.
 
 connection_acceptance_criteria:
   - The project URL is validated before client construction.
@@ -88,11 +94,13 @@ database_workflow:
     - Do not commit supabase/.temp or environment secrets.
     - Develop and verify migrations locally before pushing to the hosted project.
     - Pass --local or --linked explicitly for database commands when target ambiguity is possible.
+  admin_access:
+    membership_table: private.admin_users
+    client_check: public.is_admin()
+    assignment_path: direct database SQL only
+    operator_guide: docs/engineering/admin-access.md
 
 open_decisions:
   - id: SUP-TBD-001
-    question: Which tables, storage buckets, and Edge Functions are required first?
-    status: TBD
-  - id: SUP-TBD-002
-    question: Which anon and authenticated RLS policies are required for each resource?
+    question: Which additional application tables, storage buckets, and Edge Functions are required?
     status: TBD

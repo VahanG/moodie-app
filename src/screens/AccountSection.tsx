@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Button, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import {
   AuthUser,
   isAuthConfigured,
@@ -11,7 +11,9 @@ import {
   subscribeToAuthUser,
   verifyEmailOtp,
 } from '../features/auth';
+import { loadAdminStatus } from '../features/admin';
 import { useHomeScreenStyles } from './HomeScreen.styles';
+import { AppButton, AppText, AppTextField, Card } from '../components/ui';
 import { useTheme } from '../theme';
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -27,6 +29,8 @@ const AccountSection: React.FC = () => {
   const [otp, setOtp] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -76,6 +80,42 @@ const AccountSection: React.FC = () => {
       unsubscribe();
     };
   }, [isConfigured]);
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      setIsAdminLoading(false);
+      return undefined;
+    }
+
+    let isMounted = true;
+    setIsAdmin(false);
+    setIsAdminLoading(true);
+
+    loadAdminStatus()
+      .then(nextIsAdmin => {
+        if (isMounted) {
+          setIsAdmin(nextIsAdmin);
+        }
+      })
+      .catch(error => {
+        if (isMounted) {
+          setIsAdmin(false);
+          setStatusMessage(
+            getErrorMessage(error, 'Could not verify admin access.'),
+          );
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsAdminLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   const handleSignIn = useCallback(async () => {
     const normalizedEmail = email.trim();
@@ -207,163 +247,165 @@ const AccountSection: React.FC = () => {
   }, []);
 
   return (
-    <View style={styles.accountSection} testID="section-account">
-      <Text style={styles.sectionTitle}>Account</Text>
+    <Card variant="outlined" testID="section-account">
+      <AppText variant="heading">Account</AppText>
 
       {!isConfigured ? (
-        <Text style={styles.value} testID="text-auth-status">
+        <AppText tone="muted" testID="text-auth-status">
           Sign-in is unavailable until Supabase is configured.
-        </Text>
+        </AppText>
       ) : isLoading ? (
         <View style={styles.accountLoading}>
           <ActivityIndicator color={theme.colors.accent} />
-          <Text style={styles.loadingText} testID="text-auth-status">
+          <AppText tone="muted" testID="text-auth-status">
             Loading account...
-          </Text>
+          </AppText>
         </View>
       ) : user ? (
         <View style={styles.accountFields}>
-          <Text
-            style={styles.value}
+          <AppText
+            tone="muted"
             testID={statusMessage ? undefined : 'text-auth-status'}
           >
             Signed in as {user.email ?? 'Moodie user'}
-          </Text>
-          <Button
-            title={isSubmitting ? 'Signing out...' : 'Sign out'}
+          </AppText>
+          {isAdminLoading ? (
+            <AppText tone="muted" testID="text-admin-status">
+              Checking admin access...
+            </AppText>
+          ) : isAdmin ? (
+            <AppText tone="accent" variant="label" testID="text-admin-status">
+              Administrator
+            </AppText>
+          ) : null}
+          <AppButton
+            label={isSubmitting ? 'Signing out...' : 'Sign out'}
+            loading={isSubmitting}
             onPress={handleSignOut}
-            disabled={isSubmitting}
             testID="btn-sign-out"
-            color={theme.colors.accent}
+            variant="danger"
           />
         </View>
       ) : (
         <View style={styles.accountFields}>
-          <TextInput
+          <AppTextField
             value={email}
             onChangeText={handleEmailChange}
-            placeholder="Email"
+            label="Email"
+            placeholder="you@example.com"
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
             keyboardType="email-address"
             textContentType="username"
-            style={styles.input}
-            placeholderTextColor={theme.colors.placeholder}
-            selectionColor={theme.colors.accent}
             editable={!isSubmitting}
             testID="input-auth-email"
           />
 
           {authMode === 'password' ? (
             <>
-              <TextInput
+              <AppTextField
                 value={password}
                 onChangeText={setPassword}
+                label="Password"
                 placeholder="Password"
                 autoCapitalize="none"
                 autoComplete="current-password"
                 secureTextEntry
                 textContentType="password"
-                style={styles.input}
-                placeholderTextColor={theme.colors.placeholder}
-                selectionColor={theme.colors.accent}
                 editable={!isSubmitting}
                 onSubmitEditing={handleSignIn}
                 testID="input-auth-password"
               />
-              <Button
-                title={isSubmitting ? 'Signing in...' : 'Sign in with password'}
+              <AppButton
+                label={isSubmitting ? 'Signing in...' : 'Sign in with password'}
+                loading={isSubmitting}
                 onPress={handleSignIn}
-                disabled={isSubmitting}
                 testID="btn-sign-in"
-                color={theme.colors.accent}
               />
-              <Button
-                title="Use a one-time code"
+              <AppButton
+                label="Use a one-time code"
                 onPress={() => selectAuthMode('otp')}
                 disabled={isSubmitting}
                 testID="btn-use-email-otp"
-                color={theme.colors.accent}
+                variant="ghost"
               />
             </>
           ) : (
             <>
               {isOtpSent ? (
                 <>
-                  <TextInput
+                  <AppTextField
                     value={otp}
                     onChangeText={value => setOtp(value.replace(/[^0-9]/g, ''))}
+                    label="Verification code"
                     placeholder="Six-digit code"
                     autoComplete="one-time-code"
                     keyboardType="number-pad"
                     maxLength={6}
-                    style={styles.input}
-                    placeholderTextColor={theme.colors.placeholder}
-                    selectionColor={theme.colors.accent}
                     editable={!isSubmitting}
                     onSubmitEditing={handleVerifyOtp}
                     testID="input-auth-otp"
                   />
-                  <Button
-                    title={isSubmitting ? 'Verifying...' : 'Verify code'}
+                  <AppButton
+                    label={isSubmitting ? 'Verifying...' : 'Verify code'}
+                    loading={isSubmitting}
                     onPress={handleVerifyOtp}
-                    disabled={isSubmitting}
                     testID="btn-verify-email-otp"
-                    color={theme.colors.accent}
                   />
-                  <Button
-                    title="Send a new code"
+                  <AppButton
+                    label="Send a new code"
                     onPress={handleSendOtp}
                     disabled={isSubmitting}
                     testID="btn-send-email-otp"
-                    color={theme.colors.accent}
+                    variant="secondary"
                   />
                 </>
               ) : (
-                <Button
-                  title={isSubmitting ? 'Sending...' : 'Send one-time code'}
+                <AppButton
+                  label={isSubmitting ? 'Sending...' : 'Send one-time code'}
+                  loading={isSubmitting}
                   onPress={handleSendOtp}
-                  disabled={isSubmitting}
                   testID="btn-send-email-otp"
-                  color={theme.colors.accent}
                 />
               )}
-              <Button
-                title="Use password instead"
+              <AppButton
+                label="Use password instead"
                 onPress={() => selectAuthMode('password')}
                 disabled={isSubmitting}
                 testID="btn-use-password"
-                color={theme.colors.accent}
+                variant="ghost"
               />
             </>
           )}
 
           <View style={styles.authDivider}>
             <View style={styles.authDividerLine} />
-            <Text style={styles.authDividerText}>or</Text>
+            <AppText tone="muted" variant="caption">
+              or
+            </AppText>
             <View style={styles.authDividerLine} />
           </View>
-          <Button
-            title={isSubmitting ? 'Opening Google...' : 'Continue with Google'}
+          <AppButton
+            label={isSubmitting ? 'Opening Google...' : 'Continue with Google'}
+            loading={isSubmitting}
             onPress={handleGoogleSignIn}
-            disabled={isSubmitting}
             testID="btn-sign-in-google"
-            color={theme.colors.accent}
+            variant="secondary"
           />
         </View>
       )}
 
       {statusMessage ? (
-        <Text
+        <AppText
           accessibilityLiveRegion="polite"
-          style={styles.status}
+          tone="accent"
           testID="text-auth-status"
         >
           {statusMessage}
-        </Text>
+        </AppText>
       ) : null}
-    </View>
+    </Card>
   );
 };
 
