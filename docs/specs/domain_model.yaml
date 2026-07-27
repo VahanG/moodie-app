@@ -22,9 +22,6 @@ entities:
         type: string
         required: true
         unique: true
-      - name: name
-        type: string
-        required: true
       - name: image_uri
         type: uri
         required: true
@@ -41,6 +38,9 @@ entities:
       - type: has_many
         target: Affirmation
         foreign_key: topic_id
+      - type: has_many
+        target: AffirmationTopicTranslation
+        foreign_key: topic_id
 
   - name: Affirmation
     status: defined
@@ -53,11 +53,6 @@ entities:
       - name: topic_id
         type: string
         required: true
-      - name: text
-        type: string
-        required: true
-        constraints:
-          min_length: 1
       - name: background_suggestion_uris
         type: list<uri>
         required: true
@@ -74,6 +69,9 @@ entities:
       - type: belongs_to
         target: AffirmationTopic
         foreign_key: topic_id
+      - type: has_many
+        target: AffirmationTranslation
+        foreign_key: affirmation_id
     notes:
       - Text has one or more weakly connected background suggestions.
       - Text is not strictly bound one-to-one to gallery backgrounds.
@@ -89,18 +87,115 @@ entities:
       - name: image_uri
         type: uri
         required: true
-      - name: tags
-        type: list<string>
-        required: true
-        constraints:
-          min_items: 1
-          unique_items: true
       - name: sort_order
         type: integer
         required: true
       - name: is_published
         type: boolean
         required: true
+    relationships:
+      - type: has_many
+        target: AffirmationBackgroundTranslation
+        foreign_key: background_id
+
+  - name: SupportedLanguage
+    status: defined
+    storage: supabase_public.supported_languages
+    fields:
+      - name: code
+        type: bcp47_language_code
+        required: true
+        unique: true
+      - name: english_name
+        type: string
+        required: true
+      - name: native_name
+        type: string
+        required: true
+      - name: text_direction
+        type: enum
+        required: true
+        allowed_values:
+          - ltr
+          - rtl
+      - name: is_enabled
+        type: boolean
+        required: true
+      - name: is_default
+        type: boolean
+        required: true
+
+  - name: AffirmationTopicTranslation
+    status: defined
+    storage: supabase_public.affirmation_topic_translations
+    fields:
+      - name: topic_id
+        type: string
+        required: true
+      - name: language_code
+        type: bcp47_language_code
+        required: true
+      - name: name
+        type: string
+        required: true
+    constraints:
+      unique_together:
+        - topic_id
+        - language_code
+
+  - name: AffirmationTranslation
+    status: defined
+    storage: supabase_public.affirmation_translations
+    fields:
+      - name: affirmation_id
+        type: uuid
+        required: true
+      - name: language_code
+        type: bcp47_language_code
+        required: true
+      - name: text
+        type: string
+        required: true
+    constraints:
+      unique_together:
+        - affirmation_id
+        - language_code
+
+  - name: AffirmationBackgroundTranslation
+    status: defined
+    storage: supabase_public.affirmation_background_translations
+    fields:
+      - name: background_id
+        type: string
+        required: true
+      - name: language_code
+        type: bcp47_language_code
+        required: true
+      - name: tags
+        type: list<string>
+        required: true
+    constraints:
+      unique_together:
+        - background_id
+        - language_code
+
+  - name: AppTextTranslation
+    status: defined
+    storage: supabase_public.app_text_translations
+    fields:
+      - name: language_code
+        type: bcp47_language_code
+        required: true
+      - name: text_key
+        type: string
+        required: true
+      - name: text_value
+        type: string
+        required: true
+    constraints:
+      unique_together:
+        - language_code
+        - text_key
 
   - name: AffirmationPreferences
     status: defined
@@ -180,6 +275,9 @@ entities:
         type: uuid
         required: true
         unique: true
+      - name: language_code
+        type: bcp47_language_code
+        required: true
       - name: theme_preference
         type: enum
         required: true

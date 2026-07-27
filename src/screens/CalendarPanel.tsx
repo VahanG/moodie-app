@@ -4,14 +4,15 @@ import { Image, useWindowDimensions, View } from 'react-native';
 import { AppText } from '../components/ui';
 import { useTheme } from '../theme';
 import { useCalendarPanelStyles } from './CalendarPanel.styles';
+import { useLocalization } from '../features/localization';
 
 const CALENDAR_BACKGROUND_URI =
   'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80';
 
-function getDateParts(date: Date) {
+function getDateParts(date: Date, languageCode: string) {
   const day = date.getDate().toString().padStart(2, '0');
-  const month = date.toLocaleString('en-US', { month: 'short' });
-  const weekday = date.toLocaleString('en-US', { weekday: 'long' });
+  const month = date.toLocaleString(languageCode, { month: 'short' });
+  const weekday = date.toLocaleString(languageCode, { weekday: 'long' });
   const year = date.getFullYear().toString();
   return { day, month, weekday, year };
 }
@@ -19,11 +20,12 @@ function getDateParts(date: Date) {
 const CalendarPanel: React.FC = () => {
   const styles = useCalendarPanelStyles();
   const { theme } = useTheme();
+  const { languageCode, t } = useLocalization();
   const { height: windowHeight } = useWindowDimensions();
   const isCompactLayout = windowHeight < 700;
   const { day, month, weekday, year } = useMemo(
-    () => getDateParts(new Date()),
-    [],
+    () => getDateParts(new Date(), languageCode),
+    [languageCode],
   );
   const accessibleDate = `${weekday}, ${month} ${day}, ${year}`;
 
@@ -36,10 +38,10 @@ const CalendarPanel: React.FC = () => {
         style={[styles.pageHeader, isCompactLayout && styles.pageHeaderCompact]}
       >
         <AppText testID="text-calendar-heading" variant="title">
-          Calendar
+          {t('calendar.title')}
         </AppText>
         <AppText tone="muted">
-          A gentle view of the day in front of you.
+          {t('calendar.subtitle')}
         </AppText>
       </View>
 
@@ -63,7 +65,7 @@ const CalendarPanel: React.FC = () => {
               size={17}
             />
             <AppText style={styles.todayText} variant="label">
-              Today
+              {t('calendar.today')}
             </AppText>
           </View>
 
@@ -97,7 +99,7 @@ const CalendarPanel: React.FC = () => {
             </View>
             <View style={styles.reflectionCopy}>
               <AppText style={styles.reflectionEyebrow} variant="caption">
-                Daily reflection
+                {t('calendar.reflection')}
               </AppText>
               <AppText
                 style={styles.reflectionMessage}
@@ -105,7 +107,7 @@ const CalendarPanel: React.FC = () => {
                 tone="onImage"
                 variant="heading"
               >
-                Your day is unfolding perfectly.
+                {t('calendar.message')}
               </AppText>
             </View>
           </View>

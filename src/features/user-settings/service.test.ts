@@ -36,6 +36,7 @@ jest.mock('./remote', () => ({
 
 function makeSettings(themePreference: 'system' | 'light' | 'dark') {
   return {
+    languageCode: 'en',
     themePreference,
     reminderPreferences: { enabled: false, hour: 9, minute: 0 },
     selectedTopicIds: ['growth'],

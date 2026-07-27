@@ -9,6 +9,7 @@ import { parseUserSettingsRow } from './remote';
 describe('database user settings parsing', () => {
   const row = {
     user_id: 'user-1',
+    language_code: 'en',
     theme_preference: 'dark',
     reminder_enabled: true,
     reminder_hour: 8,
@@ -21,6 +22,7 @@ describe('database user settings parsing', () => {
 
   test('validates and normalizes a complete current-user row', () => {
     expect(parseUserSettingsRow(row)).toEqual({
+      languageCode: 'en',
       themePreference: 'dark',
       reminderPreferences: { enabled: true, hour: 8, minute: 30 },
       selectedTopicIds: ['growth', 'calm'],

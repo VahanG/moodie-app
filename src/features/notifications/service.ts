@@ -4,9 +4,6 @@ import PushNotification from 'react-native-push-notification';
 const DAILY_REMINDER_CHANNEL_ID = 'moodie-daily-reminders';
 const DAILY_REMINDER_NOTIFICATION_ID = 'moodie-daily-reminder';
 
-const DAILY_REMINDER_TITLE = 'Moodie daily reminder';
-const DAILY_REMINDER_MESSAGE = 'Come back and check Moodie today.';
-
 let isChannelConfigured = false;
 
 function getNextReminderDate(hour: number, minute: number): Date {
@@ -22,7 +19,9 @@ function getNextReminderDate(hour: number, minute: number): Date {
   return nextReminder;
 }
 
-export function configureNotificationChannel(): void {
+export function configureNotificationChannel(
+  channelName = 'Daily reminders',
+): void {
   if (Platform.OS !== 'android' || isChannelConfigured) {
     return;
   }
@@ -30,7 +29,7 @@ export function configureNotificationChannel(): void {
   PushNotification.createChannel(
     {
       channelId: DAILY_REMINDER_CHANNEL_ID,
-      channelName: 'Daily reminders',
+      channelName,
       importance: PushNotification.Importance.HIGH,
       vibrate: true,
     },
@@ -65,7 +64,17 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return true;
 }
 
-export function scheduleDailyReminder(hour: number, minute: number): void {
+export function scheduleDailyReminder(
+  hour: number,
+  minute: number,
+  content: {
+    title: string;
+    message: string;
+  } = {
+    title: 'Moodie daily reminder',
+    message: 'Come back and check Moodie today.',
+  },
+): void {
   const nextReminderDate = getNextReminderDate(hour, minute);
 
   cancelDailyReminder();
@@ -73,8 +82,8 @@ export function scheduleDailyReminder(hour: number, minute: number): void {
   PushNotification.localNotificationSchedule({
     id: DAILY_REMINDER_NOTIFICATION_ID,
     channelId: DAILY_REMINDER_CHANNEL_ID,
-    title: DAILY_REMINDER_TITLE,
-    message: DAILY_REMINDER_MESSAGE,
+    title: content.title,
+    message: content.message,
     date: nextReminderDate,
     repeatType: 'day',
     allowWhileIdle: true,

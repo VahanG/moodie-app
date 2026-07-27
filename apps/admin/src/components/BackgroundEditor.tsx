@@ -1,13 +1,19 @@
 import { useState, type FormEvent } from 'react';
-import { saveBackground, type AdminBackground } from '../lib/content';
+import {
+  saveBackground,
+  type AdminBackground,
+  type AdminLanguage,
+} from '../lib/content';
 import styles from './ContentEditor.module.css';
 
 export function BackgroundEditor({
   initial,
+  languages,
   onCancel,
   onSaved,
 }: {
   initial?: AdminBackground;
+  languages: AdminLanguage[];
   onCancel: () => void;
   onSaved: () => Promise<void>;
 }) {
@@ -15,7 +21,7 @@ export function BackgroundEditor({
     initial ?? {
       id: '',
       imageUri: '',
-      tags: [],
+      translations: {},
       sortOrder: 0,
       isPublished: false,
     },
@@ -87,19 +93,23 @@ export function BackgroundEditor({
             }
           />
         </label>
-        <label className={styles.wide}>
-          Tags (comma separated)
-          <input
-            required
-            value={background.tags.join(', ')}
-            onChange={event =>
-              setBackground({
-                ...background,
-                tags: event.target.value.split(','),
-              })
-            }
-          />
-        </label>
+        {languages.map(language => (
+          <label className={styles.wide} key={language.code}>
+            Tags · {language.nativeName} ({language.code}, comma separated)
+            <input
+              value={(background.translations[language.code] ?? []).join(', ')}
+              onChange={event =>
+                setBackground({
+                  ...background,
+                  translations: {
+                    ...background.translations,
+                    [language.code]: event.target.value.split(','),
+                  },
+                })
+              }
+            />
+          </label>
+        ))}
         <label className={styles.checkbox}>
           <input
             checked={background.isPublished}

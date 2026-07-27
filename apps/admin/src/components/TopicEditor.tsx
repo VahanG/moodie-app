@@ -1,20 +1,26 @@
 import { useState, type FormEvent } from 'react';
-import { saveTopic, type AdminTopic } from '../lib/content';
+import {
+  saveTopic,
+  type AdminLanguage,
+  type AdminTopic,
+} from '../lib/content';
 import styles from './ContentEditor.module.css';
 
 export function TopicEditor({
   initial,
+  languages,
   onCancel,
   onSaved,
 }: {
   initial?: AdminTopic;
+  languages: AdminLanguage[];
   onCancel: () => void;
   onSaved: () => Promise<void>;
 }) {
   const [topic, setTopic] = useState<AdminTopic>(
     initial ?? {
       id: '',
-      name: '',
+      translations: {},
       imageUri: '',
       sortOrder: 0,
       isPublished: false,
@@ -55,14 +61,23 @@ export function TopicEditor({
             }
           />
         </label>
-        <label>
-          Name
-          <input
-            required
-            value={topic.name}
-            onChange={event => setTopic({ ...topic, name: event.target.value })}
-          />
-        </label>
+        {languages.map(language => (
+          <label className={styles.wide} key={language.code}>
+            Name · {language.nativeName} ({language.code})
+            <input
+              value={topic.translations[language.code] ?? ''}
+              onChange={event =>
+                setTopic({
+                  ...topic,
+                  translations: {
+                    ...topic.translations,
+                    [language.code]: event.target.value,
+                  },
+                })
+              }
+            />
+          </label>
+        ))}
         <label className={styles.wide}>
           Image URL
           <input

@@ -12,6 +12,7 @@ import {
   ModalSheet,
   SegmentedControl,
 } from '../components/ui';
+import { useLocalization } from '../features/localization';
 
 type BackgroundGroup = {
   tag: string;
@@ -59,6 +60,7 @@ const BackgroundSelectionModal: React.FC<Props> = ({
   onClose,
 }) => {
   const styles = useHomeScreenStyles();
+  const { t } = useLocalization();
   const [backgroundTagSearch, setBackgroundTagSearch] = useState('');
   const [selectedBackgroundTag, setSelectedBackgroundTag] = useState<
     string | null
@@ -107,11 +109,11 @@ const BackgroundSelectionModal: React.FC<Props> = ({
       closeTestID="btn-close-background-selection"
       onClose={handleClose}
       testID="modal-background-selection"
-      title="Backgrounds"
+      title={t('backgrounds.title')}
       visible={visible}
     >
       <SegmentedControl
-        accessibilityLabel="Background mode"
+        accessibilityLabel={t('backgrounds.mode')}
         onChange={mode => {
           if (mode === 'free') {
             onBackgroundPreferenceChange({
@@ -130,12 +132,12 @@ const BackgroundSelectionModal: React.FC<Props> = ({
         }}
         options={[
           {
-            label: 'Free',
+            label: t('backgrounds.free'),
             value: 'free',
             testID: 'btn-background-mode-free',
           },
           {
-            label: 'Fixed',
+            label: t('backgrounds.fixed'),
             value: 'fixed',
             testID: 'btn-background-mode-fixed',
           },
@@ -144,13 +146,13 @@ const BackgroundSelectionModal: React.FC<Props> = ({
         value={backgroundPreference.mode}
       />
       <AppTextField
-        label="Search backgrounds"
+        label={t('backgrounds.searchLabel')}
         value={backgroundTagSearch}
         onChangeText={value => {
           setBackgroundTagSearch(value);
           setSelectedBackgroundTag(null);
         }}
-        placeholder="Try calm, ocean, or focus"
+        placeholder={t('backgrounds.searchPlaceholder')}
         autoCapitalize="none"
         autoCorrect={false}
         testID="input-background-tag-search"
@@ -166,7 +168,7 @@ const BackgroundSelectionModal: React.FC<Props> = ({
             <AppButton
               compact
               fullWidth={false}
-              label="Back to tags"
+              label={t('backgrounds.backToTags')}
               onPress={() => {
                 setSelectedBackgroundTag(null);
               }}
@@ -185,9 +187,9 @@ const BackgroundSelectionModal: React.FC<Props> = ({
                 return (
                   <Pressable
                     key={`${selectedBackgroundGroup.tag}-${background.id}`}
-                    accessibilityLabel={`Use ${background.tags.join(
-                      ', ',
-                    )} background`}
+                    accessibilityLabel={t('backgrounds.use', {
+                      tags: background.tags.join(', '),
+                    })}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: isSelected }}
                     style={[
@@ -211,7 +213,7 @@ const BackgroundSelectionModal: React.FC<Props> = ({
                     {isSelected ? (
                       <View style={styles.backgroundCardOverlay}>
                         <AppText tone="onImage" variant="caption">
-                          Selected
+                          {t('common.selected')}
                         </AppText>
                       </View>
                     ) : null}
@@ -253,7 +255,7 @@ const BackgroundSelectionModal: React.FC<Props> = ({
         )}
         {visibleBackgroundGroups.length === 0 ? (
           <AppText tone="muted">
-            No backgrounds found for this tag search.
+            {t('backgrounds.empty')}
           </AppText>
         ) : null}
       </ScrollView>

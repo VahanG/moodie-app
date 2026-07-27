@@ -47,6 +47,7 @@ import {
   subscribeToUserSettings,
   syncCurrentDeviceSettingsToDatabase,
 } from '../features/user-settings';
+import { useLocalization } from '../features/localization';
 
 function formatTime(hour: number, minute: number): string {
   return `${hour.toString().padStart(2, '0')}:${minute
@@ -55,6 +56,7 @@ function formatTime(hour: number, minute: number): string {
 }
 
 const HomeScreen: React.FC = () => {
+  const { languageCode, t } = useLocalization();
   const styles = useHomeScreenStyles();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const { width: windowWidth } = useWindowDimensions();
@@ -87,25 +89,32 @@ const HomeScreen: React.FC = () => {
   const [contentStatus, setContentStatus] = useState<
     'loading' | 'ready' | 'error'
   >('loading');
+  const reminderNotificationContent = useMemo(
+    () => ({
+      title: t('notifications.reminderTitle'),
+      message: t('notifications.reminderMessage'),
+    }),
+    [t],
+  );
 
   const refreshAffirmationContent = useCallback(async () => {
     setContentStatus('loading');
 
     try {
-      const loaded = await loadAffirmationContent();
+      const loaded = await loadAffirmationContent(languageCode);
       setAffirmationContent(loaded.content);
       setContentStatus('ready');
     } catch {
       setContentStatus('error');
     }
-  }, []);
+  }, [languageCode]);
 
   useEffect(() => {
     let isMounted = true;
 
     const initialize = async () => {
       try {
-        configureNotificationChannel();
+        configureNotificationChannel(t('notifications.channelName'));
         const [
           storedPreferences,
           storedTopicIds,
@@ -133,11 +142,12 @@ const HomeScreen: React.FC = () => {
           scheduleDailyReminder(
             storedPreferences.hour,
             storedPreferences.minute,
+            reminderNotificationContent,
           );
         }
       } catch {
         if (isMounted) {
-          setStatusMessage('Could not load app settings.');
+          setStatusMessage(t('status.settingsLoadError'));
         }
       } finally {
         if (isMounted) {
@@ -152,7 +162,7 @@ const HomeScreen: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [refreshAffirmationContent]);
+  }, [refreshAffirmationContent, reminderNotificationContent, t]);
 
   useEffect(
     () =>
@@ -169,12 +179,13 @@ const HomeScreen: React.FC = () => {
           scheduleDailyReminder(
             settings.reminderPreferences.hour,
             settings.reminderPreferences.minute,
+            reminderNotificationContent,
           );
         } else {
           cancelDailyReminder();
         }
       }),
-    [],
+    [reminderNotificationContent],
   );
 
   useEffect(() => {
@@ -266,12 +277,12 @@ const HomeScreen: React.FC = () => {
       setPreferences(next);
       return true;
     } catch {
-      setStatusMessage('Failed to save reminder settings.');
+      setStatusMessage(t('status.reminderSaveError'));
       return false;
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [t]);
 
   const handleToggle = useCallback(
     async (nextEnabled: boolean) => {
@@ -283,35 +294,36 @@ const HomeScreen: React.FC = () => {
           const persisted = await persistPreferences(nextPreferences);
           if (persisted) {
             cancelDailyReminder();
-            setStatusMessage('Daily reminders are off.');
+            setStatusMessage(t('status.remindersOff'));
           }
           return;
         }
 
         const hasPermission = await requestNotificationPermission();
         if (!hasPermission) {
-          setStatusMessage(
-            'Notification permission is required to enable daily reminders.',
-          );
+          setStatusMessage(t('status.permissionRequired'));
           return;
         }
 
         const nextPreferences = { ...preferences, enabled: true };
         const persisted = await persistPreferences(nextPreferences);
         if (persisted) {
-          scheduleDailyReminder(nextPreferences.hour, nextPreferences.minute);
+          scheduleDailyReminder(
+            nextPreferences.hour,
+            nextPreferences.minute,
+            reminderNotificationContent,
+          );
           setStatusMessage(
-            `Daily reminder enabled for ${formatTime(
-              nextPreferences.hour,
-              nextPreferences.minute,
-            )}.`,
+            t('status.reminderEnabled', {
+              time: formatTime(nextPreferences.hour, nextPreferences.minute),
+            }),
           );
         }
       } catch {
-        setStatusMessage('Failed to update daily reminder status.');
+        setStatusMessage(t('status.reminderUpdateError'));
       }
     },
-    [persistPreferences, preferences],
+    [persistPreferences, preferences, reminderNotificationContent, t],
   );
 
   const handleSaveTime = useCallback(async () => {
@@ -329,7 +341,7 @@ const HomeScreen: React.FC = () => {
         parsedMinute <= 59;
 
       if (!hasValidHour || !hasValidMinute) {
-        setStatusMessage('Use a valid 24-hour time (HH:MM).');
+        setStatusMessage(t('status.invalidTime'));
         return;
       }
 
@@ -345,26 +357,35 @@ const HomeScreen: React.FC = () => {
       }
 
       if (nextPreferences.enabled) {
-        scheduleDailyReminder(nextPreferences.hour, nextPreferences.minute);
+        scheduleDailyReminder(
+          nextPreferences.hour,
+          nextPreferences.minute,
+          reminderNotificationContent,
+        );
         setStatusMessage(
-          `Reminder time updated to ${formatTime(
-            nextPreferences.hour,
-            nextPreferences.minute,
-          )}.`,
+          t('status.reminderTimeUpdated', {
+            time: formatTime(nextPreferences.hour, nextPreferences.minute),
+          }),
         );
         return;
       }
 
       setStatusMessage(
-        `Saved reminder time ${formatTime(
-          nextPreferences.hour,
-          nextPreferences.minute,
-        )}. Turn reminders on to start notifications.`,
+        t('status.reminderTimeSaved', {
+          time: formatTime(nextPreferences.hour, nextPreferences.minute),
+        }),
       );
     } catch {
-      setStatusMessage('Failed to update reminder time.');
+      setStatusMessage(t('status.reminderTimeError'));
     }
-  }, [hourInput, minuteInput, persistPreferences, preferences]);
+  }, [
+    hourInput,
+    minuteInput,
+    persistPreferences,
+    preferences,
+    reminderNotificationContent,
+    t,
+  ]);
 
   const handlePageChange = useCallback(
     (offsetX: number, viewportWidth: number) => {
@@ -421,10 +442,10 @@ const HomeScreen: React.FC = () => {
         await syncCurrentDeviceSettingsToDatabase();
       } catch {
         setSelectedTopicIds(previousTopicIds);
-        setStatusMessage('Failed to save selected topic.');
+        setStatusMessage(t('status.topicSaveError'));
       }
     },
-    [selectedTopicIds],
+    [selectedTopicIds, t],
   );
 
   const handleBackgroundPreferenceChange = useCallback(
@@ -438,10 +459,10 @@ const HomeScreen: React.FC = () => {
         await syncCurrentDeviceSettingsToDatabase();
       } catch {
         setBackgroundPreference(previousPreference);
-        setStatusMessage('Failed to save background preference.');
+        setStatusMessage(t('status.backgroundSaveError'));
       }
     },
-    [backgroundPreference],
+    [backgroundPreference, t],
   );
 
   const handleToggleAffirmationLike = useCallback(
@@ -459,10 +480,10 @@ const HomeScreen: React.FC = () => {
         await syncCurrentDeviceSettingsToDatabase();
       } catch {
         setLikedAffirmationKeys(previousLikeKeys);
-        setStatusMessage('Failed to save liked affirmation.');
+        setStatusMessage(t('status.likeSaveError'));
       }
     },
-    [likedAffirmationKeys],
+    [likedAffirmationKeys, t],
   );
 
   return (

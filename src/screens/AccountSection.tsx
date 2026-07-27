@@ -22,6 +22,7 @@ import {
 } from '../components/ui';
 import { useTheme } from '../theme';
 import { useSettingsPanelStyles } from './SettingsPanel.styles';
+import { useLocalization } from '../features/localization';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
@@ -30,6 +31,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 const AccountSection: React.FC = () => {
   const styles = useSettingsPanelStyles();
   const { theme } = useTheme();
+  const { t } = useLocalization();
   const [authMode, setAuthMode] = useState<'password' | 'otp'>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -72,7 +74,7 @@ const AccountSection: React.FC = () => {
       .catch(error => {
         if (isMounted) {
           setStatusMessage(
-            getErrorMessage(error, 'Could not load your account session.'),
+            getErrorMessage(error, t('auth.sessionLoadError')),
           );
         }
       })
@@ -86,7 +88,7 @@ const AccountSection: React.FC = () => {
       isMounted = false;
       unsubscribe();
     };
-  }, [isConfigured]);
+  }, [isConfigured, t]);
 
   useEffect(() => {
     if (!user) {
@@ -109,7 +111,7 @@ const AccountSection: React.FC = () => {
         if (isMounted) {
           setIsAdmin(false);
           setStatusMessage(
-            getErrorMessage(error, 'Could not verify admin access.'),
+            getErrorMessage(error, t('auth.adminCheckError')),
           );
         }
       })
@@ -122,13 +124,13 @@ const AccountSection: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [t, user]);
 
   const handleSignIn = useCallback(async () => {
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail || !password) {
-      setStatusMessage('Enter both your email and password.');
+      setStatusMessage(t('auth.enterCredentials'));
       return;
     }
 
@@ -143,17 +145,17 @@ const AccountSection: React.FC = () => {
       setUser(nextUser);
       setPassword('');
     } catch (error) {
-      setStatusMessage(getErrorMessage(error, 'Could not sign in.'));
+      setStatusMessage(getErrorMessage(error, t('auth.signInError')));
     } finally {
       setIsSubmitting(false);
     }
-  }, [email, password]);
+  }, [email, password, t]);
 
   const handleSendOtp = useCallback(async () => {
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
-      setStatusMessage('Enter your email to receive a sign-in code.');
+      setStatusMessage(t('auth.enterEmail'));
       return;
     }
 
@@ -164,22 +166,22 @@ const AccountSection: React.FC = () => {
       await sendEmailOtp(normalizedEmail);
       setIsOtpSent(true);
       setOtp('');
-      setStatusMessage('Check your email for the six-digit sign-in code.');
+      setStatusMessage(t('auth.codeSent'));
     } catch (error) {
       setStatusMessage(
-        getErrorMessage(error, 'Could not send a sign-in code.'),
+        getErrorMessage(error, t('auth.sendCodeError')),
       );
     } finally {
       setIsSubmitting(false);
     }
-  }, [email]);
+  }, [email, t]);
 
   const handleVerifyOtp = useCallback(async () => {
     const normalizedEmail = email.trim();
     const normalizedOtp = otp.trim();
 
     if (!normalizedEmail || normalizedOtp.length !== 6) {
-      setStatusMessage('Enter the six-digit code from your email.');
+      setStatusMessage(t('auth.enterCode'));
       return;
     }
 
@@ -192,11 +194,11 @@ const AccountSection: React.FC = () => {
       setOtp('');
       setIsOtpSent(false);
     } catch (error) {
-      setStatusMessage(getErrorMessage(error, 'Could not verify the code.'));
+      setStatusMessage(getErrorMessage(error, t('auth.verifyError')));
     } finally {
       setIsSubmitting(false);
     }
-  }, [email, otp]);
+  }, [email, otp, t]);
 
   const handleGoogleSignIn = useCallback(async () => {
     setIsSubmitting(true);
@@ -206,19 +208,19 @@ const AccountSection: React.FC = () => {
       const nextUser = await signInWithGoogle();
 
       if (!nextUser) {
-        setStatusMessage('Google sign-in was canceled.');
+        setStatusMessage(t('auth.googleCanceled'));
         return;
       }
 
       setUser(nextUser);
     } catch (error) {
       setStatusMessage(
-        getErrorMessage(error, 'Could not sign in with Google.'),
+        getErrorMessage(error, t('auth.googleError')),
       );
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [t]);
 
   const handleEmailChange = useCallback((value: string) => {
     setEmail(value);
@@ -247,16 +249,16 @@ const AccountSection: React.FC = () => {
       setOtp('');
       setIsOtpSent(false);
     } catch (error) {
-      setStatusMessage(getErrorMessage(error, 'Could not sign out.'));
+      setStatusMessage(getErrorMessage(error, t('auth.signOutError')));
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [t]);
 
   return (
     <Card style={styles.card} variant="elevated" testID="section-account">
       <SettingsSectionHeader
-        description="Sign in and manage your Moodie identity."
+        description={t('account.description')}
         icon={
           <Ionicons
             color={theme.colors.accent}
@@ -264,18 +266,18 @@ const AccountSection: React.FC = () => {
             size={22}
           />
         }
-        title="Account"
+        title={t('account.title')}
       />
 
       {!isConfigured ? (
         <AppText tone="muted" testID="text-auth-status">
-          Sign-in is unavailable until Supabase is configured.
+          {t('account.unconfigured')}
         </AppText>
       ) : isLoading ? (
         <View style={styles.accountLoading}>
           <ActivityIndicator color={theme.colors.accent} />
           <AppText tone="muted" testID="text-auth-status">
-            Loading account...
+            {t('account.loading')}
           </AppText>
         </View>
       ) : user ? (
@@ -284,19 +286,23 @@ const AccountSection: React.FC = () => {
             tone="muted"
             testID={statusMessage ? undefined : 'text-auth-status'}
           >
-            Signed in as {user.email ?? 'Moodie user'}
+            {t('account.signedIn', {
+              email: user.email ?? t('account.defaultUser'),
+            })}
           </AppText>
           {isAdminLoading ? (
             <AppText tone="muted" testID="text-admin-status">
-              Checking admin access...
+              {t('account.checkingAdmin')}
             </AppText>
           ) : isAdmin ? (
             <AppText tone="accent" variant="label" testID="text-admin-status">
-              Administrator
+              {t('account.administrator')}
             </AppText>
           ) : null}
           <AppButton
-            label={isSubmitting ? 'Signing out...' : 'Sign out'}
+            label={
+              isSubmitting ? t('account.signingOut') : t('account.signOut')
+            }
             loading={isSubmitting}
             onPress={handleSignOut}
             testID="btn-sign-out"
@@ -308,8 +314,8 @@ const AccountSection: React.FC = () => {
           <AppTextField
             value={email}
             onChangeText={handleEmailChange}
-            label="Email"
-            placeholder="you@example.com"
+            label={t('account.email')}
+            placeholder={t('account.emailPlaceholder')}
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
@@ -324,8 +330,8 @@ const AccountSection: React.FC = () => {
               <AppTextField
                 value={password}
                 onChangeText={setPassword}
-                label="Password"
-                placeholder="Password"
+                label={t('account.password')}
+                placeholder={t('account.password')}
                 autoCapitalize="none"
                 autoComplete="current-password"
                 secureTextEntry
@@ -335,13 +341,17 @@ const AccountSection: React.FC = () => {
                 testID="input-auth-password"
               />
               <AppButton
-                label={isSubmitting ? 'Signing in...' : 'Sign in with password'}
+                label={
+                  isSubmitting
+                    ? t('account.signingIn')
+                    : t('account.signInPassword')
+                }
                 loading={isSubmitting}
                 onPress={handleSignIn}
                 testID="btn-sign-in"
               />
               <AppButton
-                label="Use a one-time code"
+                label={t('account.useCode')}
                 onPress={() => selectAuthMode('otp')}
                 disabled={isSubmitting}
                 testID="btn-use-email-otp"
@@ -355,8 +365,8 @@ const AccountSection: React.FC = () => {
                   <AppTextField
                     value={otp}
                     onChangeText={value => setOtp(value.replace(/[^0-9]/g, ''))}
-                    label="Verification code"
-                    placeholder="Six-digit code"
+                    label={t('account.verificationCode')}
+                    placeholder={t('account.sixDigitCode')}
                     autoComplete="one-time-code"
                     keyboardType="number-pad"
                     maxLength={6}
@@ -365,13 +375,17 @@ const AccountSection: React.FC = () => {
                     testID="input-auth-otp"
                   />
                   <AppButton
-                    label={isSubmitting ? 'Verifying...' : 'Verify code'}
+                    label={
+                      isSubmitting
+                        ? t('account.verifying')
+                        : t('account.verifyCode')
+                    }
                     loading={isSubmitting}
                     onPress={handleVerifyOtp}
                     testID="btn-verify-email-otp"
                   />
                   <AppButton
-                    label="Send a new code"
+                    label={t('account.sendNewCode')}
                     onPress={handleSendOtp}
                     disabled={isSubmitting}
                     testID="btn-send-email-otp"
@@ -380,14 +394,16 @@ const AccountSection: React.FC = () => {
                 </>
               ) : (
                 <AppButton
-                  label={isSubmitting ? 'Sending...' : 'Send one-time code'}
+                  label={
+                    isSubmitting ? t('account.sending') : t('account.sendCode')
+                  }
                   loading={isSubmitting}
                   onPress={handleSendOtp}
                   testID="btn-send-email-otp"
                 />
               )}
               <AppButton
-                label="Use password instead"
+                label={t('account.usePassword')}
                 onPress={() => selectAuthMode('password')}
                 disabled={isSubmitting}
                 testID="btn-use-password"
@@ -399,12 +415,14 @@ const AccountSection: React.FC = () => {
           <View style={styles.authDivider}>
             <View style={styles.authDividerLine} />
             <AppText tone="muted" variant="caption">
-              or
+              {t('account.or')}
             </AppText>
             <View style={styles.authDividerLine} />
           </View>
           <AppButton
-            label={isSubmitting ? 'Opening Google...' : 'Continue with Google'}
+            label={
+              isSubmitting ? t('account.openingGoogle') : t('account.google')
+            }
             loading={isSubmitting}
             onPress={handleGoogleSignIn}
             testID="btn-sign-in-google"

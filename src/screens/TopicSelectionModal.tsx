@@ -6,6 +6,7 @@ import {
 } from '../features/affirmations/types';
 import { useHomeScreenStyles } from './HomeScreen.styles';
 import { AppText, ModalSheet } from '../components/ui';
+import { useLocalization } from '../features/localization';
 
 type Props = {
   visible: boolean;
@@ -23,13 +24,14 @@ const TopicSelectionModal: React.FC<Props> = ({
   onSelectTopics,
 }) => {
   const styles = useHomeScreenStyles();
+  const { t } = useLocalization();
 
   return (
     <ModalSheet
       closeTestID="btn-close-topic-selection"
       onClose={onClose}
       testID="modal-topic-selection"
-      title="Select topics"
+      title={t('topics.title')}
       visible={visible}
     >
       <ScrollView contentContainerStyle={styles.topicList} testID="list-topics">
@@ -62,7 +64,7 @@ const TopicSelectionModal: React.FC<Props> = ({
                 </AppText>
                 {isSelected ? (
                   <AppText tone="onImage" variant="caption">
-                    Selected
+                    {t('common.selected')}
                   </AppText>
                 ) : null}
               </View>

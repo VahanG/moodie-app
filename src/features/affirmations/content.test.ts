@@ -38,45 +38,61 @@ describe('affirmation content parsing', () => {
   const topics = [
     {
       id: 'calm',
-      name: 'Calm',
       image_uri: 'https://example.com/calm.jpg',
       sort_order: 20,
     },
     {
       id: 'growth',
-      name: 'Growth',
       image_uri: 'https://example.com/growth.jpg',
       sort_order: 10,
     },
+  ];
+  const topicTranslations = [
+    { topic_id: 'growth', name: 'Growth' },
+    { topic_id: 'calm', name: 'Calm' },
   ];
   const affirmations = [
     {
       id: 'affirmation-2',
       topic_id: 'growth',
-      text: 'Second',
       image_uri: 'https://example.com/second.jpg',
       sort_order: 20,
     },
     {
       id: 'affirmation-1',
       topic_id: 'growth',
-      text: 'First',
       image_uri: 'https://example.com/first.jpg',
       sort_order: 10,
     },
+  ];
+  const affirmationTranslations = [
+    { affirmation_id: 'affirmation-2', text: 'Second' },
+    { affirmation_id: 'affirmation-1', text: 'First' },
   ];
   const backgrounds = [
     {
       id: 'forest',
       image_uri: 'https://example.com/forest.jpg',
-      tags: [' Nature ', 'nature', 'calm'],
       sort_order: 10,
     },
   ];
+  const backgroundTranslations = [
+    {
+      background_id: 'forest',
+      tags: [' Nature ', 'nature', 'calm'],
+    },
+  ];
 
-  test('normalizes and orders database rows', () => {
+  test('normalizes and orders selected-language rows', () => {
     expect(
-      parseAffirmationContentRows(topics, affirmations, backgrounds),
+      parseAffirmationContentRows(
+        topics,
+        topicTranslations,
+        affirmations,
+        affirmationTranslations,
+        backgrounds,
+        backgroundTranslations,
+      ),
     ).toEqual({
       topics: [
         {
@@ -107,79 +123,94 @@ describe('affirmation content parsing', () => {
     });
   });
 
-  test('ignores unavailable topic rows and rejects empty published feeds', () => {
+  test('hides every item missing a selected-language translation', () => {
     expect(() =>
       parseAffirmationContentRows(
         topics,
-        [{ ...affirmations[0], topic_id: 'missing' }],
+        topicTranslations,
+        affirmations,
+        [],
         backgrounds,
+        backgroundTranslations,
       ),
     ).toThrow('No published affirmations');
+
+    expect(() =>
+      parseAffirmationContentRows(
+        topics,
+        topicTranslations,
+        affirmations,
+        affirmationTranslations,
+        backgrounds,
+        [],
+      ),
+    ).toThrow('No published affirmation backgrounds');
   });
 });
 
 describe('affirmation content loading', () => {
-  const topicRows = [
-    {
-      id: 'growth',
-      name: 'Growth',
-      image_uri: 'https://example.com/growth.jpg',
-      sort_order: 10,
-    },
-  ];
-  const affirmationRows = [
-    {
-      id: 'affirmation-1',
-      topic_id: 'growth',
-      text: 'Keep going.',
-      image_uri: 'https://example.com/affirmation.jpg',
-      sort_order: 10,
-    },
-  ];
-  const backgroundRows = [
-    {
-      id: 'forest',
-      image_uri: 'https://example.com/forest.jpg',
-      tags: ['growth'],
-      sort_order: 10,
-    },
-  ];
+  const rowsByTable: Record<string, unknown[]> = {
+    affirmation_topics: [
+      {
+        id: 'growth',
+        image_uri: 'https://example.com/growth.jpg',
+        sort_order: 10,
+      },
+    ],
+    affirmation_topic_translations: [
+      { topic_id: 'growth', name: 'Growth' },
+    ],
+    affirmations: [
+      {
+        id: 'affirmation-1',
+        topic_id: 'growth',
+        image_uri: 'https://example.com/affirmation.jpg',
+        sort_order: 10,
+      },
+    ],
+    affirmation_translations: [
+      { affirmation_id: 'affirmation-1', text: 'Keep going.' },
+    ],
+    affirmation_backgrounds: [
+      {
+        id: 'forest',
+        image_uri: 'https://example.com/forest.jpg',
+        sort_order: 10,
+      },
+    ],
+    affirmation_background_translations: [
+      { background_id: 'forest', tags: ['growth'] },
+    ],
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockSetItem.mockResolvedValue();
   });
 
-  test('retrieves published database content and caches it', async () => {
-    const rowsByTable: Record<string, unknown[]> = {
-      affirmation_topics: topicRows,
-      affirmations: affirmationRows,
-      affirmation_backgrounds: backgroundRows,
-    };
+  test('retrieves one language and caches it separately', async () => {
     mockFrom.mockImplementation((table: string) =>
       buildQuery({ data: rowsByTable[table], error: null }),
     );
 
-    const loaded = await loadAffirmationContent();
+    const loaded = await loadAffirmationContent('en');
 
     expect(loaded.source).toBe('remote');
     expect(loaded.content.topics[0].affirmations[0].text).toBe('Keep going.');
-    expect(mockFrom).toHaveBeenCalledWith('affirmation_topics');
-    expect(mockFrom).toHaveBeenCalledWith('affirmations');
-    expect(mockFrom).toHaveBeenCalledWith('affirmation_backgrounds');
+    expect(mockFrom).toHaveBeenCalledWith('affirmation_translations');
     expect(mockSetItem).toHaveBeenCalledWith(
-      '@moodie/affirmation-content-v1',
-      expect.stringContaining('"version":1'),
+      '@moodie/affirmation-content-v2:en',
+      expect.stringContaining('"version":2'),
     );
   });
 
-  test('uses a validated last-known-good cache when the database fails', async () => {
+  test('uses only the selected languages last-known-good cache', async () => {
     mockFrom.mockImplementation(() =>
       buildQuery({ data: null, error: new Error('offline') }),
     );
     mockGetItem.mockResolvedValue(
       JSON.stringify({
-        version: 1,
+        version: 2,
         topics: [
           {
             id: 'growth',
@@ -204,9 +235,11 @@ describe('affirmation content loading', () => {
       }),
     );
 
-    const loaded = await loadAffirmationContent();
+    const loaded = await loadAffirmationContent('en');
 
-    expect(loaded.source).toBe('cache');
+    expect(mockGetItem).toHaveBeenCalledWith(
+      '@moodie/affirmation-content-v2:en',
+    );
     expect(loaded.content.topics[0].affirmations[0].text).toBe(
       'Cached affirmation.',
     );

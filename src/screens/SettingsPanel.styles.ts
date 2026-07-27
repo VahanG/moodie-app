@@ -86,6 +86,10 @@ export function createSettingsPanelStyles(theme: MoodieTheme) {
     statusMessage: {
       flex: 1,
     },
+    languageList: {
+      gap: spacing.sm,
+      paddingTop: spacing.sm,
+    },
   });
 }
 

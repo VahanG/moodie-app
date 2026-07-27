@@ -124,12 +124,19 @@ database_workflow:
   affirmation_content:
     tables:
       - public.affirmation_topics
+      - public.affirmation_topic_translations
       - public.affirmations
+      - public.affirmation_translations
       - public.affirmation_backgrounds
+      - public.affirmation_background_translations
+      - public.supported_languages
+      - public.app_text_translations
     supporter_access: select_published_only
     admin_access: rls_protected_crud
     admin_authorization: public.is_admin()
-    offline_cache: validated_last_known_good
+    offline_cache: validated_last_known_good_per_language
+    editorial_translation_fallback: none
+    app_text_fallback: remote_then_bundled_language_then_bundled_english
   user_settings:
     table: public.user_settings
     ownership: auth.uid()
@@ -139,6 +146,7 @@ database_workflow:
     login_conflict_rule: database_wins
     initial_row_rule: seed_from_device_when_database_row_is_absent
     offline_write_rule: retain_user_scoped_pending_snapshot_and_retry
+    language_preference: language_code
 
 open_decisions:
   - id: SUP-TBD-001

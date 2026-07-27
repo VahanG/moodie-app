@@ -3,6 +3,7 @@ import { ReminderPreferences } from '../notifications/types';
 import { ThemePreference } from '../../theme/tokens';
 
 export type UserSettingsSnapshot = {
+  languageCode: string;
   themePreference: ThemePreference;
   reminderPreferences: ReminderPreferences;
   selectedTopicIds: string[];

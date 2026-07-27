@@ -26,6 +26,7 @@ import BackgroundSelectionModal from './BackgroundSelectionModal';
 import { AppButton, AppText, IconButton } from '../components/ui';
 import { useTheme } from '../theme';
 import { useAffirmationPanelStyles } from './AffirmationPanel.styles';
+import { useLocalization } from '../features/localization';
 
 type Props = {
   topics: AffirmationTopic[];
@@ -99,6 +100,7 @@ const AffirmationPanel: React.FC<Props> = ({
 }) => {
   const styles = useAffirmationPanelStyles();
   const { theme } = useTheme();
+  const { languageCode, t } = useLocalization();
   const { height: windowHeight } = useWindowDimensions();
   const isCompactLayout = windowHeight < 700;
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
@@ -132,12 +134,12 @@ const AffirmationPanel: React.FC<Props> = ({
   const isAffirmationAnimating = useRef(false);
   const todayLabel = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, {
+      new Intl.DateTimeFormat(languageCode, {
         weekday: 'long',
         month: 'short',
         day: 'numeric',
       }).format(new Date()),
-    [],
+    [languageCode],
   );
 
   useEffect(() => {
@@ -299,19 +301,19 @@ const AffirmationPanel: React.FC<Props> = ({
         <View style={styles.emptyState} testID="state-affirmation-content">
           <AppText variant="heading">
             {contentStatus === 'loading'
-              ? 'Loading your affirmations…'
-              : 'Affirmations are unavailable'}
+              ? t('affirmations.loadingTitle')
+              : t('affirmations.unavailableTitle')}
           </AppText>
           <AppText tone="muted">
             {contentStatus === 'loading'
-              ? 'Fetching the latest published content.'
-              : 'Check your connection and try again.'}
+              ? t('affirmations.loadingDescription')
+              : t('affirmations.unavailableDescription')}
           </AppText>
           {contentStatus === 'error' ? (
             <AppButton
               compact
               fullWidth={false}
-              label="Try again"
+              label={t('common.tryAgain')}
               onPress={onRetryContent}
               testID="btn-retry-affirmation-content"
             />
@@ -348,14 +350,14 @@ const AffirmationPanel: React.FC<Props> = ({
           <View style={styles.header}>
             <View style={styles.headingBlock}>
               <AppText style={styles.eyebrow} testID="text-today-heading">
-                Today
+                {t('affirmations.today')}
               </AppText>
               <AppText style={styles.date} tone="onImage" variant="caption">
                 {todayLabel}
               </AppText>
             </View>
             <IconButton
-              accessibilityLabel="Choose affirmation background"
+              accessibilityLabel={t('affirmations.chooseBackground')}
               compact
               icon={
                 <Ionicons
@@ -383,7 +385,9 @@ const AffirmationPanel: React.FC<Props> = ({
             ]}
           >
             <Pressable
-              accessibilityLabel={`Choose affirmation topic. Current topic ${activeAffirmation.topicName}`}
+              accessibilityLabel={t('affirmations.chooseTopic', {
+                topic: activeAffirmation.topicName,
+              })}
               accessibilityRole="button"
               onPress={() => {
                 setIsTopicModalVisible(true);
@@ -442,8 +446,8 @@ const AffirmationPanel: React.FC<Props> = ({
               <IconButton
                 accessibilityLabel={
                   isActiveAffirmationLiked
-                    ? 'Unlike affirmation'
-                    : 'Like affirmation'
+                    ? t('affirmations.unlike')
+                    : t('affirmations.like')
                 }
                 accessibilityState={{ selected: isActiveAffirmationLiked }}
                 compact
@@ -463,7 +467,7 @@ const AffirmationPanel: React.FC<Props> = ({
               />
               <View style={styles.actionDivider} />
               <IconButton
-                accessibilityLabel="Share affirmation"
+                accessibilityLabel={t('affirmations.share')}
                 compact
                 icon={
                   <Ionicons
@@ -492,7 +496,7 @@ const AffirmationPanel: React.FC<Props> = ({
                 tone="onImage"
                 variant="caption"
               >
-                Swipe for another
+                {t('affirmations.swipe')}
               </AppText>
             </View>
             <AppText

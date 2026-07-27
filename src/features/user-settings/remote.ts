@@ -3,6 +3,7 @@ import { UserSettingsSnapshot } from './types';
 
 type SettingsRow = {
   user_id: unknown;
+  language_code: unknown;
   theme_preference: unknown;
   reminder_enabled: unknown;
   reminder_hour: unknown;
@@ -22,6 +23,12 @@ function parseStringArray(value: unknown, field: string): string[] {
 }
 
 export function parseUserSettingsRow(row: SettingsRow): UserSettingsSnapshot {
+  if (
+    typeof row.language_code !== 'string' ||
+    !/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/.test(row.language_code)
+  ) {
+    throw new Error('Invalid language in database user settings.');
+  }
   const themePreference = row.theme_preference;
   const backgroundMode = row.background_mode;
 
@@ -60,6 +67,7 @@ export function parseUserSettingsRow(row: SettingsRow): UserSettingsSnapshot {
   }
 
   return {
+    languageCode: row.language_code,
     themePreference,
     reminderPreferences: {
       enabled: row.reminder_enabled,
@@ -100,7 +108,7 @@ export async function loadDatabaseUserSettings(
   const { data, error } = await getSupabaseClient()
     .from('user_settings')
     .select(
-      'user_id,theme_preference,reminder_enabled,reminder_hour,reminder_minute,selected_topic_ids,background_mode,background_id,liked_affirmation_keys',
+      'user_id,language_code,theme_preference,reminder_enabled,reminder_hour,reminder_minute,selected_topic_ids,background_mode,background_id,liked_affirmation_keys',
     )
     .eq('user_id', userId)
     .maybeSingle();
@@ -119,6 +127,7 @@ export async function upsertDatabaseUserSettings(
   const { error } = await getSupabaseClient().from('user_settings').upsert(
     {
       user_id: userId,
+      language_code: settings.languageCode,
       theme_preference: settings.themePreference,
       reminder_enabled: settings.reminderPreferences.enabled,
       reminder_hour: settings.reminderPreferences.hour,

@@ -10,17 +10,30 @@ import {
   SettingsSectionHeader,
 } from '../components/ui';
 import { useSettingsPanelStyles } from './SettingsPanel.styles';
-
-const appearanceOptions: SegmentedControlOption[] = [
-  { label: 'System', value: 'system', testID: 'btn-theme-system' },
-  { label: 'Light', value: 'light', testID: 'btn-theme-light' },
-  { label: 'Dark', value: 'dark', testID: 'btn-theme-dark' },
-];
+import { useLocalization } from '../features/localization';
 
 const AppearanceSection: React.FC = () => {
   const styles = useSettingsPanelStyles();
   const { preference, resolvedMode, setPreference, theme } = useTheme();
+  const { t } = useLocalization();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const appearanceOptions: SegmentedControlOption[] = [
+    {
+      label: t('appearance.system'),
+      value: 'system',
+      testID: 'btn-theme-system',
+    },
+    {
+      label: t('appearance.light'),
+      value: 'light',
+      testID: 'btn-theme-light',
+    },
+    {
+      label: t('appearance.dark'),
+      value: 'dark',
+      testID: 'btn-theme-dark',
+    },
+  ];
 
   const selectPreference = async (nextPreference: ThemePreference) => {
     setErrorMessage(null);
@@ -28,14 +41,14 @@ const AppearanceSection: React.FC = () => {
     try {
       await setPreference(nextPreference);
     } catch {
-      setErrorMessage('Could not save your appearance preference.');
+      setErrorMessage(t('appearance.saveError'));
     }
   };
 
   return (
     <Card style={styles.card} variant="elevated" testID="section-appearance">
       <SettingsSectionHeader
-        description="Choose how Moodie looks on this device."
+        description={t('appearance.description')}
         icon={
           <Ionicons
             color={theme.colors.accent}
@@ -43,7 +56,7 @@ const AppearanceSection: React.FC = () => {
             size={22}
           />
         }
-        title="Appearance"
+        title={t('appearance.title')}
         trailing={
           <View style={styles.statusPill}>
             <View style={styles.statusDot} />
@@ -52,13 +65,15 @@ const AppearanceSection: React.FC = () => {
               variant="caption"
               testID={`theme-resolved-${resolvedMode}`}
             >
-              {resolvedMode === 'dark' ? 'Dark' : 'Light'}
+              {resolvedMode === 'dark'
+                ? t('appearance.dark')
+                : t('appearance.light')}
             </AppText>
           </View>
         }
       />
       <SegmentedControl
-        accessibilityLabel="Application appearance"
+        accessibilityLabel={t('appearance.accessibility')}
         onChange={value => selectPreference(value as ThemePreference)}
         options={appearanceOptions}
         value={preference}

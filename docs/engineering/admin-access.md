@@ -32,6 +32,12 @@ with RLS-protected administrator mutations. Future catalog, commerce,
 analytics, or release operations must still have a documented contract and a
 database RLS policy or trusted server boundary before their UI is enabled.
 
+The Content section also owns supported languages, per-language editorial
+translations, and keyed application-text overrides. The supporter app may read
+only enabled languages and their published translated content. Administrators
+can read and mutate all language and translation rows through policies guarded
+by `(select public.is_admin())`.
+
 ### Affirmation content authorization
 
 - Anonymous and authenticated supporter clients can select only published

@@ -15,6 +15,8 @@ import {
   SettingsSectionHeader,
 } from '../components/ui';
 import { useSettingsPanelStyles } from './SettingsPanel.styles';
+import LanguageSection from './LanguageSection';
+import { useLocalization } from '../features/localization';
 
 type Props = {
   isLoading: boolean;
@@ -45,6 +47,7 @@ const SettingsPanel: React.FC<Props> = ({
 }) => {
   const styles = useSettingsPanelStyles();
   const { theme } = useTheme();
+  const { t } = useLocalization();
 
   return (
     <Screen
@@ -54,10 +57,11 @@ const SettingsPanel: React.FC<Props> = ({
       testID="screen-settings"
     >
       <View style={styles.pageHeader}>
-        <AppText variant="title">Settings</AppText>
-        <AppText tone="muted">Personalize your experience and account.</AppText>
+        <AppText variant="title">{t('settings.title')}</AppText>
+        <AppText tone="muted">{t('settings.subtitle')}</AppText>
       </View>
       <AppearanceSection />
+      <LanguageSection />
 
       <Card
         style={styles.card}
@@ -65,7 +69,7 @@ const SettingsPanel: React.FC<Props> = ({
         testID="section-notifications"
       >
         <SettingsSectionHeader
-          description="Choose when Moodie gently checks in."
+          description={t('notifications.description')}
           icon={
             <Ionicons
               color={theme.colors.accent}
@@ -73,23 +77,27 @@ const SettingsPanel: React.FC<Props> = ({
               size={22}
             />
           }
-          title="Notifications"
+          title={t('notifications.title')}
         />
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator color={theme.colors.accent} />
-            <AppText tone="muted">Loading reminder settings...</AppText>
+            <AppText tone="muted">{t('notifications.loading')}</AppText>
           </View>
         ) : (
           <>
             <SettingsRow
-              label="Daily reminders"
-              description={`Current time: ${reminderTimeText} (local time)`}
+              label={t('notifications.daily')}
+              description={t('notifications.currentTime', {
+                time: reminderTimeText,
+              })}
               style={styles.reminderRow}
               trailing={
                 <Switch
-                  accessibilityLabel="Enable daily reminders"
+                  accessibilityLabel={t(
+                    'notifications.enableAccessibility',
+                  )}
                   value={preferences.enabled}
                   onValueChange={value => onToggle(value)}
                   disabled={isSaving}
@@ -106,8 +114,8 @@ const SettingsPanel: React.FC<Props> = ({
             <View style={styles.timeInputs}>
               <View style={styles.inputBlock}>
                 <AppTextField
-                  label="Hour"
-                  helperText="0–23"
+                  label={t('notifications.hour')}
+                  helperText={t('notifications.hourHelp')}
                   value={hourInput}
                   onChangeText={text =>
                     setHourInput(text.replace(/[^0-9]/g, ''))
@@ -119,8 +127,8 @@ const SettingsPanel: React.FC<Props> = ({
               </View>
               <View style={styles.inputBlock}>
                 <AppTextField
-                  label="Minute"
-                  helperText="0–59"
+                  label={t('notifications.minute')}
+                  helperText={t('notifications.minuteHelp')}
                   value={minuteInput}
                   onChangeText={text =>
                     setMinuteInput(text.replace(/[^0-9]/g, ''))
@@ -133,7 +141,11 @@ const SettingsPanel: React.FC<Props> = ({
             </View>
 
             <AppButton
-              label={isSaving ? 'Saving...' : 'Save reminder time'}
+              label={
+                isSaving
+                  ? t('notifications.saving')
+                  : t('notifications.saveTime')
+              }
               loading={isSaving}
               onPress={onSaveTime}
               testID="btn-save-reminder-time"

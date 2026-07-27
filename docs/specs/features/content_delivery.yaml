@@ -19,6 +19,7 @@ requirements:
       - Compatible payloads are downloaded and cached.
       - Incompatible or invalid payloads do not replace working content.
       - Affirmation topics, affirmations, and backgrounds are queried from normalized Supabase tables.
+      - Language-neutral content is joined with exactly one selected-language translation set.
     verification:
       test_id: activate_valid_remote_content
       preconditions:
@@ -36,6 +37,7 @@ requirements:
     acceptance_criteria:
       - The last-known-good compatible content is retained in the cache.
       - When the remote source is unavailable, the application uses last-known-good content.
+      - Editorial caches are scoped by language and never reused across languages.
       - Cache invalidation rules are defined before production rollout.
       - Behavior when no cached content exists is TBD.
     verification:
@@ -67,6 +69,20 @@ requirements:
           url: moodie://__e2e/content?release=fixture-release
         - action: expect_visible
           selector: "[data-testid='content-payload-status'][data-assets-valid='true'][data-release-notes='true']"
+
+  - id: CNT-004
+    title: Translation Completeness Controls Visibility
+    description: Editorial content is visible only when its required text exists in the user's selected language.
+    priority: MUST
+    acceptance_criteria:
+      - Admin can add and enable supported languages without a schema change.
+      - Admin can provide topic names, affirmation text, and background tags for each supported language.
+      - A topic, affirmation, or background missing required selected-language text is omitted.
+      - Editorial content never falls back to a different language.
+      - App UI text may fall back from admin override to bundled selected-language text and then bundled English.
+    verification:
+      test_id: omit_incomplete_selected_language_content
+      status: automated_service_test
 
 open_decisions:
   - id: CNT-TBD-001

@@ -5,33 +5,57 @@ import {
   type AdminAffirmation,
   type AdminBackground,
   type AdminContent,
+  type AdminLanguage,
   type AdminTopic,
 } from '../lib/content';
 import { AffirmationEditor } from './AffirmationEditor';
 import { BackgroundEditor } from './BackgroundEditor';
 import { TopicEditor } from './TopicEditor';
+import { LanguageEditor } from './LanguageEditor';
+import { AppTextEditor } from './AppTextEditor';
 import styles from './ContentManager.module.css';
 
-type Section = 'topics' | 'affirmations' | 'backgrounds';
+type Section =
+  | 'languages'
+  | 'topics'
+  | 'affirmations'
+  | 'backgrounds'
+  | 'appTexts';
 type Editor =
+  | { kind: 'language'; value?: AdminLanguage }
   | { kind: 'topic'; value?: AdminTopic }
   | { kind: 'affirmation'; value?: AdminAffirmation }
   | { kind: 'background'; value?: AdminBackground }
   | null;
 
 const emptyContent: AdminContent = {
+  languages: [],
   topics: [],
   affirmations: [],
   backgrounds: [],
+  appTexts: {},
 };
 
 function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : 'Content operation failed.';
 }
 
+function translationCount(
+  translations: Record<string, string | string[]>,
+  languages: AdminLanguage[],
+): string {
+  const completed = languages.filter(language => {
+    const value = translations[language.code];
+    return Array.isArray(value)
+      ? value.some(item => item.trim().length > 0)
+      : typeof value === 'string' && value.trim().length > 0;
+  }).length;
+  return `${completed}/${languages.length} languages`;
+}
+
 export function ContentManager() {
   const [content, setContent] = useState<AdminContent>(emptyContent);
-  const [section, setSection] = useState<Section>('topics');
+  const [section, setSection] = useState<Section>('languages');
   const [editor, setEditor] = useState<Editor>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +93,18 @@ export function ContentManager() {
   }, []);
 
   const topicNames = useMemo(
-    () => new Map(content.topics.map(topic => [topic.id, topic.name])),
+    () =>
+      new Map(
+        content.topics.map(topic => [
+          topic.id,
+          topic.translations.en ?? topic.id,
+        ]),
+      ),
     [content.topics],
   );
 
   const startAdd = () => {
+    if (section === 'languages') setEditor({ kind: 'language' });
     if (section === 'topics') setEditor({ kind: 'topic' });
     if (section === 'affirmations') setEditor({ kind: 'affirmation' });
     if (section === 'backgrounds') setEditor({ kind: 'background' });
@@ -108,15 +139,28 @@ export function ContentManager() {
             Manage categories, text, backgrounds, ordering, and publication.
           </p>
         </div>
-        {!editor && (
+        {!editor && section !== 'appTexts' && (
           <button className={styles.addButton} onClick={startAdd} type="button">
-            Add {section === 'topics' ? 'category' : section.slice(0, -1)}
+            Add{' '}
+            {section === 'topics'
+              ? 'category'
+              : section === 'languages'
+                ? 'language'
+                : section.slice(0, -1)}
           </button>
         )}
       </header>
 
       <div aria-label="Content type" className={styles.tabs}>
-        {(['topics', 'affirmations', 'backgrounds'] as Section[]).map(item => (
+        {(
+          [
+            'languages',
+            'topics',
+            'affirmations',
+            'backgrounds',
+            'appTexts',
+          ] as Section[]
+        ).map(item => (
           <button
             className={section === item ? styles.activeTab : undefined}
             key={item}
@@ -128,7 +172,9 @@ export function ContentManager() {
           >
             {item === 'topics'
               ? 'Categories'
-              : item[0].toUpperCase() + item.slice(1)}
+              : item === 'appTexts'
+                ? 'App text'
+                : item[0].toUpperCase() + item.slice(1)}
           </button>
         ))}
       </div>
@@ -136,9 +182,17 @@ export function ContentManager() {
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={`${styles.panel} ${editor ? styles.editorPanel : ''}`}>
+        {editor?.kind === 'language' && (
+          <LanguageEditor
+            initial={editor.value}
+            onCancel={() => setEditor(null)}
+            onSaved={reload}
+          />
+        )}
         {editor?.kind === 'topic' && (
           <TopicEditor
             initial={editor.value}
+            languages={content.languages}
             onCancel={() => setEditor(null)}
             onSaved={reload}
           />
@@ -146,6 +200,7 @@ export function ContentManager() {
         {editor?.kind === 'affirmation' && (
           <AffirmationEditor
             initial={editor.value}
+            languages={content.languages}
             topics={content.topics}
             onCancel={() => setEditor(null)}
             onSaved={reload}
@@ -154,21 +209,42 @@ export function ContentManager() {
         {editor?.kind === 'background' && (
           <BackgroundEditor
             initial={editor.value}
+            languages={content.languages}
             onCancel={() => setEditor(null)}
             onSaved={reload}
           />
         )}
 
         {!editor && loading && <div className={styles.loading}>Loading…</div>}
+        {!editor && !loading && section === 'languages' && (
+          <ContentList
+            items={content.languages.map(language => ({
+              id: language.code,
+              title: `${language.nativeName} · ${language.englishName}`,
+              subtitle: `${language.code.toUpperCase()} · ${
+                language.textDirection.toUpperCase()
+              } · order ${language.sortOrder}${
+                language.isDefault ? ' · default' : ''
+              }`,
+              isPublished: language.isEnabled,
+              publishedLabel: language.isEnabled ? 'Enabled' : 'Disabled',
+              edit: () =>
+                setEditor({ kind: 'language', value: language }),
+            }))}
+          />
+        )}
         {!editor && !loading && section === 'topics' && (
           <ContentList
             items={content.topics.map(topic => ({
               id: topic.id,
-              title: topic.name,
+              title: topic.translations.en ?? topic.id,
               subtitle: `${
                 content.affirmations.filter(item => item.topicId === topic.id)
                   .length
-              } affirmations · order ${topic.sortOrder}`,
+              } affirmations · ${translationCount(
+                topic.translations,
+                content.languages,
+              )} · order ${topic.sortOrder}`,
               imageUri: topic.imageUri,
               isPublished: topic.isPublished,
               edit: () => setEditor({ kind: 'topic', value: topic }),
@@ -180,10 +256,15 @@ export function ContentManager() {
           <ContentList
             items={content.affirmations.map(affirmation => ({
               id: affirmation.id,
-              title: affirmation.text,
+              title:
+                affirmation.translations.en ??
+                `Untranslated affirmation ${affirmation.id.slice(0, 8)}`,
               subtitle: `${
                 topicNames.get(affirmation.topicId) ?? affirmation.topicId
-              } · order ${affirmation.sortOrder}`,
+              } · ${translationCount(
+                affirmation.translations,
+                content.languages,
+              )} · order ${affirmation.sortOrder}`,
               imageUri: affirmation.imageUri,
               isPublished: affirmation.isPublished,
               edit: () =>
@@ -197,14 +278,24 @@ export function ContentManager() {
             items={content.backgrounds.map(background => ({
               id: background.id,
               title: background.id,
-              subtitle: `${background.tags.join(', ')} · order ${
-                background.sortOrder
-              }`,
+              subtitle: `${(background.translations.en ?? []).join(
+                ', ',
+              )} · ${translationCount(
+                background.translations,
+                content.languages,
+              )} · order ${background.sortOrder}`,
               imageUri: background.imageUri,
               isPublished: background.isPublished,
               edit: () => setEditor({ kind: 'background', value: background }),
               remove: () => remove('background', background.id),
             }))}
+          />
+        )}
+        {!editor && !loading && section === 'appTexts' && (
+          <AppTextEditor
+            appTexts={content.appTexts}
+            languages={content.languages}
+            onSaved={reload}
           />
         )}
       </div>
@@ -219,10 +310,11 @@ function ContentList({
     id: string;
     title: string;
     subtitle: string;
-    imageUri: string;
+    imageUri?: string;
     isPublished: boolean;
+    publishedLabel?: string;
     edit: () => void;
-    remove: () => void;
+    remove?: () => void;
   }>;
 }) {
   if (items.length === 0) {
@@ -233,25 +325,32 @@ function ContentList({
     <div className={styles.list}>
       {items.map(item => (
         <article className={styles.row} key={item.id}>
-          <img alt="" className={styles.thumbnail} src={item.imageUri} />
+          {item.imageUri ? (
+            <img alt="" className={styles.thumbnail} src={item.imageUri} />
+          ) : (
+            <div className={styles.thumbnail} />
+          )}
           <div className={styles.summary}>
             <strong>{item.title}</strong>
             <small>{item.subtitle}</small>
           </div>
           <span className={item.isPublished ? styles.published : styles.draft}>
-            {item.isPublished ? 'Published' : 'Draft'}
+            {item.publishedLabel ??
+              (item.isPublished ? 'Published' : 'Draft')}
           </span>
           <div className={styles.rowActions}>
             <button onClick={item.edit} type="button">
               Edit
             </button>
-            <button
-              className={styles.delete}
-              onClick={item.remove}
-              type="button"
-            >
-              Delete
-            </button>
+            {item.remove && (
+              <button
+                className={styles.delete}
+                onClick={item.remove}
+                type="button"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </article>
       ))}

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import {
   saveAffirmation,
   type AdminAffirmation,
+  type AdminLanguage,
   type AdminTopic,
 } from '../lib/content';
 import styles from './ContentEditor.module.css';
@@ -9,11 +10,13 @@ import styles from './ContentEditor.module.css';
 export function AffirmationEditor({
   initial,
   topics,
+  languages,
   onCancel,
   onSaved,
 }: {
   initial?: AdminAffirmation;
   topics: AdminTopic[];
+  languages: AdminLanguage[];
   onCancel: () => void;
   onSaved: () => Promise<void>;
 }) {
@@ -22,7 +25,7 @@ export function AffirmationEditor({
   >(
     initial ?? {
       topicId: topics[0]?.id ?? '',
-      text: '',
+      translations: {},
       imageUri: '',
       sortOrder: 0,
       isPublished: false,
@@ -65,7 +68,7 @@ export function AffirmationEditor({
           >
             {topics.map(topic => (
               <option key={topic.id} value={topic.id}>
-                {topic.name}
+              {topic.translations.en ?? topic.id}
               </option>
             ))}
           </select>
@@ -85,16 +88,23 @@ export function AffirmationEditor({
             }
           />
         </label>
-        <label className={styles.wide}>
-          Affirmation text
-          <textarea
-            required
-            value={affirmation.text}
-            onChange={event =>
-              setAffirmation({ ...affirmation, text: event.target.value })
-            }
-          />
-        </label>
+        {languages.map(language => (
+          <label className={styles.wide} key={language.code}>
+            Affirmation text · {language.nativeName} ({language.code})
+            <textarea
+              value={affirmation.translations[language.code] ?? ''}
+              onChange={event =>
+                setAffirmation({
+                  ...affirmation,
+                  translations: {
+                    ...affirmation.translations,
+                    [language.code]: event.target.value,
+                  },
+                })
+              }
+            />
+          </label>
+        ))}
         <label className={styles.wide}>
           Suggested image URL
           <input

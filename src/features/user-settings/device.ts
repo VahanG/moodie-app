@@ -12,6 +12,10 @@ import {
   saveReminderPreferences,
 } from '../notifications/storage';
 import { loadThemePreference, saveThemePreference } from '../../theme/storage';
+import {
+  loadLanguageCode,
+  saveLanguageCode,
+} from '../localization/storage';
 import { UserSettingsSnapshot } from './types';
 
 const PENDING_USER_SETTINGS_KEY = '@moodie/pending-user-settings-v1';
@@ -23,12 +27,14 @@ type PendingUserSettings = {
 
 export async function loadDeviceUserSettings(): Promise<UserSettingsSnapshot> {
   const [
+    languageCode,
     themePreference,
     reminderPreferences,
     selectedTopicIds,
     backgroundPreference,
     likedAffirmationKeys,
   ] = await Promise.all([
+    loadLanguageCode(),
     loadThemePreference(),
     loadReminderPreferences(),
     loadSelectedAffirmationTopics(),
@@ -37,6 +43,7 @@ export async function loadDeviceUserSettings(): Promise<UserSettingsSnapshot> {
   ]);
 
   return {
+    languageCode,
     themePreference,
     reminderPreferences,
     selectedTopicIds,
@@ -49,6 +56,7 @@ export async function saveDeviceUserSettings(
   settings: UserSettingsSnapshot,
 ): Promise<void> {
   await Promise.all([
+    saveLanguageCode(settings.languageCode),
     saveThemePreference(settings.themePreference),
     saveReminderPreferences(settings.reminderPreferences),
     saveSelectedAffirmationTopics(settings.selectedTopicIds),

@@ -8,29 +8,41 @@ import {
   LoadedAffirmationContent,
 } from './types';
 
-const CONTENT_CACHE_KEY = '@moodie/affirmation-content-v1';
-const CONTENT_CACHE_VERSION = 1;
+const CONTENT_CACHE_PREFIX = '@moodie/affirmation-content-v2:';
+const CONTENT_CACHE_VERSION = 2;
 
 type TopicRow = {
   id: unknown;
-  name: unknown;
   image_uri: unknown;
   sort_order: unknown;
+};
+
+type TopicTranslationRow = {
+  topic_id: unknown;
+  name: unknown;
 };
 
 type AffirmationRow = {
   id: unknown;
   topic_id: unknown;
-  text: unknown;
   image_uri: unknown;
   sort_order: unknown;
+};
+
+type AffirmationTranslationRow = {
+  affirmation_id: unknown;
+  text: unknown;
 };
 
 type BackgroundRow = {
   id: unknown;
   image_uri: unknown;
-  tags: unknown;
   sort_order: unknown;
+};
+
+type BackgroundTranslationRow = {
+  background_id: unknown;
+  tags: unknown;
 };
 
 type OrderedAffirmation = AffirmationCard & { sortOrder: number };
@@ -84,29 +96,48 @@ function compareOrdered(
 
 export function parseAffirmationContentRows(
   topicRows: TopicRow[],
+  topicTranslationRows: TopicTranslationRow[],
   affirmationRows: AffirmationRow[],
+  affirmationTranslationRows: AffirmationTranslationRow[],
   backgroundRows: BackgroundRow[],
+  backgroundTranslationRows: BackgroundTranslationRow[],
 ): AffirmationContent {
+  const topicNames = new Map(
+    topicTranslationRows.map(row => [
+      requireString(row.topic_id, 'topic translation id'),
+      requireString(row.name, 'topic name'),
+    ]),
+  );
   const topicsById = new Map<string, OrderedTopic>();
 
   topicRows.forEach(row => {
     const id = requireString(row.id, 'topic id');
+    const name = topicNames.get(id);
+    if (!name) return;
     if (topicsById.has(id)) {
       throw new Error(`Duplicate topic id "${id}" in affirmation content.`);
     }
 
     topicsById.set(id, {
       id,
-      name: requireString(row.name, 'topic name'),
+      name,
       imageUri: requireString(row.image_uri, 'topic image URI'),
       sortOrder: requireOrder(row.sort_order, 'topic sort order'),
       affirmations: [],
     });
   });
 
+  const affirmationTexts = new Map(
+    affirmationTranslationRows.map(row => [
+      requireString(row.affirmation_id, 'affirmation translation id'),
+      requireString(row.text, 'affirmation text'),
+    ]),
+  );
   const seenAffirmationIds = new Set<string>();
   affirmationRows.forEach(row => {
     const id = requireString(row.id, 'affirmation id');
+    const text = affirmationTexts.get(id);
+    if (!text) return;
     if (seenAffirmationIds.has(id)) {
       throw new Error(
         `Duplicate affirmation id "${id}" in affirmation content.`,
@@ -115,14 +146,11 @@ export function parseAffirmationContentRows(
     seenAffirmationIds.add(id);
     const topicId = requireString(row.topic_id, 'affirmation topic id');
     const topic = topicsById.get(topicId);
-
-    if (!topic) {
-      return;
-    }
+    if (!topic) return;
 
     topic.affirmations.push({
       id,
-      text: requireString(row.text, 'affirmation text'),
+      text,
       imageUri: requireString(row.image_uri, 'affirmation image URI'),
       sortOrder: requireOrder(row.sort_order, 'affirmation sort order'),
     });
@@ -140,12 +168,26 @@ export function parseAffirmationContentRows(
         .map(({ sortOrder: _sortOrder, ...affirmation }) => affirmation),
     }));
 
-  const backgroundsWithOrder = backgroundRows.map(row => ({
-    id: requireString(row.id, 'background id'),
-    imageUri: requireString(row.image_uri, 'background image URI'),
-    tags: parseTags(row.tags),
-    sortOrder: requireOrder(row.sort_order, 'background sort order'),
-  }));
+  const backgroundTags = new Map(
+    backgroundTranslationRows.map(row => [
+      requireString(row.background_id, 'background translation id'),
+      parseTags(row.tags),
+    ]),
+  );
+  const backgroundsWithOrder = backgroundRows.flatMap(row => {
+    const id = requireString(row.id, 'background id');
+    const tags = backgroundTags.get(id);
+    if (!tags) return [];
+
+    return [
+      {
+        id,
+        imageUri: requireString(row.image_uri, 'background image URI'),
+        tags,
+        sortOrder: requireOrder(row.sort_order, 'background sort order'),
+      },
+    ];
+  });
   const seenBackgroundIds = new Set<string>();
   backgroundsWithOrder.forEach(background => {
     if (seenBackgroundIds.has(background.id)) {
@@ -173,41 +215,70 @@ export function parseAffirmationContentRows(
   return { topics, backgrounds };
 }
 
-async function fetchPublishedAffirmationContent(): Promise<AffirmationContent> {
+async function fetchPublishedAffirmationContent(
+  languageCode: string,
+): Promise<AffirmationContent> {
   const client = getSupabaseClient();
-  const [topicsResult, affirmationsResult, backgroundsResult] =
-    await Promise.all([
-      client
-        .from('affirmation_topics')
-        .select('id,name,image_uri,sort_order')
-        .eq('is_published', true)
-        .order('sort_order')
-        .order('id'),
-      client
-        .from('affirmations')
-        .select('id,topic_id,text,image_uri,sort_order')
-        .eq('is_published', true)
-        .order('topic_id')
-        .order('sort_order')
-        .order('id'),
-      client
-        .from('affirmation_backgrounds')
-        .select('id,image_uri,tags,sort_order')
-        .eq('is_published', true)
-        .order('sort_order')
-        .order('id'),
-    ]);
+  const [
+    topicsResult,
+    topicTranslationsResult,
+    affirmationsResult,
+    affirmationTranslationsResult,
+    backgroundsResult,
+    backgroundTranslationsResult,
+  ] = await Promise.all([
+    client
+      .from('affirmation_topics')
+      .select('id,image_uri,sort_order')
+      .eq('is_published', true)
+      .order('sort_order')
+      .order('id'),
+    client
+      .from('affirmation_topic_translations')
+      .select('topic_id,name')
+      .eq('language_code', languageCode)
+      .order('topic_id'),
+    client
+      .from('affirmations')
+      .select('id,topic_id,image_uri,sort_order')
+      .eq('is_published', true)
+      .order('topic_id')
+      .order('sort_order')
+      .order('id'),
+    client
+      .from('affirmation_translations')
+      .select('affirmation_id,text')
+      .eq('language_code', languageCode)
+      .order('affirmation_id'),
+    client
+      .from('affirmation_backgrounds')
+      .select('id,image_uri,sort_order')
+      .eq('is_published', true)
+      .order('sort_order')
+      .order('id'),
+    client
+      .from('affirmation_background_translations')
+      .select('background_id,tags')
+      .eq('language_code', languageCode)
+      .order('background_id'),
+  ]);
 
   const error =
-    topicsResult.error ?? affirmationsResult.error ?? backgroundsResult.error;
-  if (error) {
-    throw error;
-  }
+    topicsResult.error ??
+    topicTranslationsResult.error ??
+    affirmationsResult.error ??
+    affirmationTranslationsResult.error ??
+    backgroundsResult.error ??
+    backgroundTranslationsResult.error;
+  if (error) throw error;
 
   return parseAffirmationContentRows(
     (topicsResult.data ?? []) as TopicRow[],
+    (topicTranslationsResult.data ?? []) as TopicTranslationRow[],
     (affirmationsResult.data ?? []) as AffirmationRow[],
+    (affirmationTranslationsResult.data ?? []) as AffirmationTranslationRow[],
     (backgroundsResult.data ?? []) as BackgroundRow[],
+    (backgroundTranslationsResult.data ?? []) as BackgroundTranslationRow[],
   );
 }
 
@@ -231,7 +302,9 @@ function parseCachedContent(value: string): AffirmationContent {
   }
 
   const topicRows: TopicRow[] = [];
+  const topicTranslationRows: TopicTranslationRow[] = [];
   const affirmationRows: AffirmationRow[] = [];
+  const affirmationTranslationRows: AffirmationTranslationRow[] = [];
   candidate.topics.forEach(topicValue => {
     if (typeof topicValue !== 'object' || topicValue === null) {
       throw new Error('Invalid cached affirmation topic.');
@@ -245,10 +318,10 @@ function parseCachedContent(value: string): AffirmationContent {
     };
     topicRows.push({
       id: topic.id,
-      name: topic.name,
       image_uri: topic.imageUri,
       sort_order: topicRows.length,
     });
+    topicTranslationRows.push({ topic_id: topic.id, name: topic.name });
 
     if (!Array.isArray(topic.affirmations)) {
       throw new Error('Invalid cached affirmations.');
@@ -265,52 +338,62 @@ function parseCachedContent(value: string): AffirmationContent {
       affirmationRows.push({
         id: affirmation.id,
         topic_id: topic.id,
-        text: affirmation.text,
         image_uri: affirmation.imageUri,
         sort_order: affirmationRows.length,
+      });
+      affirmationTranslationRows.push({
+        affirmation_id: affirmation.id,
+        text: affirmation.text,
       });
     });
   });
 
-  const backgroundRows = candidate.backgrounds.map(
-    (backgroundValue, index): BackgroundRow => {
-      if (typeof backgroundValue !== 'object' || backgroundValue === null) {
-        throw new Error('Invalid cached affirmation background.');
-      }
-      const background = backgroundValue as {
-        id?: unknown;
-        imageUri?: unknown;
-        tags?: unknown;
-      };
-      return {
-        id: background.id,
-        image_uri: background.imageUri,
-        tags: background.tags,
-        sort_order: index,
-      };
-    },
-  );
+  const backgroundRows: BackgroundRow[] = [];
+  const backgroundTranslationRows: BackgroundTranslationRow[] = [];
+  candidate.backgrounds.forEach((backgroundValue, index) => {
+    if (typeof backgroundValue !== 'object' || backgroundValue === null) {
+      throw new Error('Invalid cached affirmation background.');
+    }
+    const background = backgroundValue as {
+      id?: unknown;
+      imageUri?: unknown;
+      tags?: unknown;
+    };
+    backgroundRows.push({
+      id: background.id,
+      image_uri: background.imageUri,
+      sort_order: index,
+    });
+    backgroundTranslationRows.push({
+      background_id: background.id,
+      tags: background.tags,
+    });
+  });
 
   return parseAffirmationContentRows(
     topicRows,
+    topicTranslationRows,
     affirmationRows,
+    affirmationTranslationRows,
     backgroundRows,
+    backgroundTranslationRows,
   );
 }
 
-export async function loadAffirmationContent(): Promise<LoadedAffirmationContent> {
+export async function loadAffirmationContent(
+  languageCode: string,
+): Promise<LoadedAffirmationContent> {
+  const cacheKey = `${CONTENT_CACHE_PREFIX}${languageCode}`;
   try {
-    const content = await fetchPublishedAffirmationContent();
+    const content = await fetchPublishedAffirmationContent(languageCode);
     await AsyncStorage.setItem(
-      CONTENT_CACHE_KEY,
+      cacheKey,
       JSON.stringify({ version: CONTENT_CACHE_VERSION, ...content }),
     ).catch(() => undefined);
     return { content, source: 'remote' };
   } catch (remoteError) {
-    const cachedValue = await AsyncStorage.getItem(CONTENT_CACHE_KEY);
-    if (cachedValue === null) {
-      throw remoteError;
-    }
+    const cachedValue = await AsyncStorage.getItem(cacheKey);
+    if (cachedValue === null) throw remoteError;
 
     return {
       content: parseCachedContent(cachedValue),

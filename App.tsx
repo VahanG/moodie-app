@@ -11,6 +11,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import { initializeSupabase } from './src/features/supabase';
 import { ThemeProvider, useTheme } from './src/theme';
 import { UserSettingsSynchronizer } from './src/features/user-settings';
+import { LocalizationProvider } from './src/features/localization';
 
 function App() {
   React.useEffect(() => initializeSupabase(), []);
@@ -18,9 +19,11 @@ function App() {
   return (
     <SafeAreaProvider>
       <UserSettingsSynchronizer />
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
+      <LocalizationProvider>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
+      </LocalizationProvider>
     </SafeAreaProvider>
   );
 }

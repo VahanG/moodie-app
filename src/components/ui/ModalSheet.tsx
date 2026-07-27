@@ -4,6 +4,7 @@ import { useTheme } from '../../theme';
 import { AppButton } from './AppButton';
 import { AppText } from './AppText';
 import { createModalSheetStyles } from './ModalSheet.styles';
+import { useLocalization } from '../../features/localization';
 
 type Props = {
   visible: boolean;
@@ -25,6 +26,7 @@ export const ModalSheet: React.FC<Props> = ({
   sheetStyle,
 }) => {
   const { theme } = useTheme();
+  const { t } = useLocalization();
   const styles = useMemo(() => createModalSheetStyles(theme), [theme]);
 
   return (
@@ -37,7 +39,7 @@ export const ModalSheet: React.FC<Props> = ({
     >
       <View style={styles.backdrop} testID={testID}>
         <Pressable
-          accessibilityLabel={`Close ${title}`}
+          accessibilityLabel={t('common.closeNamed', { title })}
           onPress={onClose}
           style={styles.dismissArea}
         />
@@ -48,7 +50,7 @@ export const ModalSheet: React.FC<Props> = ({
             <AppButton
               compact
               fullWidth={false}
-              label="Done"
+              label={t('common.done')}
               onPress={onClose}
               testID={closeTestID}
               variant="ghost"

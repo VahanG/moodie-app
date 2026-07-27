@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { useTheme } from '../../theme';
 import { AppText } from './AppText';
 import { createBottomNavigationStyles } from './BottomNavigation.styles';
+import { useLocalization } from '../../features/localization';
 
 export type BottomNavigationIconProps = {
   color: string;
@@ -31,12 +32,13 @@ export function BottomNavigation<Key extends React.Key>({
   testID,
 }: Props<Key>) {
   const { theme } = useTheme();
+  const { t } = useLocalization();
   const styles = useMemo(() => createBottomNavigationStyles(theme), [theme]);
 
   return (
     <View style={styles.shell}>
       <View
-        accessibilityLabel="Primary navigation"
+        accessibilityLabel={t('navigation.primary')}
         accessibilityRole="tablist"
         style={styles.navigation}
         testID={testID}
