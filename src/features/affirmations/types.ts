@@ -10,7 +10,7 @@ export type AffirmationCard = {
 
 export type AffirmationTopic = {
   id: AffirmationTopicId;
-  name: string;
+  name: string | null;
   imageUri: string;
   affirmations: AffirmationCard[];
 };

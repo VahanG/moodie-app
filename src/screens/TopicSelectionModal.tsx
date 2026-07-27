@@ -35,42 +35,47 @@ const TopicSelectionModal: React.FC<Props> = ({
       visible={visible}
     >
       <ScrollView contentContainerStyle={styles.topicList} testID="list-topics">
-        {topics.map(topic => {
-          const isSelected = selectedTopicIds.includes(topic.id);
+        {topics
+          .filter(topic => topic.name !== null)
+          .map(topic => {
+            const isSelected = selectedTopicIds.includes(topic.id);
 
-          return (
-            <Pressable
-              key={topic.id}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: isSelected }}
-              style={[styles.topicCard, isSelected && styles.topicCardSelected]}
-              onPress={() => {
-                const nextTopicIds = isSelected
-                  ? selectedTopicIds.filter(id => id !== topic.id)
-                  : [...selectedTopicIds, topic.id];
+            return (
+              <Pressable
+                key={topic.id}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isSelected }}
+                style={[
+                  styles.topicCard,
+                  isSelected && styles.topicCardSelected,
+                ]}
+                onPress={() => {
+                  const nextTopicIds = isSelected
+                    ? selectedTopicIds.filter(id => id !== topic.id)
+                    : [...selectedTopicIds, topic.id];
 
-                onSelectTopics(nextTopicIds);
-              }}
-              testID={`item-topic-${topic.id}`}
-            >
-              <Image
-                source={{ uri: topic.imageUri }}
-                style={styles.topicCardImage}
-                resizeMode="cover"
-              />
-              <View style={styles.topicCardOverlay}>
-                <AppText tone="onImage" variant="heading">
-                  {topic.name}
-                </AppText>
-                {isSelected ? (
-                  <AppText tone="onImage" variant="caption">
-                    {t('common.selected')}
+                  onSelectTopics(nextTopicIds);
+                }}
+                testID={`item-topic-${topic.id}`}
+              >
+                <Image
+                  source={{ uri: topic.imageUri }}
+                  style={styles.topicCardImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.topicCardOverlay}>
+                  <AppText tone="onImage" variant="heading">
+                    {topic.name}
                   </AppText>
-                ) : null}
-              </View>
-            </Pressable>
-          );
-        })}
+                  {isSelected ? (
+                    <AppText tone="onImage" variant="caption">
+                      {t('common.selected')}
+                    </AppText>
+                  ) : null}
+                </View>
+              </Pressable>
+            );
+          })}
       </ScrollView>
     </ModalSheet>
   );

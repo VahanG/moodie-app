@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -54,19 +55,36 @@ const fallbackContext: LocalizationContextValue = {
 const LocalizationContext =
   createContext<LocalizationContextValue>(fallbackContext);
 
+type LocaleState = {
+  languageCode: string;
+  remoteMessages: Record<string, string>;
+};
+
 export function LocalizationProvider({ children }: { children: ReactNode }) {
-  const [languageCode, setLanguageCode] = useState(DEFAULT_LANGUAGE_CODE);
+  const [locale, setLocale] = useState<LocaleState>({
+    languageCode: DEFAULT_LANGUAGE_CODE,
+    remoteMessages: {},
+  });
   const [languages, setLanguages] = useState<SupportedLanguage[]>([
     fallbackLanguage,
   ]);
-  const [remoteMessages, setRemoteMessages] = useState<Record<string, string>>(
-    {},
-  );
   const [isLoading, setIsLoading] = useState(true);
+  const activeLanguageCodeRef = useRef(DEFAULT_LANGUAGE_CODE);
+  const languageRequestIdRef = useRef(0);
+  const isSelectingLanguageRef = useRef(false);
+  const explicitlySelectedLanguageCodeRef = useRef<string | null>(null);
+  const { languageCode, remoteMessages } = locale;
 
   const applyLanguage = useCallback(async (nextCode: string) => {
-    setLanguageCode(nextCode);
-    setRemoteMessages(await loadRemoteMessages(nextCode));
+    const requestId = languageRequestIdRef.current + 1;
+    languageRequestIdRef.current = requestId;
+    const messages = await loadRemoteMessages(nextCode);
+    if (languageRequestIdRef.current !== requestId) {
+      return;
+    }
+
+    activeLanguageCodeRef.current = nextCode;
+    setLocale({ languageCode: nextCode, remoteMessages: messages });
   }, []);
 
   useEffect(() => {
@@ -93,9 +111,13 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
       })
       .catch(async () => {
         if (!active) return;
+        languageRequestIdRef.current += 1;
+        activeLanguageCodeRef.current = DEFAULT_LANGUAGE_CODE;
         setLanguages([fallbackLanguage]);
-        setLanguageCode(DEFAULT_LANGUAGE_CODE);
-        setRemoteMessages({});
+        setLocale({
+          languageCode: DEFAULT_LANGUAGE_CODE,
+          remoteMessages: {},
+        });
       })
       .finally(() => {
         if (active) setIsLoading(false);
@@ -109,11 +131,20 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
   useEffect(
     () =>
       subscribeToUserSettings(settings => {
-        if (isLoading) return;
+        if (isLoading || isSelectingLanguageRef.current) return;
+        if (
+          explicitlySelectedLanguageCodeRef.current !== null &&
+          settings.languageCode !== explicitlySelectedLanguageCodeRef.current
+        ) {
+          return;
+        }
         const isSupported = languages.some(
           language => language.code === settings.languageCode,
         );
-        if (settings.languageCode !== languageCode && isSupported) {
+        if (
+          settings.languageCode !== activeLanguageCodeRef.current &&
+          isSupported
+        ) {
           saveLanguageCode(settings.languageCode)
             .then(() => applyLanguage(settings.languageCode))
             .catch(() => undefined);
@@ -130,7 +161,7 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
             .catch(() => undefined);
         }
       }),
-    [applyLanguage, isLoading, languageCode, languages],
+    [applyLanguage, isLoading, languages],
   );
 
   const setLanguage = useCallback(
@@ -139,9 +170,18 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
         throw new Error('That language is not currently supported.');
       }
 
-      await saveLanguageCode(nextCode);
-      await applyLanguage(nextCode);
-      await syncCurrentDeviceSettingsToDatabase();
+      explicitlySelectedLanguageCodeRef.current = nextCode;
+      isSelectingLanguageRef.current = true;
+      try {
+        await saveLanguageCode(nextCode);
+        await applyLanguage(nextCode);
+        await syncCurrentDeviceSettingsToDatabase();
+      } catch (error) {
+        explicitlySelectedLanguageCodeRef.current = null;
+        throw error;
+      } finally {
+        isSelectingLanguageRef.current = false;
+      }
     },
     [applyLanguage, languages],
   );

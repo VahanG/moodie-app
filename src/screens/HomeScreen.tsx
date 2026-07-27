@@ -48,6 +48,11 @@ import {
   syncCurrentDeviceSettingsToDatabase,
 } from '../features/user-settings';
 import { useLocalization } from '../features/localization';
+import {
+  getAffirmationContentForLanguage,
+  getAffirmationContentStatusForLanguage,
+  type AffirmationContentStatus,
+} from '../features/affirmations/localizedState';
 
 function formatTime(hour: number, minute: number): string {
   return `${hour.toString().padStart(2, '0')}:${minute
@@ -59,6 +64,7 @@ const HomeScreen: React.FC = () => {
   const { languageCode, t } = useLocalization();
   const styles = useHomeScreenStyles();
   const scrollViewRef = useRef<ScrollView | null>(null);
+  const contentRequestIdRef = useRef(0);
   const { width: windowWidth } = useWindowDimensions();
   const [pagerWidth, setPagerWidth] = useState(windowWidth);
   const [preferences, setPreferences] = useState<ReminderPreferences>(
@@ -86,9 +92,14 @@ const HomeScreen: React.FC = () => {
   );
   const [affirmationContent, setAffirmationContent] =
     useState<AffirmationContent>({ topics: [], backgrounds: [] });
-  const [contentStatus, setContentStatus] = useState<
-    'loading' | 'ready' | 'error'
-  >('loading');
+  const [contentLanguageCode, setContentLanguageCode] = useState<string | null>(
+    null,
+  );
+  const [contentStatus, setContentStatus] =
+    useState<AffirmationContentStatus>('loading');
+  const [contentStatusLanguageCode, setContentStatusLanguageCode] = useState<
+    string | null
+  >(null);
   const reminderNotificationContent = useMemo(
     () => ({
       title: t('notifications.reminderTitle'),
@@ -98,16 +109,38 @@ const HomeScreen: React.FC = () => {
   );
 
   const refreshAffirmationContent = useCallback(async () => {
+    const requestedLanguageCode = languageCode;
+    const requestId = contentRequestIdRef.current + 1;
+    contentRequestIdRef.current = requestId;
+    setContentStatusLanguageCode(requestedLanguageCode);
     setContentStatus('loading');
 
     try {
-      const loaded = await loadAffirmationContent(languageCode);
+      const loaded = await loadAffirmationContent(requestedLanguageCode);
+      if (contentRequestIdRef.current !== requestId) {
+        return;
+      }
       setAffirmationContent(loaded.content);
+      setContentLanguageCode(requestedLanguageCode);
       setContentStatus('ready');
     } catch {
+      if (contentRequestIdRef.current !== requestId) {
+        return;
+      }
       setContentStatus('error');
     }
   }, [languageCode]);
+
+  const visibleAffirmationContent = getAffirmationContentForLanguage(
+    affirmationContent,
+    contentLanguageCode,
+    languageCode,
+  );
+  const visibleContentStatus = getAffirmationContentStatusForLanguage(
+    contentStatus,
+    contentStatusLanguageCode,
+    languageCode,
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -189,7 +222,7 @@ const HomeScreen: React.FC = () => {
   );
 
   useEffect(() => {
-    if (contentStatus !== 'ready') {
+    if (contentStatus !== 'ready' || contentLanguageCode !== languageCode) {
       return;
     }
 
@@ -258,7 +291,9 @@ const HomeScreen: React.FC = () => {
     affirmationContent.backgrounds,
     affirmationContent.topics,
     backgroundPreference.backgroundId,
+    contentLanguageCode,
     contentStatus,
+    languageCode,
     likedAffirmationKeys,
     selectedTopicIds,
   ]);
@@ -268,21 +303,24 @@ const HomeScreen: React.FC = () => {
     [preferences.hour, preferences.minute],
   );
 
-  const persistPreferences = useCallback(async (next: ReminderPreferences) => {
-    setIsSaving(true);
+  const persistPreferences = useCallback(
+    async (next: ReminderPreferences) => {
+      setIsSaving(true);
 
-    try {
-      await saveReminderPreferences(next);
-      await syncCurrentDeviceSettingsToDatabase();
-      setPreferences(next);
-      return true;
-    } catch {
-      setStatusMessage(t('status.reminderSaveError'));
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [t]);
+      try {
+        await saveReminderPreferences(next);
+        await syncCurrentDeviceSettingsToDatabase();
+        setPreferences(next);
+        return true;
+      } catch {
+        setStatusMessage(t('status.reminderSaveError'));
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [t],
+  );
 
   const handleToggle = useCallback(
     async (nextEnabled: boolean) => {
@@ -524,9 +562,9 @@ const HomeScreen: React.FC = () => {
           style={[styles.page, styles.affirmationPage, { width: pagerWidth }]}
         >
           <AffirmationPanel
-            topics={affirmationContent.topics}
-            backgrounds={affirmationContent.backgrounds}
-            contentStatus={contentStatus}
+            topics={visibleAffirmationContent.topics}
+            backgrounds={visibleAffirmationContent.backgrounds}
+            contentStatus={visibleContentStatus}
             onRetryContent={refreshAffirmationContent}
             selectedTopicIds={selectedTopicIds}
             onSelectTopics={handleTopicSelect}

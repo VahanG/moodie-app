@@ -32,6 +32,10 @@ requirements:
       - Every admin mutation is authorized by database RLS using the current authenticated administrator.
       - A validated database response is cached as last-known-good content for offline launches.
       - Invalid or unavailable remote content never replaces the last-known-good cache.
+      - The Today feed includes only affirmations with translations for the currently selected language.
+      - A translated affirmation remains eligible when its topic name has not yet been translated; untranslated topic labels are omitted.
+      - Content loaded for a previously selected language is hidden while the current language loads or fails.
+      - Missing translated background metadata does not prevent otherwise translated affirmations from loading.
     verification:
       test_id: database_managed_affirmation_content
       status: integration_contract_check

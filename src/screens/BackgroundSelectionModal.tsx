@@ -114,6 +114,7 @@ const BackgroundSelectionModal: React.FC<Props> = ({
     >
       <SegmentedControl
         accessibilityLabel={t('backgrounds.mode')}
+        disabled={backgrounds.length === 0}
         onChange={mode => {
           if (mode === 'free') {
             onBackgroundPreferenceChange({
@@ -254,9 +255,7 @@ const BackgroundSelectionModal: React.FC<Props> = ({
           </View>
         )}
         {visibleBackgroundGroups.length === 0 ? (
-          <AppText tone="muted">
-            {t('backgrounds.empty')}
-          </AppText>
+          <AppText tone="muted">{t('backgrounds.empty')}</AppText>
         ) : null}
       </ScrollView>
     </ModalSheet>

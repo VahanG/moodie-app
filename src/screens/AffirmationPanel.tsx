@@ -46,7 +46,7 @@ type Props = {
 type TopicAffirmation = {
   id: string;
   topicId: AffirmationTopicId;
-  topicName: string;
+  topicName: string | null;
   imageUri: string;
   text: string;
 };
@@ -384,38 +384,40 @@ const AffirmationPanel: React.FC<Props> = ({
               },
             ]}
           >
-            <Pressable
-              accessibilityLabel={t('affirmations.chooseTopic', {
-                topic: activeAffirmation.topicName,
-              })}
-              accessibilityRole="button"
-              onPress={() => {
-                setIsTopicModalVisible(true);
-              }}
-              style={({ pressed }) => [
-                styles.topicChip,
-                pressed && { opacity: 0.72 },
-              ]}
-              testID="btn-open-topic-selection"
-            >
-              <Ionicons
-                color={theme.colors.onImage}
-                name="sparkles-outline"
-                size={16}
-              />
-              <AppText
-                style={styles.topicText}
-                testID="text-current-topic"
-                variant="label"
+            {activeAffirmation.topicName !== null ? (
+              <Pressable
+                accessibilityLabel={t('affirmations.chooseTopic', {
+                  topic: activeAffirmation.topicName,
+                })}
+                accessibilityRole="button"
+                onPress={() => {
+                  setIsTopicModalVisible(true);
+                }}
+                style={({ pressed }) => [
+                  styles.topicChip,
+                  pressed && { opacity: 0.72 },
+                ]}
+                testID="btn-open-topic-selection"
               >
-                {activeAffirmation.topicName}
-              </AppText>
-              <Ionicons
-                color={theme.colors.onImageMuted}
-                name="chevron-down"
-                size={15}
-              />
-            </Pressable>
+                <Ionicons
+                  color={theme.colors.onImage}
+                  name="sparkles-outline"
+                  size={16}
+                />
+                <AppText
+                  style={styles.topicText}
+                  testID="text-current-topic"
+                  variant="label"
+                >
+                  {activeAffirmation.topicName}
+                </AppText>
+                <Ionicons
+                  color={theme.colors.onImageMuted}
+                  name="chevron-down"
+                  size={15}
+                />
+              </Pressable>
+            ) : null}
 
             <AppText
               style={[

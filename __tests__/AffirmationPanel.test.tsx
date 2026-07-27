@@ -98,3 +98,45 @@ test('renders the modern Today card and keeps core actions functional', async ()
 
   shareSpy.mockRestore();
 });
+
+test('renders translated affirmation text without an untranslated topic label', async () => {
+  const topic: AffirmationTopic = {
+    id: 'selflove',
+    name: null,
+    imageUri: 'https://example.com/self-love.jpg',
+    affirmations: [
+      {
+        id: 'affirmation-hy',
+        imageUri: 'https://example.com/affirmation-hy.jpg',
+        text: 'Հոգ տար քո մասին',
+      },
+    ],
+  };
+  let renderer: ReactTestRenderer.ReactTestRenderer;
+
+  await ReactTestRenderer.act(async () => {
+    renderer = ReactTestRenderer.create(
+      <ThemeProvider>
+        <AffirmationPanel
+          backgrounds={[]}
+          backgroundPreference={{ mode: 'free', backgroundId: null }}
+          contentStatus="ready"
+          likedAffirmationKeys={[]}
+          onBackgroundPreferenceChange={jest.fn()}
+          onRetryContent={jest.fn()}
+          onSelectTopics={jest.fn()}
+          onToggleAffirmationLike={jest.fn()}
+          selectedTopicIds={[]}
+          topics={[topic]}
+        />
+      </ThemeProvider>,
+    );
+  });
+
+  expect(
+    renderer!.root.findByProps({ testID: 'text-affirmation' }).props.children,
+  ).toBe('Հոգ տար քո մասին');
+  expect(
+    renderer!.root.findAllByProps({ testID: 'text-current-topic' }),
+  ).toHaveLength(0);
+});

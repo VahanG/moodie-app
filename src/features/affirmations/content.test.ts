@@ -135,7 +135,7 @@ describe('affirmation content parsing', () => {
       ),
     ).toThrow('No published affirmations');
 
-    expect(() =>
+    expect(
       parseAffirmationContentRows(
         topics,
         topicTranslations,
@@ -143,8 +143,53 @@ describe('affirmation content parsing', () => {
         affirmationTranslations,
         backgrounds,
         [],
-      ),
-    ).toThrow('No published affirmation backgrounds');
+      ).backgrounds,
+    ).toEqual([]);
+  });
+
+  test('keeps only affirmations translated into the selected language', () => {
+    expect(
+      parseAffirmationContentRows(
+        topics,
+        topicTranslations,
+        affirmations,
+        [affirmationTranslations[0]],
+        backgrounds,
+        backgroundTranslations,
+      ).topics[0].affirmations,
+    ).toEqual([
+      {
+        id: 'affirmation-2',
+        text: 'Second',
+        imageUri: 'https://example.com/second.jpg',
+      },
+    ]);
+  });
+
+  test('keeps a translated affirmation when its topic name is untranslated', () => {
+    expect(
+      parseAffirmationContentRows(
+        topics,
+        [],
+        affirmations,
+        [affirmationTranslations[0]],
+        backgrounds,
+        [],
+      ).topics,
+    ).toEqual([
+      {
+        id: 'growth',
+        name: null,
+        imageUri: 'https://example.com/growth.jpg',
+        affirmations: [
+          {
+            id: 'affirmation-2',
+            text: 'Second',
+            imageUri: 'https://example.com/second.jpg',
+          },
+        ],
+      },
+    ]);
   });
 });
 
@@ -157,9 +202,7 @@ describe('affirmation content loading', () => {
         sort_order: 10,
       },
     ],
-    affirmation_topic_translations: [
-      { topic_id: 'growth', name: 'Growth' },
-    ],
+    affirmation_topic_translations: [{ topic_id: 'growth', name: 'Growth' }],
     affirmations: [
       {
         id: 'affirmation-1',
@@ -199,8 +242,8 @@ describe('affirmation content loading', () => {
     expect(loaded.content.topics[0].affirmations[0].text).toBe('Keep going.');
     expect(mockFrom).toHaveBeenCalledWith('affirmation_translations');
     expect(mockSetItem).toHaveBeenCalledWith(
-      '@moodie/affirmation-content-v2:en',
-      expect.stringContaining('"version":2'),
+      '@moodie/affirmation-content-v3:en',
+      expect.stringContaining('"version":3'),
     );
   });
 
@@ -210,7 +253,7 @@ describe('affirmation content loading', () => {
     );
     mockGetItem.mockResolvedValue(
       JSON.stringify({
-        version: 2,
+        version: 3,
         topics: [
           {
             id: 'growth',
@@ -238,7 +281,7 @@ describe('affirmation content loading', () => {
     const loaded = await loadAffirmationContent('en');
 
     expect(mockGetItem).toHaveBeenCalledWith(
-      '@moodie/affirmation-content-v2:en',
+      '@moodie/affirmation-content-v3:en',
     );
     expect(loaded.content.topics[0].affirmations[0].text).toBe(
       'Cached affirmation.',

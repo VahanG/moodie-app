@@ -8,8 +8,8 @@ import {
   LoadedAffirmationContent,
 } from './types';
 
-const CONTENT_CACHE_PREFIX = '@moodie/affirmation-content-v2:';
-const CONTENT_CACHE_VERSION = 2;
+const CONTENT_CACHE_PREFIX = '@moodie/affirmation-content-v3:';
+const CONTENT_CACHE_VERSION = 3;
 
 type TopicRow = {
   id: unknown;
@@ -112,15 +112,13 @@ export function parseAffirmationContentRows(
 
   topicRows.forEach(row => {
     const id = requireString(row.id, 'topic id');
-    const name = topicNames.get(id);
-    if (!name) return;
     if (topicsById.has(id)) {
       throw new Error(`Duplicate topic id "${id}" in affirmation content.`);
     }
 
     topicsById.set(id, {
       id,
-      name,
+      name: topicNames.get(id) ?? null,
       imageUri: requireString(row.image_uri, 'topic image URI'),
       sortOrder: requireOrder(row.sort_order, 'topic sort order'),
       affirmations: [],
@@ -206,10 +204,6 @@ export function parseAffirmationContentRows(
     topics.every(topic => topic.affirmations.length === 0)
   ) {
     throw new Error('No published affirmations are available.');
-  }
-
-  if (backgrounds.length === 0) {
-    throw new Error('No published affirmation backgrounds are available.');
   }
 
   return { topics, backgrounds };
@@ -321,7 +315,9 @@ function parseCachedContent(value: string): AffirmationContent {
       image_uri: topic.imageUri,
       sort_order: topicRows.length,
     });
-    topicTranslationRows.push({ topic_id: topic.id, name: topic.name });
+    if (topic.name !== null) {
+      topicTranslationRows.push({ topic_id: topic.id, name: topic.name });
+    }
 
     if (!Array.isArray(topic.affirmations)) {
       throw new Error('Invalid cached affirmations.');

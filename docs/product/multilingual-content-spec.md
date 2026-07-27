@@ -15,6 +15,9 @@ native release for every new language or content translation.
 - English (`en`) is the initial and default language.
 - The user's selection is stored on the device and, when authenticated, in
   `public.user_settings`.
+- The active language code and its UI-message bundle are applied atomically;
+  stale message loads or settings snapshots cannot create a mixed-language
+  state or override a newer explicit selection.
 - If a previously selected language is disabled, the app returns to the
   configured default language.
 
@@ -46,10 +49,11 @@ their language-neutral records:
 - background translation: localized tags used for browsing, labels, search,
   and accessibility.
 
-Editorial content never falls back to another language. For the selected
-language:
+Editorial content never falls back to another language. Each translated field
+is independently eligible for the selected language:
 
-- a topic without a nonblank translation is absent;
+- a topic without a nonblank translation is absent from topic labels and
+  selection controls, but does not suppress its translated affirmations;
 - an affirmation without a nonblank translation is absent;
 - a topic with no visible translated affirmations is absent;
 - a background without translated tags is absent.
@@ -90,6 +94,8 @@ browser uses only the Supabase publishable key.
 - Admin can enter topic, affirmation, background-tag, and app UI translations
   per supported language.
 - Selecting a language reloads editorial content in that language.
+- The language code exposed to screens always matches the UI-message bundle
+  used by those screens.
 - No editorial item is visible when its required selected-language
   translation is missing or blank.
 - Disabling a language removes it from selection and causes affected users to
