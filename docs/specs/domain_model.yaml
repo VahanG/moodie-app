@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: DOMAIN-MODEL
@@ -16,7 +16,7 @@ conventions:
 entities:
   - name: AffirmationTopic
     status: defined
-    storage: bundled_content_v1
+    storage: supabase_public.affirmation_topics
     fields:
       - name: id
         type: string
@@ -31,22 +31,25 @@ entities:
       - name: affirmations
         type: list<Affirmation>
         required: true
-        constraints:
-          min_items: 1
+      - name: sort_order
+        type: integer
+        required: true
+      - name: is_published
+        type: boolean
+        required: true
     relationships:
       - type: has_many
         target: Affirmation
         foreign_key: topic_id
 
   - name: Affirmation
-    status: provisional
-    storage: bundled_content_v1
+    status: defined
+    storage: supabase_public.affirmations
     fields:
       - name: id
-        type: string
+        type: uuid
         required: true
         unique: true
-        derivation: TBD
       - name: topic_id
         type: string
         required: true
@@ -60,6 +63,13 @@ entities:
         required: true
         constraints:
           min_items: 1
+        implementation_field: image_uri
+      - name: sort_order
+        type: integer
+        required: true
+      - name: is_published
+        type: boolean
+        required: true
     relationships:
       - type: belongs_to
         target: AffirmationTopic
@@ -70,7 +80,7 @@ entities:
 
   - name: AffirmationBackground
     status: defined
-    storage: bundled_content_v1
+    storage: supabase_public.affirmation_backgrounds
     fields:
       - name: id
         type: string
@@ -85,6 +95,12 @@ entities:
         constraints:
           min_items: 1
           unique_items: true
+      - name: sort_order
+        type: integer
+        required: true
+      - name: is_published
+        type: boolean
+        required: true
 
   - name: AffirmationPreferences
     status: provisional
@@ -123,7 +139,6 @@ entities:
         target: Affirmation
         field: liked_affirmation_ids
     unresolved:
-      - Stable affirmation identifier strategy is TBD.
       - Ownership by a future user model is TBD.
 
   - name: ReminderPreferences

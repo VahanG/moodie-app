@@ -30,7 +30,9 @@ import {
   saveSelectedAffirmationTopics,
   toggleLikedAffirmationKey,
 } from '../features/affirmations/storage';
+import { loadAffirmationContent } from '../features/affirmations/content';
 import {
+  AffirmationContent,
   AffirmationBackgroundPreference,
   AffirmationTopicId,
 } from '../features/affirmations/types';
@@ -75,6 +77,23 @@ const HomeScreen: React.FC = () => {
   const [likedAffirmationKeys, setLikedAffirmationKeys] = useState<string[]>(
     [],
   );
+  const [affirmationContent, setAffirmationContent] =
+    useState<AffirmationContent>({ topics: [], backgrounds: [] });
+  const [contentStatus, setContentStatus] = useState<
+    'loading' | 'ready' | 'error'
+  >('loading');
+
+  const refreshAffirmationContent = useCallback(async () => {
+    setContentStatus('loading');
+
+    try {
+      const loaded = await loadAffirmationContent();
+      setAffirmationContent(loaded.content);
+      setContentStatus('ready');
+    } catch {
+      setContentStatus('error');
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -123,11 +142,40 @@ const HomeScreen: React.FC = () => {
     };
 
     initialize();
+    refreshAffirmationContent();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshAffirmationContent]);
+
+  useEffect(() => {
+    if (contentStatus !== 'ready') {
+      return;
+    }
+
+    const availableTopicIds = new Set(
+      affirmationContent.topics.map(topic => topic.id),
+    );
+    setSelectedTopicIds(current =>
+      current.filter(topicId => availableTopicIds.has(topicId)),
+    );
+
+    const backgroundId = backgroundPreference.backgroundId;
+    if (
+      backgroundId !== null &&
+      !affirmationContent.backgrounds.some(
+        background => background.id === backgroundId,
+      )
+    ) {
+      setBackgroundPreference({ mode: 'free', backgroundId: null });
+    }
+  }, [
+    affirmationContent.backgrounds,
+    affirmationContent.topics,
+    backgroundPreference.backgroundId,
+    contentStatus,
+  ]);
 
   const reminderTimeText = useMemo(
     () => formatTime(preferences.hour, preferences.minute),
@@ -376,6 +424,10 @@ const HomeScreen: React.FC = () => {
           style={[styles.page, styles.affirmationPage, { width: pagerWidth }]}
         >
           <AffirmationPanel
+            topics={affirmationContent.topics}
+            backgrounds={affirmationContent.backgrounds}
+            contentStatus={contentStatus}
+            onRetryContent={refreshAffirmationContent}
             selectedTopicIds={selectedTopicIds}
             onSelectTopics={handleTopicSelect}
             backgroundPreference={backgroundPreference}

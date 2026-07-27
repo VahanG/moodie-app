@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 feature:
   id: FEATURE-BACKGROUND-SELECTION
@@ -7,13 +7,17 @@ feature:
   purpose: Control affirmation background behavior and locate a preferred image in a large gallery.
   entry_route: moodie://affirmations/backgrounds
 
-v1_content_policy:
-  source: prefetched_or_hardcoded_in_app
-  remote_feed: out_of_scope
+content_policy:
+  source: supabase
+  admin_surface: apps/admin
+  offline_fallback: last_known_good_validated_database_payload
+  bundled_fallback: none
   background_fields:
     - id
     - image_uri
     - tags
+    - sort_order
+    - is_published
 
 test_fixtures:
   - id: background-a
@@ -158,4 +162,3 @@ requirements:
           url: moodie://affirmations?relaunch=true
         - action: expect_visible
           selector: "[data-testid='image-affirmation-background'][data-background-id='background-a']"
-

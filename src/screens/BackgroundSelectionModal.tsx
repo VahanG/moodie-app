@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
-import { AFFIRMATION_BACKGROUNDS } from '../features/affirmations/backgrounds';
 import {
   AffirmationBackground,
   AffirmationBackgroundPreference,
@@ -22,6 +21,7 @@ type BackgroundGroup = {
 
 type Props = {
   visible: boolean;
+  backgrounds: AffirmationBackground[];
   backgroundPreference: AffirmationBackgroundPreference;
   onBackgroundPreferenceChange: (
     preference: AffirmationBackgroundPreference,
@@ -53,6 +53,7 @@ function buildBackgroundGroups(
 
 const BackgroundSelectionModal: React.FC<Props> = ({
   visible,
+  backgrounds,
   backgroundPreference,
   onBackgroundPreferenceChange,
   onClose,
@@ -64,8 +65,8 @@ const BackgroundSelectionModal: React.FC<Props> = ({
   >(null);
   const normalizedTagSearch = backgroundTagSearch.trim().toLowerCase();
   const groupedBackgrounds = useMemo(
-    () => buildBackgroundGroups(AFFIRMATION_BACKGROUNDS),
-    [],
+    () => buildBackgroundGroups(backgrounds),
+    [backgrounds],
   );
   const visibleBackgroundGroups = useMemo(
     () =>
@@ -83,7 +84,7 @@ const BackgroundSelectionModal: React.FC<Props> = ({
       ) ?? null,
     [visibleBackgroundGroups, selectedBackgroundTag],
   );
-  const fixedModeFallbackBackgroundId = AFFIRMATION_BACKGROUNDS[0]?.id ?? null;
+  const fixedModeFallbackBackgroundId = backgrounds[0]?.id ?? null;
 
   useEffect(() => {
     if (

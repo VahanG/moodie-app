@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: PRODUCT-SCOPE
@@ -42,12 +42,11 @@ affirmation_experience:
     - Persistent liked-affirmation state for later My Favorites consumption.
     - Tag-grouped background gallery with tag-only search.
     - Persistent selections across application sessions.
-    - Prefetched or hardcoded background metadata for v1.
+    - Admin-managed topics, affirmations, and background metadata delivered from Supabase.
   out_of_scope:
     - Advanced personalization beyond topic and background mode.
     - Topic recommendation engine.
     - Strict one-to-one matching between gallery images and affirmation text.
-    - Dynamic or remote background data for v1.
 
 documentation_delivery_scope:
   in_scope:

@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: SUPABASE-INTEGRATION
@@ -57,7 +57,7 @@ client:
 environment:
   local_file: .env
   committed_template: .env.example
-  eas_project: "@vahan.vgs/moodie-app"
+  eas_project: '@vahan.vgs/moodie-app'
   eas_environments:
     development: configured
     preview: configured
@@ -121,6 +121,15 @@ database_workflow:
     client_check: public.is_admin()
     assignment_path: direct database SQL only
     operator_guide: docs/engineering/admin-access.md
+  affirmation_content:
+    tables:
+      - public.affirmation_topics
+      - public.affirmations
+      - public.affirmation_backgrounds
+    supporter_access: select_published_only
+    admin_access: rls_protected_crud
+    admin_authorization: public.is_admin()
+    offline_cache: validated_last_known_good
 
 open_decisions:
   - id: SUP-TBD-001

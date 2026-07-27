@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: ACCESS-CONTROL
@@ -57,6 +57,7 @@ application_boundaries:
     shared_contracts:
       - supabase_auth_identity
       - public.is_admin()
+      - public affirmation content tables
 
 roles:
   - id: admin
@@ -71,14 +72,18 @@ roles:
 
 permission_matrix:
   - actor: anonymous_device_session
-    resource: local_affirmation_experience
+    resource: published_affirmation_content
     permissions:
       - view
+    basis: Published editorial content is intentionally public and protected by read-only RLS.
+  - actor: anonymous_device_session
+    resource: local_affirmation_preferences
+    permissions:
       - select_topics
       - select_background
       - like
       - share
-    basis: Current features are device-local and no authentication boundary is documented.
+    basis: Personal affirmation preferences remain device-local.
   - actor: anonymous_device_session
     resource: local_reminder_preferences
     permissions:
@@ -86,14 +91,18 @@ permission_matrix:
       - update
     basis: Current reminder configuration is device-local and no authentication boundary is documented.
   - actor: authenticated_moodie_user
-    resource: local_affirmation_experience
+    resource: published_affirmation_content
     permissions:
       - view
+    basis: Published editorial content is readable independently of authentication.
+  - actor: authenticated_moodie_user
+    resource: local_affirmation_preferences
+    permissions:
       - select_topics
       - select_background
       - like
       - share
-    basis: Authentication does not yet change access to device-local features.
+    basis: Personal affirmation preferences remain device-local.
   - actor: authenticated_moodie_user
     resource: local_reminder_preferences
     permissions:
@@ -117,12 +126,19 @@ permission_matrix:
     permissions:
       - view
     basis: Admin membership is visible to the current account but cannot be assigned, changed, or revoked by the app.
+  - actor: moodie_admin
+    resource: affirmation_content
+    permissions:
+      - view
+      - create
+      - update
+      - publish
+      - unpublish
+      - delete
+    basis: Content table RLS evaluates public.is_admin() for every privileged operation.
 
 undefined_permissions:
   - resource: product_catalog_management
-    roles:
-      - admin
-  - resource: remote_content_publishing
     roles:
       - admin
   - resource: purchase_entitlements

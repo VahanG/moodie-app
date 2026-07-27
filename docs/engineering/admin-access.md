@@ -26,10 +26,24 @@ checks `public.is_admin()` after session restoration and after every
 authentication change, and fails closed when the RPC is unavailable or returns
 anything other than `true`.
 
-The dashboard currently exposes no privileged mutations. Each future catalog,
-content, commerce, analytics, or release operation must have a documented
-contract and a database RLS policy or trusted server boundary before its UI is
-enabled.
+The dashboard Content section manages affirmation categories, affirmation
+text, and selectable backgrounds. These operations use public Supabase tables
+with RLS-protected administrator mutations. Future catalog, commerce,
+analytics, or release operations must still have a documented contract and a
+database RLS policy or trusted server boundary before their UI is enabled.
+
+### Affirmation content authorization
+
+- Anonymous and authenticated supporter clients can select only published
+  rows from `affirmation_topics`, `affirmations`, and
+  `affirmation_backgrounds`.
+- Authenticated clients receive table mutation grants, but RLS permits a
+  mutation only when `(select public.is_admin())` succeeds.
+- Administrators can create drafts, edit, order, publish, unpublish, and
+  delete records in the Content section.
+- Deleting a category cascades to its affirmation records and requires an
+  explicit browser confirmation.
+- A service-role key is not used by or exposed to the admin browser.
 
 Required admin web environment values:
 

@@ -1,12 +1,15 @@
 import React from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
-import { AFFIRMATION_TOPICS } from '../features/affirmations/data';
-import { AffirmationTopicId } from '../features/affirmations/types';
+import {
+  AffirmationTopic,
+  AffirmationTopicId,
+} from '../features/affirmations/types';
 import { useHomeScreenStyles } from './HomeScreen.styles';
 import { AppText, ModalSheet } from '../components/ui';
 
 type Props = {
   visible: boolean;
+  topics: AffirmationTopic[];
   selectedTopicIds: AffirmationTopicId[];
   onClose: () => void;
   onSelectTopics: (topicIds: AffirmationTopicId[]) => Promise<void> | void;
@@ -14,6 +17,7 @@ type Props = {
 
 const TopicSelectionModal: React.FC<Props> = ({
   visible,
+  topics,
   selectedTopicIds,
   onClose,
   onSelectTopics,
@@ -29,7 +33,7 @@ const TopicSelectionModal: React.FC<Props> = ({
       visible={visible}
     >
       <ScrollView contentContainerStyle={styles.topicList} testID="list-topics">
-        {AFFIRMATION_TOPICS.map(topic => {
+        {topics.map(topic => {
           const isSelected = selectedTopicIds.includes(topic.id);
 
           return (

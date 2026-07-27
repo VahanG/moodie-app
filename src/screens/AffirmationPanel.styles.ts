@@ -12,6 +12,13 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       paddingHorizontal: spacing.md,
       backgroundColor: colors.background,
     },
+    emptyState: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.md,
+      padding: spacing.xl,
+    },
     mediaCard: {
       flex: 1,
       minHeight: 0,

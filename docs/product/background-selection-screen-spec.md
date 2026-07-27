@@ -7,13 +7,13 @@ Allow users to control how affirmation backgrounds are chosen and quickly find a
 - Entry should be accessible from the Affirmations screen.
 - After changing background mode, user returns to Affirmations and sees the new behavior immediately.
 
-## Gallery content model (v1)
-- Background data is prefetched/hardcoded in-app for this phase.
+## Gallery content model
+- Background data is managed in the Moodie admin workspace and retrieved from Supabase.
 - Each background image has:
   - Stable id.
   - Image asset reference.
   - One or more tags.
-- Dynamic/remote background feeds are out of scope for this phase.
+- Only published backgrounds are visible in the supporter app.
 
 ## Modes
 1. Fixed background mode

@@ -35,20 +35,21 @@ describe('affirmation preference storage', () => {
     );
   });
 
-  test('loads the default topic and supports the legacy single-topic format', async () => {
+  test('loads an empty default and supports the legacy single-topic format', async () => {
     mockGetItem.mockResolvedValueOnce(null).mockResolvedValueOnce('"calm"');
 
-    await expect(loadSelectedAffirmationTopics()).resolves.toEqual(['growth']);
+    await expect(loadSelectedAffirmationTopics()).resolves.toEqual([]);
     await expect(loadSelectedAffirmationTopics()).resolves.toEqual(['calm']);
   });
 
-  test('filters unknown topics and removes duplicates', async () => {
+  test('keeps database identifiers and removes duplicates', async () => {
     mockGetItem.mockResolvedValue(
       JSON.stringify(['calm', 'unknown', 'calm', 'focus']),
     );
 
     await expect(loadSelectedAffirmationTopics()).resolves.toEqual([
       'calm',
+      'unknown',
       'focus',
     ]);
   });
@@ -67,7 +68,7 @@ describe('affirmation preference storage', () => {
     mockGetItem
       .mockResolvedValueOnce(JSON.stringify(preference))
       .mockResolvedValueOnce(
-        JSON.stringify({ mode: 'fixed', backgroundId: 'missing' }),
+        JSON.stringify({ mode: 'fixed', backgroundId: '' }),
       );
 
     await expect(loadAffirmationBackgroundPreference()).resolves.toEqual(

@@ -2,7 +2,7 @@ import React from 'react';
 import { Share } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import AffirmationPanel from '../src/screens/AffirmationPanel';
-import { AFFIRMATION_TOPICS } from '../src/features/affirmations/data';
+import { AffirmationTopic } from '../src/features/affirmations/types';
 import { buildAffirmationLikeKey } from '../src/features/affirmations/storage';
 import { ThemeProvider } from '../src/theme';
 
@@ -25,7 +25,25 @@ function findInteractiveNode(
 }
 
 test('renders the modern Today card and keeps core actions functional', async () => {
-  const topic = AFFIRMATION_TOPICS[0];
+  const topic: AffirmationTopic = {
+    id: 'growth',
+    name: 'Growth',
+    imageUri: 'https://example.com/growth.jpg',
+    affirmations: [
+      {
+        id: 'affirmation-1',
+        imageUri: 'https://example.com/affirmation.jpg',
+        text: 'You are growing every day.',
+      },
+    ],
+  };
+  const backgrounds = [
+    {
+      id: 'forest',
+      imageUri: 'https://example.com/forest.jpg',
+      tags: ['growth'],
+    },
+  ];
   const dailyIndex =
     Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % topic.affirmations.length;
   const activeAffirmation = topic.affirmations[dailyIndex];
@@ -39,14 +57,18 @@ test('renders the modern Today card and keeps core actions functional', async ()
     renderer = ReactTestRenderer.create(
       <ThemeProvider>
         <AffirmationPanel
+          backgrounds={backgrounds}
           backgroundPreference={{ mode: 'free', backgroundId: null }}
+          contentStatus="ready"
           likedAffirmationKeys={[
             buildAffirmationLikeKey(topic.id, activeAffirmation.text),
           ]}
           onBackgroundPreferenceChange={jest.fn()}
+          onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
           onToggleAffirmationLike={onToggleAffirmationLike}
           selectedTopicIds={[topic.id]}
+          topics={[topic]}
         />
       </ThemeProvider>,
     );

@@ -19,12 +19,11 @@ Users currently see a single generic affirmation stream. The product now needs a
   - Persistent liked-affirmation state for future "My Favorites" consumption.
   - Tag-grouped background gallery with tag-based search.
   - Persistent user selections across app sessions.
-  - Prefetched/hardcoded background metadata for v1.
+  - Admin-managed topics, affirmations, and background metadata delivered from Supabase.
 - Out
   - Advanced personalization beyond topic and background mode.
   - Topic recommendation engine.
   - Gallery-image and affirmation-text strict one-to-one matching.
-  - Dynamic/remote background data flow.
 
 ## Product requirements (high level)
 1. The default landing page remains Affirmations.
@@ -39,7 +38,7 @@ Users currently see a single generic affirmation stream. The product now needs a
 10. Free mode uses affirmation-text-connected backgrounds.
 11. Background gallery supports browsing by tags and searching by tags.
 12. Selecting a background from gallery/search sets fixed mode and applies to all affirmation texts.
-13. For v1, background list is prefetched/hardcoded.
+13. Categories, affirmation text, and backgrounds are managed in the admin workspace and retrieved from Supabase.
 14. Liked affirmations persist across sessions and are reserved for a future My Favorites section.
 15. Calendar and Settings behavior from v1 remains unchanged by this update.
 

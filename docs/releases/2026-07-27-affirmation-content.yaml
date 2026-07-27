@@ -1,0 +1,31 @@
+schema_version: "1.0.0"
+
+release:
+  id: affirmation-content-database-foundation
+  date: "2026-07-27"
+  type: content_platform_migration
+  summary: Move affirmation categories, text, and backgrounds from the app bundle into Supabase and the protected admin workspace.
+
+content:
+  topics: 9
+  affirmations: 27
+  backgrounds: 9
+  publication_state: published
+  source: existing_supporter_app_content
+
+delivery:
+  supporter_source: published Supabase rows
+  offline_behavior: validated last-known-good cache
+  bundled_editorial_fallback: none
+
+authorization:
+  public_permission: select published rows only
+  admin_permission: RLS-protected CRUD
+  admin_check: public.is_admin()
+
+verification:
+  - Migrations apply from a clean local database.
+  - Anonymous reads return the published seed set.
+  - A non-admin authenticated update affects zero rows.
+  - A database-listed authenticated admin can update through RLS.
+  - Supabase database lint reports no schema errors.

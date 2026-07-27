@@ -15,22 +15,23 @@ import {
   View,
 } from 'react-native';
 import {
-  AFFIRMATION_TOPICS,
-  getAffirmationTopicById,
-} from '../features/affirmations/data';
-import { getAffirmationBackgroundById } from '../features/affirmations/backgrounds';
-import {
+  AffirmationBackground,
   AffirmationBackgroundPreference,
+  AffirmationTopic,
   AffirmationTopicId,
 } from '../features/affirmations/types';
 import { buildAffirmationLikeKey } from '../features/affirmations/storage';
 import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
-import { AppText, IconButton } from '../components/ui';
+import { AppButton, AppText, IconButton } from '../components/ui';
 import { useTheme } from '../theme';
 import { useAffirmationPanelStyles } from './AffirmationPanel.styles';
 
 type Props = {
+  topics: AffirmationTopic[];
+  backgrounds: AffirmationBackground[];
+  contentStatus: 'loading' | 'ready' | 'error';
+  onRetryContent: () => Promise<void> | void;
   selectedTopicIds: AffirmationTopicId[];
   onSelectTopics: (topicIds: AffirmationTopicId[]) => Promise<void> | void;
   backgroundPreference: AffirmationBackgroundPreference;
@@ -59,10 +60,7 @@ function getDailyIndex(length: number): number {
   return Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % length;
 }
 
-function buildAffirmationFeed(
-  topicIds: AffirmationTopicId[],
-): TopicAffirmation[] {
-  const topics = topicIds.map(getAffirmationTopicById);
+function buildAffirmationFeed(topics: AffirmationTopic[]): TopicAffirmation[] {
   const maxAffirmationCount = topics.reduce(
     (maxCount, topic) => Math.max(maxCount, topic.affirmations.length),
     0,
@@ -89,6 +87,10 @@ function buildAffirmationFeed(
 }
 
 const AffirmationPanel: React.FC<Props> = ({
+  topics,
+  backgrounds,
+  contentStatus,
+  onRetryContent,
   selectedTopicIds,
   onSelectTopics,
   backgroundPreference,
@@ -107,16 +109,16 @@ const AffirmationPanel: React.FC<Props> = ({
     () => [...new Set(selectedTopicIds)],
     [selectedTopicIds],
   );
-  const activeTopicIds = useMemo(
+  const activeTopics = useMemo(
     () =>
       normalizedSelectedTopicIds.length > 0
-        ? normalizedSelectedTopicIds
-        : AFFIRMATION_TOPICS.map(topic => topic.id),
-    [normalizedSelectedTopicIds],
+        ? topics.filter(topic => normalizedSelectedTopicIds.includes(topic.id))
+        : topics,
+    [normalizedSelectedTopicIds, topics],
   );
   const affirmationFeed = useMemo(
-    () => buildAffirmationFeed(activeTopicIds),
-    [activeTopicIds],
+    () => buildAffirmationFeed(activeTopics),
+    [activeTopics],
   );
   const dailyAffirmationIndex = useMemo(
     () => getDailyIndex(affirmationFeed.length),
@@ -257,8 +259,10 @@ const AffirmationPanel: React.FC<Props> = ({
       return undefined;
     }
 
-    return getAffirmationBackgroundById(backgroundPreference.backgroundId);
-  }, [backgroundPreference.backgroundId]);
+    return backgrounds.find(
+      background => background.id === backgroundPreference.backgroundId,
+    );
+  }, [backgroundPreference.backgroundId, backgrounds]);
 
   const activeAffirmationLikeKey = useMemo(() => {
     if (!activeAffirmation) {
@@ -294,7 +298,31 @@ const AffirmationPanel: React.FC<Props> = ({
   }, [activeAffirmation]);
 
   if (!activeAffirmation || !activeImageUri) {
-    return null;
+    return (
+      <View style={styles.screen} testID="screen-affirmations">
+        <View style={styles.emptyState} testID="state-affirmation-content">
+          <AppText variant="heading">
+            {contentStatus === 'loading'
+              ? 'Loading your affirmations…'
+              : 'Affirmations are unavailable'}
+          </AppText>
+          <AppText tone="muted">
+            {contentStatus === 'loading'
+              ? 'Fetching the latest published content.'
+              : 'Check your connection and try again.'}
+          </AppText>
+          {contentStatus === 'error' ? (
+            <AppButton
+              compact
+              fullWidth={false}
+              label="Try again"
+              onPress={onRetryContent}
+              testID="btn-retry-affirmation-content"
+            />
+          ) : null}
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -486,6 +514,7 @@ const AffirmationPanel: React.FC<Props> = ({
         </View>
       </View>
       <TopicSelectionModal
+        topics={topics}
         visible={isTopicModalVisible}
         selectedTopicIds={normalizedSelectedTopicIds}
         onClose={() => {
@@ -494,6 +523,7 @@ const AffirmationPanel: React.FC<Props> = ({
         onSelectTopics={onSelectTopics}
       />
       <BackgroundSelectionModal
+        backgrounds={backgrounds}
         visible={isBackgroundModalVisible}
         backgroundPreference={backgroundPreference}
         onBackgroundPreferenceChange={onBackgroundPreferenceChange}

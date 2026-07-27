@@ -10,6 +10,7 @@ feature:
   dependencies:
     - FEATURE-TOPIC-SELECTION
     - FEATURE-BACKGROUND-SELECTION
+    - FEATURE-CONTENT-DELIVERY
 
 test_fixtures:
   - id: affirmation-a
@@ -20,6 +21,21 @@ test_fixtures:
     text: Fixture affirmation B
 
 requirements:
+  - id: AFF-008
+    title: Database-Managed Editorial Content
+    description: Topics, affirmation text, and affirmation backgrounds are managed in the protected admin workspace and delivered from Supabase.
+    priority: MUST
+    acceptance_criteria:
+      - The supporter app contains no bundled topic, affirmation, or background catalog.
+      - Anonymous and authenticated supporter sessions can read only published content.
+      - Administrators can create, edit, order, publish, unpublish, and delete content through the admin workspace.
+      - Every admin mutation is authorized by database RLS using the current authenticated administrator.
+      - A validated database response is cached as last-known-good content for offline launches.
+      - Invalid or unavailable remote content never replaces the last-known-good cache.
+    verification:
+      test_id: database_managed_affirmation_content
+      status: integration_contract_check
+
   - id: AFF-001
     title: Immersive Affirmation Layout
     description: The default landing page presents a focused, mobile-first affirmation card over a media-rich visual background.

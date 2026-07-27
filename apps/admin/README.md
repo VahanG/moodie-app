@@ -26,6 +26,16 @@ or database credentials to this application.
 - Every data mutation must enforce admin authorization through RLS or a trusted
   backend function.
 - Rendering the dashboard is not an authorization boundary.
+- Published affirmation content is readable by supporter clients.
+- Category, affirmation, and background mutations are enforced by table RLS
+  using the current authenticated admin membership.
+
+## Content operations
+
+The Content section manages affirmation categories, affirmation text, and
+backgrounds. New records start as drafts unless an administrator explicitly
+publishes them. Ordering and publication changes are read by the supporter app
+from Supabase and become its cached last-known-good payload after validation.
 
 ## Render
 

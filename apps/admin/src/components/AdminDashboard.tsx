@@ -1,12 +1,14 @@
-import { type AdminIdentity } from "../lib/auth";
-import styles from "./AdminPortal.module.css";
+import { useState } from 'react';
+import { type AdminIdentity } from '../lib/auth';
+import { ContentManager } from './ContentManager';
+import styles from './AdminPortal.module.css';
 
 const navigation = [
-  { label: "Overview", enabled: true },
-  { label: "Catalog", enabled: false },
-  { label: "Content", enabled: false },
-  { label: "Commerce", enabled: false },
-  { label: "Insights", enabled: false },
+  { id: 'overview', label: 'Overview', enabled: true },
+  { id: 'content', label: 'Content', enabled: true },
+  { id: 'catalog', label: 'Catalog', enabled: false },
+  { id: 'commerce', label: 'Commerce', enabled: false },
+  { id: 'insights', label: 'Insights', enabled: false },
 ];
 
 export function AdminDashboard({
@@ -16,6 +18,8 @@ export function AdminDashboard({
   identity: AdminIdentity;
   onSignOut: () => void;
 }) {
+  const [activeSection, setActiveSection] = useState('overview');
+
   return (
     <div className={styles.appShell}>
       <aside className={styles.sidebar}>
@@ -28,10 +32,17 @@ export function AdminDashboard({
         </div>
 
         <nav aria-label="Admin sections" className={styles.navigation}>
-          {navigation.map((item) => (
+          {navigation.map(item => (
             <button
-              className={item.enabled ? styles.navActive : styles.navDisabled}
+              className={
+                item.enabled && activeSection === item.id
+                  ? styles.navActive
+                  : item.enabled
+                  ? styles.navEnabled
+                  : styles.navDisabled
+              }
               disabled={!item.enabled}
+              onClick={() => setActiveSection(item.id)}
               key={item.label}
               type="button"
             >
@@ -56,64 +67,74 @@ export function AdminDashboard({
       </aside>
 
       <main className={styles.main}>
-        <header className={styles.pageHeader}>
-          <div>
-            <p className={styles.eyebrow}>Operations</p>
-            <h1>Workspace overview</h1>
-            <p>One secure place to manage Moodie’s remote experience.</p>
-          </div>
-          <span className={styles.accessBadge}>
-            <i aria-hidden="true" />
-            Admin access verified
-          </span>
-        </header>
+        {activeSection === 'content' ? (
+          <ContentManager />
+        ) : (
+          <>
+            <header className={styles.pageHeader}>
+              <div>
+                <p className={styles.eyebrow}>Operations</p>
+                <h1>Workspace overview</h1>
+                <p>One secure place to manage Moodie’s remote experience.</p>
+              </div>
+              <span className={styles.accessBadge}>
+                <i aria-hidden="true" />
+                Admin access verified
+              </span>
+            </header>
 
-        <section aria-labelledby="readiness-title" className={styles.hero}>
-          <div>
-            <p className={styles.eyebrow}>Foundation ready</p>
-            <h2 id="readiness-title">The admin boundary is in place.</h2>
-            <p>
-              Authentication and role verification are connected. Product
-              operations will unlock as their protected APIs are implemented.
-            </p>
-          </div>
-          <div aria-hidden="true" className={styles.heroMonogram}>
-            M
-          </div>
-        </section>
+            <section aria-labelledby="readiness-title" className={styles.hero}>
+              <div>
+                <p className={styles.eyebrow}>Foundation ready</p>
+                <h2 id="readiness-title">The admin boundary is in place.</h2>
+                <p>
+                  Authentication and role verification are connected. Product
+                  operations will unlock as their protected APIs are
+                  implemented.
+                </p>
+              </div>
+              <div aria-hidden="true" className={styles.heroMonogram}>
+                M
+              </div>
+            </section>
 
-        <section aria-label="Admin capability status" className={styles.grid}>
-          <StatusCard
-            index="01"
-            status="Ready"
-            subtitle="Supabase session active"
-            title="Identity"
-          />
-          <StatusCard
-            index="02"
-            status="Ready"
-            subtitle="Database membership verified"
-            title="Access control"
-          />
-          <StatusCard
-            index="03"
-            status="Planned"
-            subtitle="Protected contract not connected"
-            title="Catalog operations"
-          />
-        </section>
+            <section
+              aria-label="Admin capability status"
+              className={styles.grid}
+            >
+              <StatusCard
+                index="01"
+                status="Ready"
+                subtitle="Supabase session active"
+                title="Identity"
+              />
+              <StatusCard
+                index="02"
+                status="Ready"
+                subtitle="Database membership verified"
+                title="Access control"
+              />
+              <StatusCard
+                index="03"
+                status="Ready"
+                subtitle="Protected database CRUD connected"
+                title="Affirmation content"
+              />
+            </section>
 
-        <section className={styles.activity}>
-          <div>
-            <p className={styles.eyebrow}>Activity</p>
-            <h2>No admin changes yet</h2>
-            <p>
-              Publishing history and audit events will appear here when the
-              first protected content workflow is connected.
-            </p>
-          </div>
-          <span className={styles.emptyDate}>Today</span>
-        </section>
+            <section className={styles.activity}>
+              <div>
+                <p className={styles.eyebrow}>Activity</p>
+                <h2>No admin changes yet</h2>
+                <p>
+                  Publishing history and audit events will appear here when the
+                  first protected content workflow is connected.
+                </p>
+              </div>
+              <span className={styles.emptyDate}>Today</span>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );
@@ -126,7 +147,7 @@ function StatusCard({
   title,
 }: {
   index: string;
-  status: "Ready" | "Planned";
+  status: 'Ready' | 'Planned';
   subtitle: string;
   title: string;
 }) {
@@ -137,7 +158,7 @@ function StatusCard({
         <h3>{title}</h3>
         <p>{subtitle}</p>
       </div>
-      <span className={status === "Ready" ? styles.ready : styles.pending}>
+      <span className={status === 'Ready' ? styles.ready : styles.pending}>
         {status}
       </span>
     </article>

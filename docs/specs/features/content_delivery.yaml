@@ -1,9 +1,9 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 feature:
   id: FEATURE-CONTENT-DELIVERY
   name: Dynamic Content Delivery
-  lifecycle: planned
+  lifecycle: current_for_affirmation_content
   purpose: Deliver remotely managed catalog, campaign, and theme content without unnecessary forced upgrades.
   content_source: Supabase
   project_ref: vwougnsbyqqeessdkbae
@@ -18,6 +18,7 @@ requirements:
       - The application validates payload version and schema compatibility before activation.
       - Compatible payloads are downloaded and cached.
       - Incompatible or invalid payloads do not replace working content.
+      - Affirmation topics, affirmations, and backgrounds are queried from normalized Supabase tables.
     verification:
       test_id: activate_valid_remote_content
       preconditions:
@@ -72,5 +73,6 @@ open_decisions:
     question: What are the cache invalidation rules and storage limits?
     status: TBD
   - id: CNT-TBD-002
-    question: What bundled fallback is used when no last-known-good payload exists?
-    status: TBD
+    question: What should the supporter app render when neither remote nor last-known-good affirmation content is available?
+    status: resolved
+    resolution: Render an explicit unavailable state with retry; do not ship a bundled editorial fallback.
