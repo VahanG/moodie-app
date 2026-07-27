@@ -60,9 +60,7 @@ test('renders the modern Today card and keeps core actions functional', async ()
           backgrounds={backgrounds}
           backgroundPreference={{ mode: 'free', backgroundId: null }}
           contentStatus="ready"
-          likedAffirmationKeys={[
-            buildAffirmationLikeKey(topic.id, activeAffirmation.text),
-          ]}
+          likedAffirmationKeys={[buildAffirmationLikeKey(activeAffirmation.id)]}
           onBackgroundPreferenceChange={jest.fn()}
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
@@ -93,10 +91,7 @@ test('renders the modern Today card and keeps core actions functional', async ()
     ).props.onPress();
   });
 
-  expect(onToggleAffirmationLike).toHaveBeenCalledWith(
-    topic.id,
-    activeAffirmation.text,
-  );
+  expect(onToggleAffirmationLike).toHaveBeenCalledWith(activeAffirmation.id);
   expect(shareSpy).toHaveBeenCalledWith({
     message: expect.stringContaining(activeAffirmation.text),
   });

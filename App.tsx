@@ -10,12 +10,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeScreen from './src/screens/HomeScreen';
 import { initializeSupabase } from './src/features/supabase';
 import { ThemeProvider, useTheme } from './src/theme';
+import { UserSettingsSynchronizer } from './src/features/user-settings';
 
 function App() {
   React.useEffect(() => initializeSupabase(), []);
 
   return (
     <SafeAreaProvider>
+      <UserSettingsSynchronizer />
       <ThemeProvider>
         <AppContent />
       </ThemeProvider>

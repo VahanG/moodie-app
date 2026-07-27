@@ -130,6 +130,15 @@ database_workflow:
     admin_access: rls_protected_crud
     admin_authorization: public.is_admin()
     offline_cache: validated_last_known_good
+  user_settings:
+    table: public.user_settings
+    ownership: auth.uid()
+    supporter_access: current_user_row_only
+    anonymous_behavior: device_only
+    authenticated_behavior: database_backed_with_device_cache
+    login_conflict_rule: database_wins
+    initial_row_rule: seed_from_device_when_database_row_is_absent
+    offline_write_rule: retain_user_scoped_pending_snapshot_and_retry
 
 open_decisions:
   - id: SUP-TBD-001

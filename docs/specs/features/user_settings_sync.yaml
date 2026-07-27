@@ -1,0 +1,60 @@
+schema_version: '1.0.0'
+
+feature:
+  id: FEATURE-USER-SETTINGS-SYNC
+  name: Authenticated User Settings Synchronization
+  lifecycle: current
+  purpose: Keep every user-owned preference available across authenticated devices while preserving signed-out and offline behavior.
+  dependencies:
+    - FEATURE-AUTHENTICATION
+
+state_scope:
+  synchronized:
+    - theme_preference
+    - reminder_enabled
+    - reminder_hour
+    - reminder_minute
+    - selected_topic_ids
+    - background_mode
+    - background_id
+    - liked_affirmation_keys
+  device_only_infrastructure:
+    - supabase_auth_session_cache
+    - published_content_last_known_good_cache
+
+requirements:
+  - id: USS-001
+    title: Database Priority After Sign-In
+    description: Existing authenticated settings replace the active device settings immediately after session restoration or sign-in.
+    priority: MUST
+    acceptance_criteria:
+      - A current-user database row is loaded after every transition to an authenticated session.
+      - When that row exists, all synchronized device values are replaced by its values.
+      - Updated values are written back to the local cache and broadcast to active screens.
+
+  - id: USS-002
+    title: First-Sign-In Device Import
+    description: A user without a database settings row keeps the choices already made on the current device.
+    priority: MUST
+    acceptance_criteria:
+      - Absence of a current-user database row is distinguished from a query failure.
+      - The complete validated local snapshot is inserted for that user.
+      - Later authenticated devices treat the inserted row as authoritative.
+
+  - id: USS-003
+    title: Authenticated Persistence
+    description: Every user preference change is stored locally and in the current user's database row.
+    priority: MUST
+    acceptance_criteria:
+      - Every synchronized field is included in one complete settings snapshot.
+      - RLS prevents reading or writing another user's row.
+      - Database writes use an upsert keyed only by the current authenticated user.
+
+  - id: USS-004
+    title: Offline Authenticated Changes
+    description: Authenticated changes remain usable offline and are not overwritten by an older database snapshot.
+    priority: MUST
+    acceptance_criteria:
+      - A failed authenticated write stores a pending snapshot scoped to the current user ID.
+      - A matching pending snapshot is pushed before the next database-priority pull.
+      - Pending state from another user is never uploaded to the current account.

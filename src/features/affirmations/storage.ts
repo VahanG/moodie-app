@@ -43,17 +43,14 @@ function getUniqueLikeKeys(likeKeys: string[]): string[] {
   return [...new Set(likeKeys)];
 }
 
-export function buildAffirmationLikeKey(
-  topicId: AffirmationTopicId,
-  affirmationText: string,
-): string {
-  const normalizedText = affirmationText.trim();
+export function buildAffirmationLikeKey(affirmationId: string): string {
+  const normalizedId = affirmationId.trim();
 
-  if (normalizedText.length === 0) {
-    throw new Error('Affirmation text is required to build a like key.');
+  if (normalizedId.length === 0) {
+    throw new Error('Affirmation ID is required to build a like key.');
   }
 
-  return `${topicId}::${normalizedText}`;
+  return normalizedId;
 }
 
 export async function loadSelectedAffirmationTopics(): Promise<

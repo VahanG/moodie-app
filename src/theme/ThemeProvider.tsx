@@ -11,6 +11,10 @@ import React, {
 import { useColorScheme } from 'react-native';
 import { loadThemePreference, saveThemePreference } from './storage';
 import {
+  subscribeToUserSettings,
+  syncCurrentDeviceSettingsToDatabase,
+} from '../features/user-settings/service';
+import {
   getTheme,
   MoodieTheme,
   ResolvedThemeMode,
@@ -56,6 +60,15 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
     };
   }, []);
 
+  useEffect(
+    () =>
+      subscribeToUserSettings(settings => {
+        setPreferenceState(settings.themePreference);
+        setIsThemeReady(true);
+      }),
+    [],
+  );
+
   const resolvedMode: ResolvedThemeMode =
     preference === 'system'
       ? systemColorScheme === 'dark'
@@ -71,6 +84,7 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
       try {
         await saveThemePreference(nextPreference);
+        await syncCurrentDeviceSettingsToDatabase();
       } catch (error) {
         setPreferenceState(previousPreference);
         throw error;

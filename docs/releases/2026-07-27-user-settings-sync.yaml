@@ -1,0 +1,32 @@
+schema_version: "1.0.0"
+
+release:
+  id: authenticated-user-settings-sync
+  date: "2026-07-27"
+  type: supporter_state_sync
+  summary: Synchronize user-owned device settings to Supabase for authenticated users.
+
+synchronized_state:
+  - theme_preference
+  - reminder_preferences
+  - selected_affirmation_topics
+  - affirmation_background_preference
+  - liked_affirmations
+
+conflict_rules:
+  signed_out: Keep settings on the device.
+  existing_database_row_after_sign_in: Database snapshot replaces device settings.
+  missing_database_row_after_sign_in: Current device snapshot seeds the database.
+  authenticated_offline_change: Keep a user-scoped pending snapshot and retry it before pulling.
+
+authorization:
+  authenticated_permission: Select, insert, and update the current user's row.
+  ownership_check: user_id equals auth.uid()
+  anonymous_permission: none
+
+verification:
+  - App type checking, linting, and unit tests pass.
+  - Migrations apply from a clean local database.
+  - An authenticated user sees only their own settings row.
+  - An authenticated update targeting another user affects zero rows.
+  - Supabase database lint reports no schema errors.

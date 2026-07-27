@@ -65,6 +65,7 @@ specification_index:
     - docs/specs/features/background_selection.yaml
     - docs/specs/features/navigation_calendar_settings.yaml
     - docs/specs/features/authentication.yaml
+    - docs/specs/features/user_settings_sync.yaml
     - docs/specs/features/reminders.yaml
     - docs/specs/features/catalog.yaml
     - docs/specs/features/commerce.yaml

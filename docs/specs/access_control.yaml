@@ -96,19 +96,26 @@ permission_matrix:
       - view
     basis: Published editorial content is readable independently of authentication.
   - actor: authenticated_moodie_user
-    resource: local_affirmation_preferences
+    resource: affirmation_preferences
     permissions:
       - select_topics
       - select_background
       - like
       - share
-    basis: Personal affirmation preferences remain device-local.
+    basis: Preferences are database-backed for the current user with a device cache.
   - actor: authenticated_moodie_user
-    resource: local_reminder_preferences
+    resource: own_user_settings
+    permissions:
+      - view
+      - create
+      - update
+    basis: RLS restricts every settings row to user_id = auth.uid().
+  - actor: authenticated_moodie_user
+    resource: reminder_preferences
     permissions:
       - view
       - update
-    basis: Authentication does not yet change access to device-local features.
+    basis: Preferences are database-backed for the current user with a device cache.
   - actor: authenticated_moodie_user
     resource: own_auth_session
     permissions:
@@ -175,11 +182,11 @@ security_requirements:
   - id: ACCESS-008
     priority: MUST
     statement: Every privileged admin data operation must be protected by database RLS or a trusted backend authorization boundary.
+  - id: ACCESS-009
+    priority: MUST
+    statement: Authenticated user settings reads and writes must derive ownership from auth.uid() and may access only the current user's row.
 
 open_decisions:
-  - id: ACCESS-TBD-002
-    question: Which preferences and entitlements synchronize across devices?
-    status: TBD
   - id: ACCESS-TBD-003
     question: How are Moodie accounts provisioned and recovered?
     status: TBD

@@ -27,11 +27,9 @@ describe('affirmation preference storage', () => {
   });
 
   test('builds stable like keys from normalized affirmation text', () => {
-    expect(buildAffirmationLikeKey('growth', '  Keep going.  ')).toBe(
-      'growth::Keep going.',
-    );
-    expect(() => buildAffirmationLikeKey('growth', '   ')).toThrow(
-      'Affirmation text is required',
+    expect(buildAffirmationLikeKey('  affirmation-1  ')).toBe('affirmation-1');
+    expect(() => buildAffirmationLikeKey('   ')).toThrow(
+      'Affirmation ID is required',
     );
   });
 

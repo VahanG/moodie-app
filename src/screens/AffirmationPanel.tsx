@@ -39,13 +39,11 @@ type Props = {
     preference: AffirmationBackgroundPreference,
   ) => Promise<void> | void;
   likedAffirmationKeys: string[];
-  onToggleAffirmationLike: (
-    topicId: AffirmationTopicId,
-    affirmationText: string,
-  ) => Promise<void> | void;
+  onToggleAffirmationLike: (affirmationId: string) => Promise<void> | void;
 };
 
 type TopicAffirmation = {
+  id: string;
   topicId: AffirmationTopicId;
   topicName: string;
   imageUri: string;
@@ -75,6 +73,7 @@ function buildAffirmationFeed(topics: AffirmationTopic[]): TopicAffirmation[] {
       }
 
       feed.push({
+        id: affirmation.id,
         topicId: topic.id,
         topicName: topic.name,
         imageUri: affirmation.imageUri,
@@ -269,10 +268,7 @@ const AffirmationPanel: React.FC<Props> = ({
       return null;
     }
 
-    return buildAffirmationLikeKey(
-      activeAffirmation.topicId,
-      activeAffirmation.text,
-    );
+    return buildAffirmationLikeKey(activeAffirmation.id);
   }, [activeAffirmation]);
   const isActiveAffirmationLiked =
     activeAffirmationLikeKey !== null &&
@@ -459,10 +455,7 @@ const AffirmationPanel: React.FC<Props> = ({
                   />
                 }
                 onPress={() => {
-                  onToggleAffirmationLike(
-                    activeAffirmation.topicId,
-                    activeAffirmation.text,
-                  );
+                  onToggleAffirmationLike(activeAffirmation.id);
                 }}
                 style={styles.actionButton}
                 testID="btn-like-affirmation"

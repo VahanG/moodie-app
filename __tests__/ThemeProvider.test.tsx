@@ -11,6 +11,10 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: (key: string) => mockGetItem(key),
   setItem: (key: string, value: string) => mockSetItem(key, value),
 }));
+jest.mock('../src/features/user-settings/service', () => ({
+  subscribeToUserSettings: () => jest.fn(),
+  syncCurrentDeviceSettingsToDatabase: jest.fn(async () => undefined),
+}));
 
 const ThemeProbe: React.FC = () => {
   const { preference, resolvedMode, setPreference } = useTheme();

@@ -103,8 +103,8 @@ entities:
         required: true
 
   - name: AffirmationPreferences
-    status: provisional
-    storage: device_local
+    status: defined
+    storage: supabase_public.user_settings_with_device_cache
     fields:
       - name: selected_topic_ids
         type: list<string>
@@ -138,12 +138,14 @@ entities:
       - type: references_many
         target: Affirmation
         field: liked_affirmation_ids
-    unresolved:
-      - Ownership by a future user model is TBD.
+    ownership:
+      anonymous_session: device_local
+      authenticated_session: auth.users.id
+      conflict_rule: database_wins_on_sign_in
 
   - name: ReminderPreferences
-    status: provisional
-    storage: device_local
+    status: defined
+    storage: supabase_public.user_settings_with_device_cache
     fields:
       - name: enabled
         type: boolean
@@ -163,9 +165,71 @@ entities:
       - name: timezone
         type: string
         required: TBD
+    ownership:
+      anonymous_session: device_local
+      authenticated_session: auth.users.id
+      conflict_rule: database_wins_on_sign_in
     unresolved:
-      - Ownership by a future user model is TBD.
       - Time-zone and daylight-saving behavior is TBD.
+
+  - name: UserSettings
+    status: defined
+    storage: supabase_public.user_settings
+    fields:
+      - name: user_id
+        type: uuid
+        required: true
+        unique: true
+      - name: theme_preference
+        type: enum
+        required: true
+        allowed_values:
+          - system
+          - light
+          - dark
+      - name: reminder_enabled
+        type: boolean
+        required: true
+      - name: reminder_hour
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 23
+      - name: reminder_minute
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 59
+      - name: selected_topic_ids
+        type: list<string>
+        required: true
+      - name: background_mode
+        type: enum
+        required: true
+        allowed_values:
+          - free
+          - fixed
+      - name: background_id
+        type: string|null
+        required: true
+      - name: liked_affirmation_keys
+        type: list<string>
+        required: true
+      - name: updated_at
+        type: timestamp
+        required: true
+    relationships:
+      - type: belongs_to
+        target: SupabaseAuthUser
+        foreign_key: user_id
+    synchronization:
+      signed_out: Persist changes to the device only.
+      first_sign_in_without_database_row: Seed the database from current device settings.
+      sign_in_with_database_row: Replace device state with the database row.
+      authenticated_change: Persist locally, then upsert the complete database snapshot.
+      offline_authenticated_change: Keep a user-scoped pending snapshot and retry before the next database pull.
 
   - name: ProductAnalog
     status: provisional

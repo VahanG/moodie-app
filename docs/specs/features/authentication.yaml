@@ -107,7 +107,6 @@ out_of_scope:
   - OAuth providers other than Google.
   - Admin management UI.
   - Protected admin application pages until an administrative feature is specified.
-  - Cross-device preference synchronization.
 
 open_decisions:
   - id: AUTH-TBD-001

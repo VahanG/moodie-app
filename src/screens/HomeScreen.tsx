@@ -27,6 +27,7 @@ import {
   loadLikedAffirmationKeys,
   loadSelectedAffirmationTopics,
   saveAffirmationBackgroundPreference,
+  saveLikedAffirmationKeys,
   saveSelectedAffirmationTopics,
   toggleLikedAffirmationKey,
 } from '../features/affirmations/storage';
@@ -42,6 +43,10 @@ import AffirmationPanel from './AffirmationPanel';
 import CalendarPanel from './CalendarPanel';
 import HomeFooter from './HomeFooter';
 import { getHomePageIndex, HOME_PAGE_COUNT } from './homePager';
+import {
+  subscribeToUserSettings,
+  syncCurrentDeviceSettingsToDatabase,
+} from '../features/user-settings';
 
 function formatTime(hour: number, minute: number): string {
   return `${hour.toString().padStart(2, '0')}:${minute
@@ -149,6 +154,29 @@ const HomeScreen: React.FC = () => {
     };
   }, [refreshAffirmationContent]);
 
+  useEffect(
+    () =>
+      subscribeToUserSettings(settings => {
+        setPreferences(settings.reminderPreferences);
+        setSelectedTopicIds(settings.selectedTopicIds);
+        setBackgroundPreference(settings.backgroundPreference);
+        setLikedAffirmationKeys(settings.likedAffirmationKeys);
+        setHourInput(settings.reminderPreferences.hour.toString());
+        setMinuteInput(settings.reminderPreferences.minute.toString());
+        setIsLoading(false);
+
+        if (settings.reminderPreferences.enabled) {
+          scheduleDailyReminder(
+            settings.reminderPreferences.hour,
+            settings.reminderPreferences.minute,
+          );
+        } else {
+          cancelDailyReminder();
+        }
+      }),
+    [],
+  );
+
   useEffect(() => {
     if (contentStatus !== 'ready') {
       return;
@@ -157,9 +185,16 @@ const HomeScreen: React.FC = () => {
     const availableTopicIds = new Set(
       affirmationContent.topics.map(topic => topic.id),
     );
-    setSelectedTopicIds(current =>
-      current.filter(topicId => availableTopicIds.has(topicId)),
+    const validSelectedTopicIds = selectedTopicIds.filter(topicId =>
+      availableTopicIds.has(topicId),
     );
+    const persistence: Promise<void>[] = [];
+    if (
+      validSelectedTopicIds.join('\u0000') !== selectedTopicIds.join('\u0000')
+    ) {
+      setSelectedTopicIds(validSelectedTopicIds);
+      persistence.push(saveSelectedAffirmationTopics(validSelectedTopicIds));
+    }
 
     const backgroundId = backgroundPreference.backgroundId;
     if (
@@ -168,13 +203,53 @@ const HomeScreen: React.FC = () => {
         background => background.id === backgroundId,
       )
     ) {
-      setBackgroundPreference({ mode: 'free', backgroundId: null });
+      const nextBackgroundPreference = {
+        mode: 'free' as const,
+        backgroundId: null,
+      };
+      setBackgroundPreference(nextBackgroundPreference);
+      persistence.push(
+        saveAffirmationBackgroundPreference(nextBackgroundPreference),
+      );
+    }
+
+    const affirmationIds = new Set<string>();
+    const legacyKeys = new Map<string, string>();
+    affirmationContent.topics.forEach(topic => {
+      topic.affirmations.forEach(affirmation => {
+        affirmationIds.add(affirmation.id);
+        legacyKeys.set(
+          `${topic.id}::${affirmation.text.trim()}`,
+          affirmation.id,
+        );
+      });
+    });
+    const migratedLikeKeys = [
+      ...new Set(
+        likedAffirmationKeys.map(key =>
+          affirmationIds.has(key) ? key : legacyKeys.get(key) ?? key,
+        ),
+      ),
+    ];
+    if (
+      migratedLikeKeys.join('\u0000') !== likedAffirmationKeys.join('\u0000')
+    ) {
+      setLikedAffirmationKeys(migratedLikeKeys);
+      persistence.push(saveLikedAffirmationKeys(migratedLikeKeys));
+    }
+
+    if (persistence.length > 0) {
+      Promise.all(persistence)
+        .then(syncCurrentDeviceSettingsToDatabase)
+        .catch(() => undefined);
     }
   }, [
     affirmationContent.backgrounds,
     affirmationContent.topics,
     backgroundPreference.backgroundId,
     contentStatus,
+    likedAffirmationKeys,
+    selectedTopicIds,
   ]);
 
   const reminderTimeText = useMemo(
@@ -187,6 +262,7 @@ const HomeScreen: React.FC = () => {
 
     try {
       await saveReminderPreferences(next);
+      await syncCurrentDeviceSettingsToDatabase();
       setPreferences(next);
       return true;
     } catch {
@@ -342,6 +418,7 @@ const HomeScreen: React.FC = () => {
 
       try {
         await saveSelectedAffirmationTopics(topicIds);
+        await syncCurrentDeviceSettingsToDatabase();
       } catch {
         setSelectedTopicIds(previousTopicIds);
         setStatusMessage('Failed to save selected topic.');
@@ -358,6 +435,7 @@ const HomeScreen: React.FC = () => {
 
       try {
         await saveAffirmationBackgroundPreference(nextPreference);
+        await syncCurrentDeviceSettingsToDatabase();
       } catch {
         setBackgroundPreference(previousPreference);
         setStatusMessage('Failed to save background preference.');
@@ -367,8 +445,8 @@ const HomeScreen: React.FC = () => {
   );
 
   const handleToggleAffirmationLike = useCallback(
-    async (topicId: AffirmationTopicId, affirmationText: string) => {
-      const likeKey = buildAffirmationLikeKey(topicId, affirmationText);
+    async (affirmationId: string) => {
+      const likeKey = buildAffirmationLikeKey(affirmationId);
       const previousLikeKeys = likedAffirmationKeys;
       const nextLikeKeys = previousLikeKeys.includes(likeKey)
         ? previousLikeKeys.filter(key => key !== likeKey)
@@ -378,6 +456,7 @@ const HomeScreen: React.FC = () => {
 
       try {
         await toggleLikedAffirmationKey(likeKey);
+        await syncCurrentDeviceSettingsToDatabase();
       } catch {
         setLikedAffirmationKeys(previousLikeKeys);
         setStatusMessage('Failed to save liked affirmation.');
