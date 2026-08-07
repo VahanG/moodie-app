@@ -71,6 +71,7 @@ specification_index:
     - docs/specs/features/commerce.yaml
     - docs/specs/features/content_delivery.yaml
     - docs/specs/features/analytics.yaml
+    - docs/specs/features/admin_gallery.yaml
 
 verification_contract:
   platform: react_native
@@ -149,6 +150,9 @@ legacy_source_map:
     - docs/specs/engineering.yaml
   docs/engineering/eas-updates.md:
     - docs/specs/engineering.yaml
+  docs/engineering/admin-gallery.md:
+    - docs/specs/features/admin_gallery.yaml
+    - docs/specs/access_control.yaml
   docs/roadmap/docs-to-codegen-phase2.md:
     - docs/specs/roadmap.yaml
 

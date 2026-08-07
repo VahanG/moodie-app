@@ -58,6 +58,8 @@ application_boundaries:
       - supabase_auth_identity
       - public.is_admin()
       - public affirmation content tables
+      - public.gallery_media
+      - private gallery storage bucket
 
 roles:
   - id: admin
@@ -143,6 +145,14 @@ permission_matrix:
       - unpublish
       - delete
     basis: Content table RLS evaluates public.is_admin() for every privileged operation.
+  - actor: moodie_admin
+    resource: gallery_media
+    permissions:
+      - view
+      - create
+      - update
+      - delete
+    basis: Gallery metadata and private Storage object policies evaluate public.is_admin() for every operation.
 
 undefined_permissions:
   - resource: product_catalog_management

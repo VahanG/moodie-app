@@ -1,0 +1,71 @@
+schema_version: '1.0.0'
+
+feature:
+  id: FEATURE-ADMIN-GALLERY
+  name: Admin Media Gallery
+  lifecycle: implemented
+  purpose: Give Moodie administrators a protected library for reusable image and video assets.
+  surface: admin_web
+  storage_bucket: gallery
+  metadata_table: public.gallery_media
+
+requirements:
+  - id: GAL-001
+    title: Protected Bulk Media Upload
+    description: Administrators can upload one or more supported media files in one action.
+    priority: MUST
+    acceptance_criteria:
+      - The file picker accepts multiple supported image and video files.
+      - Empty, unsupported, and files larger than 50 MB are rejected before upload.
+      - Partial batches and metadata failures clean up newly uploaded objects.
+      - File bytes are stored in the private gallery bucket.
+    verification:
+      status: admin_build_and_migration_validation
+
+  - id: GAL-002
+    title: Gallery Preview and Discovery
+    description: Administrators can preview and find stored media from the gallery.
+    priority: MUST
+    acceptance_criteria:
+      - Images render as card previews.
+      - Videos render as card previews and expose controls in the single-item editor.
+      - Private objects are previewed through short-lived signed URLs.
+      - Name, description, tags, MIME type, and file size can be searched from the loaded gallery.
+    verification:
+      status: admin_build_test
+
+  - id: GAL-003
+    title: Single and Bulk Metadata Editing
+    description: Administrators can edit one item or apply chosen metadata fields to many selected items.
+    priority: MUST
+    acceptance_criteria:
+      - One selected item exposes editable name, description, and tags.
+      - Multiple selected items require an explicit choice for every field applied to the selection.
+      - Unchecked bulk fields remain unchanged.
+      - Tags are trimmed, lowercased, de-duplicated, and stored as an array.
+      - A media name cannot be blank.
+    verification:
+      status: admin_build_test
+
+  - id: GAL-004
+    title: Post-Upload Edit Mode
+    description: Newly uploaded media enters metadata editing immediately.
+    priority: MUST
+    acceptance_criteria:
+      - Every item created by the completed upload batch is selected.
+      - The metadata editor opens automatically for that selection.
+    verification:
+      status: automated_admin_source_contract
+
+  - id: GAL-005
+    title: Gallery Authorization
+    description: Gallery records and objects are restricted to database-managed administrators.
+    priority: MUST
+    acceptance_criteria:
+      - The gallery metadata table has RLS enabled.
+      - Select, insert, update, and delete operations require public.is_admin().
+      - Storage object policies scope access to the gallery bucket and require public.is_admin().
+      - Anonymous and non-admin authenticated users cannot access gallery media.
+    verification:
+      status: local_supabase_migration_and_schema_lint
+

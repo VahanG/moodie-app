@@ -8,6 +8,10 @@ This repository follows a docs-first workflow: document intent and requirements 
 - `engineering/`: architecture and integration contracts.
 - `roadmap/`: forward-looking proposals.
 
+## Admin feature references
+
+- [Media gallery](engineering/admin-gallery.md)
+
 ## Docs-First Rules
 1. Start every feature/change with docs updates in this folder.
 2. Link affected docs in each implementation PR.
