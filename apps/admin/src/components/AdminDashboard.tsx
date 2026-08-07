@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { type AdminIdentity } from '../lib/auth';
 import { ContentManager } from './ContentManager';
+import { GalleryManager } from './GalleryManager';
 import styles from './AdminPortal.module.css';
 
 const navigation = [
   { id: 'overview', label: 'Overview', enabled: true },
   { id: 'content', label: 'Content', enabled: true },
+  { id: 'gallery', label: 'Gallery', enabled: true },
   { id: 'catalog', label: 'Catalog', enabled: false },
   { id: 'commerce', label: 'Commerce', enabled: false },
   { id: 'insights', label: 'Insights', enabled: false },
@@ -67,7 +69,9 @@ export function AdminDashboard({
       </aside>
 
       <main className={styles.main}>
-        {activeSection === 'content' ? (
+        {activeSection === 'gallery' ? (
+          <GalleryManager />
+        ) : activeSection === 'content' ? (
           <ContentManager />
         ) : (
           <>

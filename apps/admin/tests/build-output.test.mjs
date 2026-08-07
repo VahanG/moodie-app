@@ -16,10 +16,12 @@ test("builds a static admin entry document", async () => {
 });
 
 test("keeps the admin app independent and client-only", async () => {
-  const [auth, config, portal, main, packageJson, viteConfig] =
+  const [auth, config, dashboard, gallery, portal, main, packageJson, viteConfig] =
     await Promise.all([
       readFile(new URL("src/lib/auth.ts", adminRoot), "utf8"),
       readFile(new URL("src/lib/config.ts", adminRoot), "utf8"),
+      readFile(new URL("src/components/AdminDashboard.tsx", adminRoot), "utf8"),
+      readFile(new URL("src/components/GalleryManager.tsx", adminRoot), "utf8"),
       readFile(new URL("src/components/AdminPortal.tsx", adminRoot), "utf8"),
       readFile(new URL("src/main.tsx", adminRoot), "utf8"),
       readFile(new URL("package.json", adminRoot), "utf8"),
@@ -29,6 +31,9 @@ test("keeps the admin app independent and client-only", async () => {
   assert.match(auth, /redirectTo: window\.location\.origin/);
   assert.match(config, /EXPO_PUBLIC_SUPABASE_URL/);
   assert.match(config, /EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+  assert.match(dashboard, /GalleryManager/);
+  assert.match(gallery, /multiple/);
+  assert.match(gallery, /setEditorOpen\(true\)/);
   assert.match(portal, /verifyCurrentAdmin/);
   assert.match(main, /createRoot\(root\)\.render/);
   assert.match(packageJson, /"vite":/);
