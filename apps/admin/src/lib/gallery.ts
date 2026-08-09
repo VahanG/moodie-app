@@ -1,4 +1,9 @@
 import { getAdminSupabaseClient } from './supabase';
+import {
+  attachmentRejectionMessage,
+  planGalleryMediaAttachments,
+  type GalleryAttachmentRejectionCode,
+} from './galleryAttachment';
 
 const GALLERY_BUCKET = 'gallery';
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -93,6 +98,27 @@ export type GalleryMediaReference = {
 export type DeleteGalleryMediaResult =
   | { deleted: true }
   | { deleted: false; references: GalleryMediaReference[] };
+
+export type GalleryAttachmentRejectedFile = {
+  code: GalleryAttachmentRejectionCode;
+  fileName: string;
+  reason: string;
+};
+
+export type AttachGalleryMediaResult = {
+  attachedMediaIds: string[];
+  rejected: GalleryAttachmentRejectedFile[];
+};
+
+export class GalleryAttachmentUploadError extends Error {
+  rejected: GalleryAttachmentRejectedFile[];
+
+  constructor(message: string, rejected: GalleryAttachmentRejectedFile[]) {
+    super(message);
+    this.name = 'GalleryAttachmentUploadError';
+    this.rejected = rejected;
+  }
+}
 
 type GalleryRow = {
   id: string;
@@ -285,6 +311,105 @@ export async function uploadGalleryMedia(
   }
 
   return withPreviewUrls((data ?? []) as unknown as GalleryRow[]);
+}
+
+async function removeGalleryObjects(
+  objectPaths: string[],
+): Promise<string | null> {
+  if (objectPaths.length === 0) return null;
+  const { error } = await getAdminSupabaseClient()
+    .storage.from(GALLERY_BUCKET)
+    .remove(objectPaths);
+  return error?.message ?? null;
+}
+
+export async function attachGalleryMediaFiles(
+  files: File[],
+  media: GalleryMedia[],
+): Promise<AttachGalleryMediaResult> {
+  const plan = planGalleryMediaAttachments(files, media);
+  const rejected = plan.rejected.map(({ code, file }) => ({
+    code,
+    fileName: file.name,
+    reason: attachmentRejectionMessage(code),
+  }));
+  if (plan.matches.length === 0) {
+    return { attachedMediaIds: [], rejected };
+  }
+
+  const client = getAdminSupabaseClient();
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError) {
+    throw new GalleryAttachmentUploadError(userError.message, rejected);
+  }
+  if (!userData.user) {
+    throw new GalleryAttachmentUploadError(
+      'Your admin session has expired.',
+      rejected,
+    );
+  }
+
+  const uploads = await Promise.allSettled(
+    plan.matches.map(async match => {
+      const objectPath = `${userData.user.id}/registered/${safeFilename(
+        match.asset.assetId,
+      )}/${crypto.randomUUID()}-${safeFilename(match.file.name)}`;
+      const { error } = await client.storage
+        .from(GALLERY_BUCKET)
+        .upload(objectPath, match.file, {
+          cacheControl: '3600',
+          contentType: match.file.type,
+          upsert: false,
+        });
+      throwIfError(error);
+      return { ...match, objectPath };
+    }),
+  );
+
+  const completed = uploads.flatMap(result =>
+    result.status === 'fulfilled' ? [result.value] : [],
+  );
+  const failed = uploads.find(result => result.status === 'rejected');
+  if (failed?.status === 'rejected') {
+    const cleanupError = await removeGalleryObjects(
+      completed.map(upload => upload.objectPath),
+    );
+    const uploadMessage =
+      failed.reason instanceof Error
+        ? failed.reason.message
+        : 'One or more images could not be uploaded.';
+    throw new GalleryAttachmentUploadError(
+      cleanupError
+        ? `${uploadMessage} Uploaded objects could not be fully cleaned up: ${cleanupError}`
+        : `${uploadMessage} No gallery assets were attached.`,
+      rejected,
+    );
+  }
+
+  const { data, error } = await client.rpc('attach_gallery_media_uploads', {
+    p_uploads: completed.map(upload => ({
+      asset_id: upload.asset.assetId,
+      object_path: upload.objectPath,
+      mime_type: upload.file.type,
+      size_bytes: upload.file.size,
+    })),
+  });
+  if (error) {
+    const cleanupError = await removeGalleryObjects(
+      completed.map(upload => upload.objectPath),
+    );
+    throw new GalleryAttachmentUploadError(
+      cleanupError
+        ? `${error.message} Uploaded objects could not be fully cleaned up: ${cleanupError}`
+        : `${error.message} Uploaded objects were removed and no gallery assets were attached.`,
+      rejected,
+    );
+  }
+
+  const attachedMediaIds = (
+    (data ?? []) as Array<{ media_id: string; attached_asset_id: string }>
+  ).map(row => row.media_id);
+  return { attachedMediaIds, rejected };
 }
 
 export async function updateGalleryMedia(

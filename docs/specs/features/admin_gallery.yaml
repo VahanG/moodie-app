@@ -1,4 +1,4 @@
-schema_version: '1.1.0'
+schema_version: '1.2.0'
 
 feature:
   id: FEATURE-ADMIN-GALLERY
@@ -101,3 +101,20 @@ requirements:
       - Existing uploaded rows receive stable legacy asset IDs during migration.
     verification:
       status: migration_validation_and_admin_build_test
+
+  - id: GAL-008
+    title: Attach Uploads by Asset ID
+    description: Administrators can attach image files to existing fileless gallery rows by including the exact Asset ID in each filename.
+    priority: MUST
+    acceptance_criteria:
+      - Attachment mode is separate from the existing upload-and-create mode.
+      - Matching is exact and case-sensitive against an Asset ID contained in the filename.
+      - Attachment mode never creates a new gallery row.
+      - Empty, unsupported, oversized, unmatched, ambiguous, already-attached, and duplicate files are not persisted.
+      - Rejected files and their reasons are displayed to the administrator.
+      - Accepted files are attached to fileless rows in one admin-only database transaction.
+      - A concurrent attachment or database failure changes no gallery rows and removes all objects uploaded by the failed attempt.
+      - A Storage failure removes every object uploaded by the failed attempt and changes no gallery rows.
+      - Successful attachment records object path, MIME type, file size, uploader, download date when absent, and pending-review status.
+    verification:
+      status: matching_unit_tests_admin_build_and_migration_validation

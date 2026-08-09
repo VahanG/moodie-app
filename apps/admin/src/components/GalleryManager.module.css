@@ -32,6 +32,52 @@
   text-transform: uppercase;
 }
 
+.uploadControls {
+  max-width: 420px;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.uploadModes {
+  padding: 3px;
+  display: inline-flex;
+  gap: 3px;
+  border: 1px solid #d9dcd5;
+  border-radius: 10px;
+  background: #f4f4ef;
+}
+
+.uploadModes button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: #68736d;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.uploadModes button[aria-pressed='true'] {
+  color: #29463a;
+  background: #fffdf9;
+  box-shadow: 0 1px 4px rgba(32, 58, 50, 0.12);
+}
+
+.uploadModes button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.uploadHelp {
+  color: #858d87;
+  font-size: 9px;
+  line-height: 1.45;
+  text-align: right;
+}
+
 .uploadButton {
   min-height: 44px;
   padding: 10px 16px;
@@ -139,6 +185,46 @@
 .editorError {
   color: #9a4141;
   background: #f7e8e5;
+}
+
+.rejectionReport {
+  margin-top: -8px;
+  padding: 13px 14px;
+  border: 1px solid #ead5aa;
+  border-radius: 10px;
+  color: #6f5831;
+  background: #fbf3df;
+}
+
+.rejectionReport > strong {
+  font-size: 12px;
+}
+
+.rejectionReport ul {
+  padding: 0;
+  margin: 9px 0 0;
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.rejectionReport li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 1fr);
+  gap: 12px;
+  font-size: 10px;
+}
+
+.rejectionReport span {
+  overflow: hidden;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rejectionReport small {
+  color: #816d48;
+  font-size: 9px;
 }
 
 .workspace {
@@ -779,6 +865,16 @@
     flex-direction: column;
   }
 
+  .uploadControls {
+    width: 100%;
+    max-width: none;
+    justify-items: start;
+  }
+
+  .uploadHelp {
+    text-align: left;
+  }
+
   .toolbar {
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -802,6 +898,19 @@
 }
 
 @media (max-width: 520px) {
+  .uploadModes {
+    width: 100%;
+  }
+
+  .uploadModes button {
+    flex: 1;
+  }
+
+  .rejectionReport li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;

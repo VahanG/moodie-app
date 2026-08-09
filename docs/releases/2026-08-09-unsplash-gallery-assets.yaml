@@ -1,0 +1,35 @@
+schema_version: '1.0.0'
+
+release:
+  id: unsplash-gallery-asset-registration
+  date: '2026-08-09'
+  type: gallery_content_registration
+  summary: Register the reviewed internal Unsplash candidate inventory as fileless gallery assets before bulk upload.
+  feature_spec: docs/specs/features/admin_gallery.yaml
+
+content:
+  source_record: docs/internal/unsplash-image-candidates.md
+  source_sha256: 0affad5af0b9630f924628222281a57e245ffcbc81c6beca7cba7fb1dcfaae77
+  gallery_rows: 100
+  unique_asset_ids: 100
+  asset_status: pending_upload
+  storage_objects: 0
+  provider_urls_stored: 0
+
+mapping:
+  asset_id: Asset ID
+  name: Candidate heading
+  description: Why it may fit
+  tags: Suggested topics
+  source_provider: unsplash
+  creator_name: Creator name
+  creator_handle: Creator handle without the display prefix
+  license_name: Unsplash License
+  license_checked_on: Per-entry date or document check date
+  original_dimensions: Present only when documented
+
+verification:
+  - The source record parses into exactly 100 sequential entries.
+  - Asset IDs and names are pairwise unique.
+  - Every stored value matches its mapped source field.
+  - No Storage path, provider URL, or downloaded file is registered by this release.

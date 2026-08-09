@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  attachGalleryMediaFiles,
   GALLERY_ACCEPT,
+  GalleryAttachmentUploadError,
   loadGalleryMedia,
   uploadGalleryMedia,
+  type GalleryAttachmentRejectedFile,
   type GalleryMedia,
 } from '../lib/gallery';
+import { GALLERY_ATTACHMENT_ACCEPT } from '../lib/galleryAttachment';
 import { GalleryEditor } from './GalleryEditor';
 import { GalleryDeleteDialog } from './GalleryDeleteDialog';
 import styles from './GalleryManager.module.css';
@@ -27,9 +31,13 @@ export function GalleryManager() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadMode, setUploadMode] = useState<'create' | 'attach'>('create');
   const [deletingItem, setDeletingItem] = useState<GalleryMedia | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [rejectedFiles, setRejectedFiles] = useState<
+    GalleryAttachmentRejectedFile[]
+  >([]);
 
   const reload = useCallback(async () => {
     setError(null);
@@ -113,22 +121,49 @@ export function GalleryManager() {
     setUploading(true);
     setError(null);
     setNotice(null);
+    setRejectedFiles([]);
     try {
-      const uploaded = await uploadGalleryMedia(files);
-      setItems(current => [...uploaded, ...current]);
-      setSelectedIds(new Set(uploaded.map(item => item.id)));
-      setEditorOpen(true);
-      setNotice(
-        `${uploaded.length} ${
-          uploaded.length === 1 ? 'item' : 'items'
-        } uploaded. Add the metadata now.`,
-      );
+      if (uploadMode === 'create') {
+        const uploaded = await uploadGalleryMedia(files);
+        setItems(current => [...uploaded, ...current]);
+        setSelectedIds(new Set(uploaded.map(item => item.id)));
+        setEditorOpen(true);
+        setNotice(
+          `${uploaded.length} ${
+            uploaded.length === 1 ? 'item' : 'items'
+          } uploaded. Add the metadata now.`,
+        );
+      } else {
+        const result = await attachGalleryMediaFiles(files, items);
+        setRejectedFiles(result.rejected);
+        if (result.attachedMediaIds.length > 0) {
+          await reload();
+          setSelectedIds(new Set(result.attachedMediaIds));
+          setEditorOpen(false);
+        }
+        setNotice(
+          `${result.attachedMediaIds.length} ${
+            result.attachedMediaIds.length === 1 ? 'image' : 'images'
+          } attached. ${result.rejected.length} not saved.`,
+        );
+      }
     } catch (uploadError) {
+      if (uploadError instanceof GalleryAttachmentUploadError) {
+        setRejectedFiles(uploadError.rejected);
+      }
       setError(messageFrom(uploadError));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
     }
+  };
+
+  const changeUploadMode = (mode: 'create' | 'attach') => {
+    setUploadMode(mode);
+    setError(null);
+    setNotice(null);
+    setRejectedFiles([]);
+    if (inputRef.current) inputRef.current.value = '';
   };
 
   const allVisibleSelected =
@@ -155,19 +190,56 @@ export function GalleryManager() {
           <h1>Media gallery</h1>
           <p>Upload, preview, and organize reusable Moodie media.</p>
         </div>
-        <label className={styles.uploadButton}>
-          <input
-            accept={GALLERY_ACCEPT}
-            disabled={uploading}
-            multiple
-            onChange={event =>
-              handleUpload(Array.from(event.target.files ?? []))
-            }
-            ref={inputRef}
-            type="file"
-          />
-          {uploading ? 'Uploading…' : 'Upload media'}
-        </label>
+        <div className={styles.uploadControls}>
+          <div
+            aria-label="Gallery upload mode"
+            className={styles.uploadModes}
+            role="group"
+          >
+            <button
+              aria-pressed={uploadMode === 'create'}
+              disabled={uploading}
+              onClick={() => changeUploadMode('create')}
+              type="button"
+            >
+              Create new
+            </button>
+            <button
+              aria-pressed={uploadMode === 'attach'}
+              disabled={uploading}
+              onClick={() => changeUploadMode('attach')}
+              type="button"
+            >
+              Attach by Asset ID
+            </button>
+          </div>
+          <label className={styles.uploadButton}>
+            <input
+              accept={
+                uploadMode === 'attach'
+                  ? GALLERY_ATTACHMENT_ACCEPT
+                  : GALLERY_ACCEPT
+              }
+              disabled={uploading}
+              multiple
+              onChange={event =>
+                handleUpload(Array.from(event.target.files ?? []))
+              }
+              ref={inputRef}
+              type="file"
+            />
+            {uploading
+              ? 'Uploading…'
+              : uploadMode === 'attach'
+              ? 'Select images to attach'
+              : 'Upload media'}
+          </label>
+          <small className={styles.uploadHelp}>
+            {uploadMode === 'attach'
+              ? 'Filenames must contain the exact, case-sensitive Asset ID. Unmatched files are not saved.'
+              : 'Upload files and create new gallery items.'}
+          </small>
+        </div>
       </header>
 
       <div className={styles.toolbar}>
@@ -209,6 +281,22 @@ export function GalleryManager() {
         <p aria-live="polite" className={styles.error}>
           {error}
         </p>
+      )}
+      {rejectedFiles.length > 0 && (
+        <section
+          aria-label="Files not saved"
+          className={styles.rejectionReport}
+        >
+          <strong>{rejectedFiles.length} files were not saved</strong>
+          <ul>
+            {rejectedFiles.map((rejection, index) => (
+              <li key={`${rejection.fileName}:${index}`}>
+                <span>{rejection.fileName}</span>
+                <small>{rejection.reason}</small>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <div

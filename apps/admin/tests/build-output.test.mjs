@@ -23,6 +23,7 @@ test('keeps the admin app independent and client-only', async () => {
     gallery,
     galleryEditor,
     galleryService,
+    galleryAttachment,
     galleryDelete,
     portal,
     main,
@@ -35,6 +36,7 @@ test('keeps the admin app independent and client-only', async () => {
     readFile(new URL('src/components/GalleryManager.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/components/GalleryEditor.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/lib/gallery.ts', adminRoot), 'utf8'),
+    readFile(new URL('src/lib/galleryAttachment.ts', adminRoot), 'utf8'),
     readFile(
       new URL('src/components/GalleryDeleteDialog.tsx', adminRoot),
       'utf8',
@@ -52,10 +54,15 @@ test('keeps the admin app independent and client-only', async () => {
   assert.match(gallery, /multiple/);
   assert.match(gallery, /setEditorOpen\(true\)/);
   assert.match(gallery, /Awaiting upload/);
+  assert.match(gallery, /Attach by Asset ID/);
+  assert.match(gallery, /Files not saved/);
   assert.match(galleryEditor, /Asset ID/);
   assert.match(galleryEditor, /Source and licensing/);
   assert.match(galleryService, /asset_id: crypto\.randomUUID\(\)/);
+  assert.match(galleryService, /attach_gallery_media_uploads/);
+  assert.match(galleryService, /removeGalleryObjects/);
   assert.match(galleryService, /if \(!objectPath\) return \{ deleted: true \}/);
+  assert.match(galleryAttachment, /planGalleryMediaAttachments/);
   assert.match(galleryDelete, /getGalleryMediaReferences/);
   assert.match(galleryDelete, /deleteGalleryMedia/);
   assert.match(galleryDelete, /Removal is blocked/);
