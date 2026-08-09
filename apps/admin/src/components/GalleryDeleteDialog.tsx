@@ -22,9 +22,9 @@ export function GalleryDeleteDialog({
   onClose: () => void;
   onDeleted: () => Promise<void>;
 }) {
-  const [references, setReferences] = useState<
-    GalleryMediaReference[] | null
-  >(null);
+  const [references, setReferences] = useState<GalleryMediaReference[] | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -95,19 +95,25 @@ export function GalleryDeleteDialog({
         </div>
 
         <div className={styles.deleteSummary}>
-          {item.mimeType.startsWith('video/') ? (
+          {!item.objectPath ? (
+            <div className={styles.pendingPreview}>
+              <strong>Awaiting upload</strong>
+            </div>
+          ) : item.mimeType?.startsWith('video/') ? (
             <video muted preload="metadata" src={item.previewUrl} />
           ) : (
             <img alt="" src={item.previewUrl} />
           )}
           <div>
             <strong>{item.name}</strong>
-            <small>{item.objectPath}</small>
+            <small>{item.objectPath ?? item.assetId}</small>
           </div>
         </div>
 
         {references === null && !error && (
-          <p className={styles.checkingUsage}>Checking where this media is used…</p>
+          <p className={styles.checkingUsage}>
+            Checking where this media is used…
+          </p>
         )}
 
         {blocked && (
@@ -130,8 +136,9 @@ export function GalleryDeleteDialog({
 
         {references?.length === 0 && !error && (
           <p className={styles.deleteWarning}>
-            This permanently removes the file and all of its gallery metadata.
-            This action cannot be undone.
+            This permanently removes
+            {item.objectPath ? ' the file and' : ''} all of its gallery
+            metadata. This action cannot be undone.
           </p>
         )}
 
@@ -166,4 +173,3 @@ export function GalleryDeleteDialog({
     </div>
   );
 }
-

@@ -233,6 +233,33 @@
   object-fit: cover;
 }
 
+.pendingPreview {
+  width: 100%;
+  height: 100%;
+  padding: 14px;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  color: #65736c;
+  background: linear-gradient(145deg, #eef0e9, #e0e5dc);
+  text-align: center;
+}
+
+.pendingPreview strong,
+.pendingPreview span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pendingPreview strong {
+  font-size: 11px;
+}
+
+.pendingPreview span {
+  color: #849087;
+  font-size: 8px;
+}
+
 .mediaPreview > span {
   padding: 4px 7px;
   position: absolute;
@@ -255,6 +282,16 @@
   display: block;
   overflow: hidden;
   font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assetId {
+  margin-top: 4px;
+  display: block;
+  overflow: hidden;
+  color: #899089;
+  font-size: 8px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -399,12 +436,20 @@
 }
 
 .previewStrip img,
-.previewStrip video {
+.previewStrip video,
+.previewStrip .pendingPreview {
   width: 70px;
   height: 58px;
   display: block;
   border-radius: 8px;
   object-fit: cover;
+}
+
+.deleteSummary .pendingPreview {
+  width: 68px;
+  height: 58px;
+  padding: 6px;
+  border-radius: 8px;
 }
 
 .bulkNote {
@@ -449,7 +494,8 @@
 }
 
 .field > input,
-.field > textarea {
+.field > textarea,
+.field > select {
   width: 100%;
   padding: 10px 11px;
   border: 1px solid #d8dbd4;
@@ -463,9 +509,26 @@
 }
 
 .field > input:disabled,
-.field > textarea:disabled {
+.field > textarea:disabled,
+.field > select:disabled {
   color: #a1a6a1;
   background: #f1f1ed;
+}
+
+.metadataDivider {
+  padding-top: 4px;
+  border-top: 1px solid #e4e5df;
+  color: #6b7a64;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.dimensionFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .field small {

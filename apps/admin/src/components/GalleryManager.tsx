@@ -13,7 +13,8 @@ function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : 'Gallery operation failed.';
 }
 
-function formatSize(bytes: number): string {
+function formatSize(bytes: number | null): string {
+  if (bytes === null) return 'Awaiting file';
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
@@ -70,7 +71,18 @@ export function GalleryManager() {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return items;
     return items.filter(item =>
-      [item.name, item.description, item.mimeType, ...item.tags]
+      [
+        item.assetId,
+        item.name,
+        item.description,
+        item.mimeType ?? '',
+        item.sourceProvider,
+        item.creatorName,
+        item.creatorHandle ?? '',
+        item.licenseName,
+        item.assetStatus,
+        ...item.tags,
+      ]
         .join(' ')
         .toLowerCase()
         .includes(normalized),
@@ -107,7 +119,9 @@ export function GalleryManager() {
       setSelectedIds(new Set(uploaded.map(item => item.id)));
       setEditorOpen(true);
       setNotice(
-        `${uploaded.length} ${uploaded.length === 1 ? 'item' : 'items'} uploaded. Add the metadata now.`,
+        `${uploaded.length} ${
+          uploaded.length === 1 ? 'item' : 'items'
+        } uploaded. Add the metadata now.`,
       );
     } catch (uploadError) {
       setError(messageFrom(uploadError));
@@ -146,7 +160,9 @@ export function GalleryManager() {
             accept={GALLERY_ACCEPT}
             disabled={uploading}
             multiple
-            onChange={event => handleUpload(Array.from(event.target.files ?? []))}
+            onChange={event =>
+              handleUpload(Array.from(event.target.files ?? []))
+            }
             ref={inputRef}
             type="file"
           />
@@ -204,7 +220,9 @@ export function GalleryManager() {
           {loading && <div className={styles.empty}>Loading gallery…</div>}
           {!loading && visibleItems.length === 0 && (
             <div className={styles.empty}>
-              <strong>{items.length === 0 ? 'No media yet' : 'No matches'}</strong>
+              <strong>
+                {items.length === 0 ? 'No media yet' : 'No matches'}
+              </strong>
               <span>
                 {items.length === 0
                   ? 'Upload images or videos to start the library.'
@@ -232,26 +250,47 @@ export function GalleryManager() {
                       />
                     </label>
                     <div className={styles.mediaPreview}>
-                      {item.mimeType.startsWith('video/') ? (
+                      {!item.objectPath ? (
+                        <div className={styles.pendingPreview}>
+                          <strong>Awaiting upload</strong>
+                          <span>{item.assetId}</span>
+                        </div>
+                      ) : item.mimeType?.startsWith('video/') ? (
                         <video muted preload="metadata" src={item.previewUrl} />
                       ) : (
-                        <img alt={item.name} loading="lazy" src={item.previewUrl} />
+                        <img
+                          alt={item.name}
+                          loading="lazy"
+                          src={item.previewUrl}
+                        />
                       )}
-                      <span>{item.mimeType.startsWith('video/') ? 'Video' : 'Image'}</span>
+                      {item.objectPath && (
+                        <span>
+                          {item.mimeType?.startsWith('video/')
+                            ? 'Video'
+                            : 'Image'}
+                        </span>
+                      )}
                     </div>
                     <div className={styles.cardBody}>
                       <strong title={item.name}>{item.name}</strong>
+                      <small className={styles.assetId}>{item.assetId}</small>
                       <p>{item.description || 'No description yet'}</p>
                       <div className={styles.tags}>
                         {item.tags.length > 0 ? (
-                          item.tags.slice(0, 3).map(tag => <span key={tag}>{tag}</span>)
+                          item.tags
+                            .slice(0, 3)
+                            .map(tag => <span key={tag}>{tag}</span>)
                         ) : (
                           <span className={styles.missingTag}>No tags</span>
                         )}
                       </div>
                       <div className={styles.cardFooter}>
                         <small>{formatSize(item.sizeBytes)}</small>
-                        <button onClick={() => openSingleEditor(item.id)} type="button">
+                        <button
+                          onClick={() => openSingleEditor(item.id)}
+                          type="button"
+                        >
                           Edit
                         </button>
                       </div>
@@ -266,7 +305,10 @@ export function GalleryManager() {
         {editorOpen && selectedItems.length > 0 && (
           <GalleryEditor
             items={selectedItems}
-            key={selectedItems.map(item => item.id).sort().join(':')}
+            key={selectedItems
+              .map(item => item.id)
+              .sort()
+              .join(':')}
             onClose={() => setEditorOpen(false)}
             onRemove={() => setDeletingItem(selectedItems[0])}
             onSaved={async () => {
@@ -290,7 +332,11 @@ export function GalleryManager() {
             setEditorOpen(false);
             setSelectedIds(new Set());
             await reload();
-            setNotice('Media and its stored file were permanently removed.');
+            setNotice(
+              deletingItem.objectPath
+                ? 'Media and its stored file were permanently removed.'
+                : 'Asset record was permanently removed.',
+            );
           }}
         />
       )}

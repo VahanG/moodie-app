@@ -1,4 +1,4 @@
-schema_version: '1.0.0'
+schema_version: '1.1.0'
 
 feature:
   id: FEATURE-ADMIN-GALLERY
@@ -31,6 +31,8 @@ requirements:
       - Videos render as card previews and expose controls in the single-item editor.
       - Private objects are previewed through short-lived signed URLs.
       - Name, description, tags, MIME type, and file size can be searched from the loaded gallery.
+      - Fileless registered assets show an Awaiting upload placeholder.
+      - Search includes asset ID, provider, creator, and asset status.
     verification:
       status: admin_build_test
 
@@ -44,6 +46,8 @@ requirements:
       - Unchecked bulk fields remain unchanged.
       - Tags are trimmed, lowercased, de-duplicated, and stored as an array.
       - A media name cannot be blank.
+      - Single-item editing exposes asset ID, provider, creator, license, dimensions, download date, and asset status.
+      - Asset ID is a required globally unique string.
     verification:
       status: admin_build_test
 
@@ -81,5 +85,19 @@ requirements:
       - Authenticated clients cannot delete gallery metadata directly.
       - The guarded database function repeats the usage check while locking the media record.
       - Successful removal deletes both the gallery metadata row and the private Storage object.
+      - Removing a fileless asset row does not attempt a Storage deletion.
     verification:
       status: admin_build_test_and_local_supabase_migration_validation
+
+  - id: GAL-007
+    title: Asset Registration Before Upload
+    description: Licensing metadata can be registered before file bytes are available.
+    priority: MUST
+    acceptance_criteria:
+      - A gallery row can exist without object path, MIME type, file size, or uploader.
+      - File metadata is either entirely absent or entirely present.
+      - Each row has a required globally unique string asset ID.
+      - Source metadata stores provider, creator, license name, license check date, download date, original dimensions, and status without storing provider URLs.
+      - Existing uploaded rows receive stable legacy asset IDs during migration.
+    verification:
+      status: migration_validation_and_admin_build_test

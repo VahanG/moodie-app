@@ -3,16 +3,26 @@
 ## Purpose
 
 The admin gallery is Moodie's protected media workspace. It lets an
-administrator upload image and video assets, preview them, and maintain the
-name, description, and tags that make the assets reusable by future content
-workflows.
+administrator register image and video assets before or during upload, preview
+uploaded files, and maintain the metadata that makes the assets traceable and
+reusable by future content workflows.
 
 ## Data and storage
 
 - File bytes live in the private Supabase Storage bucket `gallery`.
 - Searchable metadata lives in `public.gallery_media`.
-- Gallery records store the Storage object path, display name, description,
-  normalized tags, MIME type, file size, creator, and timestamps.
+- Every gallery row has a required, globally unique string `asset_id`. This is
+  the stable external identity used to match a later file upload to an existing
+  asset row; it is separate from the row's internal UUID primary key.
+- Gallery records store display metadata, normalized tags, provider, creator,
+  license review data, original dimensions, download date, and asset status.
+- Provider source-page, creator-profile, and license URLs are not stored in the
+  production database. They remain in the restricted internal licensing
+  record, keyed by provider and `asset_id`.
+- A gallery row may exist before its file. Storage object path, MIME type, file
+  size, uploader, and preview URL are absent together until upload succeeds.
+- Uploaded file bytes and their object path continue to live in the private
+  `gallery` bucket.
 - Files are limited to 50 MB and to the image/video MIME types configured on
   the bucket.
 - Gallery rows and Storage objects are available only to authenticated users
@@ -24,14 +34,17 @@ workflows.
 
 1. Open **Gallery** in the admin navigation.
 2. Choose **Upload media** and select one or more image or video files.
-3. After the upload completes, every new item is selected and the metadata
+3. A registered asset without a file appears with an **Awaiting upload**
+   placeholder and remains searchable by asset ID and source metadata.
+4. After a regular upload completes, every new item is selected and the metadata
    editor opens automatically.
-4. With one item selected, name, description, and tags edit that item.
-5. With multiple items selected, the administrator explicitly chooses which
+5. With one item selected, the administrator can edit its general and source
+   metadata. `asset_id` remains unique across the gallery.
+6. With multiple items selected, the administrator explicitly chooses which
    fields to apply to every selected item. Unchecked fields remain unchanged.
-6. Existing cards can be selected in any combination, or opened individually
+7. Existing cards can be selected in any combination, or opened individually
    with **Edit**.
-7. A single-item editor can open the permanent removal dialog.
+8. A single-item editor can open the permanent removal dialog.
 
 Tags are trimmed, lowercased, de-duplicated, and entered as a comma-separated
 list in the admin UI.
@@ -47,7 +60,8 @@ list in the admin UI.
 - A database function repeats the reference check while locking the gallery
   row. Authenticated clients cannot delete gallery metadata directly.
 - After the guarded metadata deletion succeeds, the corresponding object is
-  permanently removed from the private `gallery` Storage bucket.
+  permanently removed from the private `gallery` Storage bucket when one is
+  attached. Fileless asset rows delete without a Storage operation.
 - If the usage check fails, removal fails closed and no delete operation is
   offered.
 

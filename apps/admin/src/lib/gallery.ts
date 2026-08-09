@@ -3,6 +3,27 @@ import { getAdminSupabaseClient } from './supabase';
 const GALLERY_BUCKET = 'gallery';
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const PREVIEW_TTL_SECONDS = 60 * 60;
+const GALLERY_COLUMNS = [
+  'id',
+  'asset_id',
+  'object_path',
+  'name',
+  'description',
+  'tags',
+  'mime_type',
+  'size_bytes',
+  'source_provider',
+  'creator_name',
+  'creator_handle',
+  'license_name',
+  'license_checked_on',
+  'downloaded_on',
+  'original_width',
+  'original_height',
+  'asset_status',
+  'created_at',
+  'updated_at',
+].join(',');
 
 export const GALLERY_ACCEPT = [
   'image/avif',
@@ -19,21 +40,48 @@ const supportedTypes = new Set(GALLERY_ACCEPT.split(','));
 
 export type GalleryMedia = {
   id: string;
-  objectPath: string;
+  assetId: string;
+  objectPath: string | null;
   name: string;
   description: string;
   tags: string[];
-  mimeType: string;
-  sizeBytes: number;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  sourceProvider: string;
+  creatorName: string;
+  creatorHandle: string | null;
+  licenseName: string;
+  licenseCheckedOn: string | null;
+  downloadedOn: string | null;
+  originalWidth: number | null;
+  originalHeight: number | null;
+  assetStatus: GalleryAssetStatus;
   createdAt: string;
   updatedAt: string;
   previewUrl: string;
 };
 
+export type GalleryAssetStatus =
+  | 'pending_upload'
+  | 'pending_review'
+  | 'approved'
+  | 'published'
+  | 'rejected';
+
 export type GalleryMediaChanges = {
+  assetId?: string;
   name?: string;
   description?: string;
   tags?: string[];
+  sourceProvider?: string;
+  creatorName?: string;
+  creatorHandle?: string | null;
+  licenseName?: string;
+  licenseCheckedOn?: string | null;
+  downloadedOn?: string | null;
+  originalWidth?: number | null;
+  originalHeight?: number | null;
+  assetStatus?: GalleryAssetStatus;
 };
 
 export type GalleryMediaReference = {
@@ -48,12 +96,22 @@ export type DeleteGalleryMediaResult =
 
 type GalleryRow = {
   id: string;
-  object_path: string;
+  asset_id: string;
+  object_path: string | null;
   name: string;
   description: string;
   tags: string[];
-  mime_type: string;
-  size_bytes: number;
+  mime_type: string | null;
+  size_bytes: number | null;
+  source_provider: string;
+  creator_name: string;
+  creator_handle: string | null;
+  license_name: string;
+  license_checked_on: string | null;
+  downloaded_on: string | null;
+  original_width: number | null;
+  original_height: number | null;
+  asset_status: GalleryAssetStatus;
   created_at: string;
   updated_at: string;
 };
@@ -105,43 +163,55 @@ function validateFiles(files: File[]): void {
 async function withPreviewUrls(rows: GalleryRow[]): Promise<GalleryMedia[]> {
   if (rows.length === 0) return [];
 
-  const client = getAdminSupabaseClient();
-  const { data, error } = await client.storage
-    .from(GALLERY_BUCKET)
-    .createSignedUrls(
-      rows.map(row => row.object_path),
-      PREVIEW_TTL_SECONDS,
-    );
-  throwIfError(error);
-
-  const previewByPath = new Map(
-    (data ?? []).map(preview => [preview.path, preview.signedUrl]),
+  const objectPaths = rows.flatMap(row =>
+    row.object_path ? [row.object_path] : [],
   );
+  const previewByPath = new Map<string, string>();
+  if (objectPaths.length > 0) {
+    const client = getAdminSupabaseClient();
+    const { data, error } = await client.storage
+      .from(GALLERY_BUCKET)
+      .createSignedUrls(objectPaths, PREVIEW_TTL_SECONDS);
+    throwIfError(error);
+    (data ?? []).forEach(preview => {
+      if (preview.path && preview.signedUrl) {
+        previewByPath.set(preview.path, preview.signedUrl);
+      }
+    });
+  }
 
   return rows.map(row => ({
     id: row.id,
+    assetId: row.asset_id,
     objectPath: row.object_path,
     name: row.name,
     description: row.description,
     tags: row.tags,
     mimeType: row.mime_type,
-    sizeBytes: Number(row.size_bytes),
+    sizeBytes: row.size_bytes === null ? null : Number(row.size_bytes),
+    sourceProvider: row.source_provider,
+    creatorName: row.creator_name,
+    creatorHandle: row.creator_handle,
+    licenseName: row.license_name,
+    licenseCheckedOn: row.license_checked_on,
+    downloadedOn: row.downloaded_on,
+    originalWidth: row.original_width,
+    originalHeight: row.original_height,
+    assetStatus: row.asset_status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    previewUrl: previewByPath.get(row.object_path) ?? '',
+    previewUrl: row.object_path ? previewByPath.get(row.object_path) ?? '' : '',
   }));
 }
 
 export async function loadGalleryMedia(): Promise<GalleryMedia[]> {
   const { data, error } = await getAdminSupabaseClient()
     .from('gallery_media')
-    .select(
-      'id,object_path,name,description,tags,mime_type,size_bytes,created_at,updated_at',
-    )
+    .select(GALLERY_COLUMNS)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false });
   throwIfError(error);
-  return withPreviewUrls((data ?? []) as GalleryRow[]);
+  return withPreviewUrls((data ?? []) as unknown as GalleryRow[]);
 }
 
 export async function uploadGalleryMedia(
@@ -156,9 +226,9 @@ export async function uploadGalleryMedia(
 
   const uploads = await Promise.allSettled(
     files.map(async file => {
-      const objectPath = `${userData.user.id}/${crypto.randomUUID()}-${safeFilename(
-        file.name,
-      )}`;
+      const objectPath = `${
+        userData.user.id
+      }/${crypto.randomUUID()}-${safeFilename(file.name)}`;
       const { error } = await client.storage
         .from(GALLERY_BUCKET)
         .upload(objectPath, file, {
@@ -191,18 +261,21 @@ export async function uploadGalleryMedia(
     .from('gallery_media')
     .insert(
       completed.map(({ file, objectPath }) => ({
+        asset_id: crypto.randomUUID(),
         object_path: objectPath,
         name: titleFromFilename(file.name),
         description: '',
         tags: [],
         mime_type: file.type,
         size_bytes: file.size,
+        source_provider: 'unknown',
+        creator_name: 'Unknown',
+        license_name: 'Unverified',
+        asset_status: 'pending_review',
         created_by: userData.user.id,
       })),
     )
-    .select(
-      'id,object_path,name,description,tags,mime_type,size_bytes,created_at,updated_at',
-    );
+    .select(GALLERY_COLUMNS);
 
   if (error) {
     await client.storage
@@ -211,7 +284,7 @@ export async function uploadGalleryMedia(
     throw new Error(error.message);
   }
 
-  return withPreviewUrls((data ?? []) as GalleryRow[]);
+  return withPreviewUrls((data ?? []) as unknown as GalleryRow[]);
 }
 
 export async function updateGalleryMedia(
@@ -220,7 +293,12 @@ export async function updateGalleryMedia(
 ): Promise<void> {
   if (ids.length === 0) throw new Error('Select at least one gallery item.');
 
-  const values: Record<string, string | string[]> = {};
+  const values: Record<string, string | string[] | number | null> = {};
+  if (changes.assetId !== undefined) {
+    const assetId = changes.assetId.trim();
+    if (!assetId) throw new Error('Asset ID cannot be empty.');
+    values.asset_id = assetId;
+  }
   if (changes.name !== undefined) {
     const name = changes.name.trim();
     if (!name) throw new Error('Media name cannot be empty.');
@@ -231,6 +309,54 @@ export async function updateGalleryMedia(
   }
   if (changes.tags !== undefined) {
     values.tags = normalizeGalleryTags(changes.tags);
+  }
+  if (changes.sourceProvider !== undefined) {
+    const provider = changes.sourceProvider.trim().toLowerCase();
+    if (!provider) throw new Error('Source provider cannot be empty.');
+    values.source_provider = provider;
+  }
+  if (changes.creatorName !== undefined) {
+    const creatorName = changes.creatorName.trim();
+    if (!creatorName) throw new Error('Creator name cannot be empty.');
+    values.creator_name = creatorName;
+  }
+  if (changes.creatorHandle !== undefined) {
+    values.creator_handle =
+      changes.creatorHandle?.trim().replace(/^@/, '') || null;
+  }
+  if (changes.licenseName !== undefined) {
+    const licenseName = changes.licenseName.trim();
+    if (!licenseName) throw new Error('License name cannot be empty.');
+    values.license_name = licenseName;
+  }
+  if (changes.licenseCheckedOn !== undefined) {
+    values.license_checked_on = changes.licenseCheckedOn || null;
+  }
+  if (changes.downloadedOn !== undefined) {
+    values.downloaded_on = changes.downloadedOn || null;
+  }
+  if (
+    changes.originalWidth !== undefined ||
+    changes.originalHeight !== undefined
+  ) {
+    const width = changes.originalWidth ?? null;
+    const height = changes.originalHeight ?? null;
+    const validDimensions =
+      (width === null && height === null) ||
+      (Number.isInteger(width) &&
+        Number.isInteger(height) &&
+        (width as number) > 0 &&
+        (height as number) > 0);
+    if (!validDimensions) {
+      throw new Error(
+        'Original width and height must both be positive whole numbers.',
+      );
+    }
+    values.original_width = width;
+    values.original_height = height;
+  }
+  if (changes.assetStatus !== undefined) {
+    values.asset_status = changes.assetStatus;
   }
   if (Object.keys(values).length === 0) {
     throw new Error('Choose at least one field to update.');
@@ -252,11 +378,13 @@ export async function getGalleryMediaReferences(
   );
   throwIfError(error);
 
-  return ((data ?? []) as Array<{
-    entity_type: string;
-    entity_id: string;
-    image_uri: string;
-  }>).map(reference => ({
+  return (
+    (data ?? []) as Array<{
+      entity_type: string;
+      entity_id: string;
+      image_uri: string;
+    }>
+  ).map(reference => ({
     entityType: reference.entity_type,
     entityId: reference.entity_id,
     imageUri: reference.image_uri,
@@ -290,6 +418,8 @@ export async function deleteGalleryMedia(
     typeof deletedObjectPath === 'string'
       ? deletedObjectPath
       : media.objectPath;
+  if (!objectPath) return { deleted: true };
+
   const { error: storageError } = await client.storage
     .from(GALLERY_BUCKET)
     .remove([objectPath]);

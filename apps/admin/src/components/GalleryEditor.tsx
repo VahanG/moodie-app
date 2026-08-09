@@ -35,6 +35,28 @@ export function GalleryEditor({
   const [tags, setTags] = useState(() =>
     commonText(items, item => item.tags.join(', ')),
   );
+  const [assetId, setAssetId] = useState(() => items[0].assetId);
+  const [sourceProvider, setSourceProvider] = useState(
+    () => items[0].sourceProvider,
+  );
+  const [creatorName, setCreatorName] = useState(() => items[0].creatorName);
+  const [creatorHandle, setCreatorHandle] = useState(
+    () => items[0].creatorHandle ?? '',
+  );
+  const [licenseName, setLicenseName] = useState(() => items[0].licenseName);
+  const [licenseCheckedOn, setLicenseCheckedOn] = useState(
+    () => items[0].licenseCheckedOn ?? '',
+  );
+  const [downloadedOn, setDownloadedOn] = useState(
+    () => items[0].downloadedOn ?? '',
+  );
+  const [originalWidth, setOriginalWidth] = useState(
+    () => items[0].originalWidth?.toString() ?? '',
+  );
+  const [originalHeight, setOriginalHeight] = useState(
+    () => items[0].originalHeight?.toString() ?? '',
+  );
+  const [assetStatus, setAssetStatus] = useState(items[0].assetStatus);
   const [applied, setApplied] = useState<Record<EditableField, boolean>>({
     name: false,
     description: false,
@@ -53,6 +75,18 @@ export function GalleryEditor({
     if (single || applied.name) changes.name = name;
     if (single || applied.description) changes.description = description;
     if (single || applied.tags) changes.tags = tags.split(',');
+    if (single) {
+      changes.assetId = assetId;
+      changes.sourceProvider = sourceProvider;
+      changes.creatorName = creatorName;
+      changes.creatorHandle = creatorHandle;
+      changes.licenseName = licenseName;
+      changes.licenseCheckedOn = licenseCheckedOn || null;
+      changes.downloadedOn = downloadedOn || null;
+      changes.originalWidth = originalWidth ? Number(originalWidth) : null;
+      changes.originalHeight = originalHeight ? Number(originalHeight) : null;
+      changes.assetStatus = assetStatus;
+    }
 
     setSaving(true);
     setError(null);
@@ -75,6 +109,22 @@ export function GalleryEditor({
 
   const hasBulkField = Object.values(applied).some(Boolean);
   const invalidName = (single || applied.name) && !name.trim();
+  const invalidSourceMetadata =
+    single &&
+    (!assetId.trim() ||
+      !sourceProvider.trim() ||
+      !creatorName.trim() ||
+      !licenseName.trim());
+  const dimensionsPresent = Boolean(originalWidth || originalHeight);
+  const invalidDimensions =
+    single &&
+    dimensionsPresent &&
+    (!originalWidth ||
+      !originalHeight ||
+      !Number.isInteger(Number(originalWidth)) ||
+      !Number.isInteger(Number(originalHeight)) ||
+      Number(originalWidth) <= 0 ||
+      Number(originalHeight) <= 0);
 
   return (
     <aside aria-label="Edit gallery metadata" className={styles.editor}>
@@ -95,7 +145,12 @@ export function GalleryEditor({
 
       <div className={single ? styles.editorPreview : styles.previewStrip}>
         {items.map(item =>
-          item.mimeType.startsWith('video/') ? (
+          !item.objectPath ? (
+            <div className={styles.pendingPreview} key={item.id}>
+              <strong>Awaiting upload</strong>
+              <span>{item.assetId}</span>
+            </div>
+          ) : item.mimeType?.startsWith('video/') ? (
             <video
               controls={single}
               key={item.id}
@@ -163,6 +218,107 @@ export function GalleryEditor({
           <small>Separate tags with commas.</small>
         </EditField>
 
+        {single && (
+          <>
+            <div className={styles.metadataDivider}>Source and licensing</div>
+            <EditField applied bulk={false} label="Asset ID">
+              <input
+                onChange={event => setAssetId(event.target.value)}
+                required
+                type="text"
+                value={assetId}
+              />
+              <small>
+                Required and unique. Later uploads match this value.
+              </small>
+            </EditField>
+            <EditField applied bulk={false} label="Source provider">
+              <input
+                onChange={event => setSourceProvider(event.target.value)}
+                placeholder="unsplash"
+                required
+                type="text"
+                value={sourceProvider}
+              />
+            </EditField>
+            <EditField applied bulk={false} label="Creator name">
+              <input
+                onChange={event => setCreatorName(event.target.value)}
+                required
+                type="text"
+                value={creatorName}
+              />
+            </EditField>
+            <EditField applied bulk={false} label="Creator handle">
+              <input
+                onChange={event => setCreatorHandle(event.target.value)}
+                placeholder="handle without @"
+                type="text"
+                value={creatorHandle}
+              />
+            </EditField>
+            <EditField applied bulk={false} label="License name">
+              <input
+                onChange={event => setLicenseName(event.target.value)}
+                placeholder="Unsplash License"
+                required
+                type="text"
+                value={licenseName}
+              />
+            </EditField>
+            <EditField applied bulk={false} label="License checked">
+              <input
+                onChange={event => setLicenseCheckedOn(event.target.value)}
+                type="date"
+                value={licenseCheckedOn}
+              />
+            </EditField>
+            <EditField applied bulk={false} label="Downloaded">
+              <input
+                onChange={event => setDownloadedOn(event.target.value)}
+                type="date"
+                value={downloadedOn}
+              />
+            </EditField>
+            <div className={styles.dimensionFields}>
+              <EditField applied bulk={false} label="Original width">
+                <input
+                  min="1"
+                  onChange={event => setOriginalWidth(event.target.value)}
+                  placeholder="px"
+                  type="number"
+                  value={originalWidth}
+                />
+              </EditField>
+              <EditField applied bulk={false} label="Original height">
+                <input
+                  min="1"
+                  onChange={event => setOriginalHeight(event.target.value)}
+                  placeholder="px"
+                  type="number"
+                  value={originalHeight}
+                />
+              </EditField>
+            </div>
+            <EditField applied bulk={false} label="Asset status">
+              <select
+                onChange={event =>
+                  setAssetStatus(
+                    event.target.value as GalleryMedia['assetStatus'],
+                  )
+                }
+                value={assetStatus}
+              >
+                <option value="pending_upload">Pending upload</option>
+                <option value="pending_review">Pending review</option>
+                <option value="approved">Approved</option>
+                <option value="published">Published</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </EditField>
+          </>
+        )}
+
         {error && (
           <p aria-live="polite" className={styles.editorError}>
             {error}
@@ -171,14 +327,20 @@ export function GalleryEditor({
 
         <button
           className={styles.saveButton}
-          disabled={saving || invalidName || (!single && !hasBulkField)}
+          disabled={
+            saving ||
+            invalidName ||
+            invalidSourceMetadata ||
+            invalidDimensions ||
+            (!single && !hasBulkField)
+          }
           type="submit"
         >
           {saving
             ? 'Saving…'
             : single
-              ? 'Save changes'
-              : `Apply to ${items.length} items`}
+            ? 'Save changes'
+            : `Apply to ${items.length} items`}
         </button>
         {single && (
           <button
@@ -206,7 +368,7 @@ function EditField({
   bulk: boolean;
   children: React.ReactNode;
   label: string;
-  onToggle: () => void;
+  onToggle?: () => void;
 }) {
   return (
     <label className={styles.field}>
