@@ -84,3 +84,7 @@ web-build/
 .env.local
 .env.*.local
 !.env.example
+
+# Local legal and licensing notes
+/docs/internal/image-licensing-checklist.md
+/docs/internal/unsplash-image-candidates.md

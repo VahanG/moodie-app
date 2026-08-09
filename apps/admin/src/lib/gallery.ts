@@ -36,6 +36,16 @@ export type GalleryMediaChanges = {
   tags?: string[];
 };
 
+export type GalleryMediaReference = {
+  entityType: string;
+  entityId: string;
+  imageUri: string;
+};
+
+export type DeleteGalleryMediaResult =
+  | { deleted: true }
+  | { deleted: false; references: GalleryMediaReference[] };
+
 type GalleryRow = {
   id: string;
   object_path: string;
@@ -231,4 +241,64 @@ export async function updateGalleryMedia(
     .update(values)
     .in('id', ids);
   throwIfError(error);
+}
+
+export async function getGalleryMediaReferences(
+  id: string,
+): Promise<GalleryMediaReference[]> {
+  const { data, error } = await getAdminSupabaseClient().rpc(
+    'get_gallery_media_references',
+    { p_media_id: id },
+  );
+  throwIfError(error);
+
+  return ((data ?? []) as Array<{
+    entity_type: string;
+    entity_id: string;
+    image_uri: string;
+  }>).map(reference => ({
+    entityType: reference.entity_type,
+    entityId: reference.entity_id,
+    imageUri: reference.image_uri,
+  }));
+}
+
+export async function deleteGalleryMedia(
+  media: GalleryMedia,
+): Promise<DeleteGalleryMediaResult> {
+  const references = await getGalleryMediaReferences(media.id);
+  if (references.length > 0) return { deleted: false, references };
+
+  const client = getAdminSupabaseClient();
+  const { data: deletedObjectPath, error: deleteError } = await client.rpc(
+    'delete_gallery_media_if_unreferenced',
+    { p_media_id: media.id },
+  );
+
+  if (deleteError?.code === '23503') {
+    const currentReferences = await getGalleryMediaReferences(media.id);
+    if (currentReferences.length > 0) {
+      return { deleted: false, references: currentReferences };
+    }
+    throw new Error(
+      'This media is still in use. Its references could not be displayed, so removal remains blocked.',
+    );
+  }
+  throwIfError(deleteError);
+
+  const objectPath =
+    typeof deletedObjectPath === 'string'
+      ? deletedObjectPath
+      : media.objectPath;
+  const { error: storageError } = await client.storage
+    .from(GALLERY_BUCKET)
+    .remove([objectPath]);
+
+  if (storageError) {
+    throw new Error(
+      `The gallery record was removed, but its stored file could not be deleted. ${storageError.message}`,
+    );
+  }
+
+  return { deleted: true };
 }

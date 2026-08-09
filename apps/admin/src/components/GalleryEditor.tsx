@@ -19,10 +19,12 @@ function commonText(
 export function GalleryEditor({
   items,
   onClose,
+  onRemove,
   onSaved,
 }: {
   items: GalleryMedia[];
   onClose: () => void;
+  onRemove: () => void;
   onSaved: () => Promise<void>;
 }) {
   const single = items.length === 1;
@@ -178,6 +180,16 @@ export function GalleryEditor({
               ? 'Save changes'
               : `Apply to ${items.length} items`}
         </button>
+        {single && (
+          <button
+            className={styles.removeButton}
+            disabled={saving}
+            onClick={onRemove}
+            type="button"
+          >
+            Remove media
+          </button>
+        )}
       </form>
     </aside>
   );
@@ -211,4 +223,3 @@ function EditField({
     </label>
   );
 }
-

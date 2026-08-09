@@ -69,3 +69,17 @@ requirements:
     verification:
       status: local_supabase_migration_and_schema_lint
 
+  - id: GAL-006
+    title: Guarded Permanent Removal
+    description: Administrators can permanently remove unreferenced media while referenced media remains protected.
+    priority: MUST
+    acceptance_criteria:
+      - Removal is available from the single-item metadata editor and requires confirmation.
+      - The usage check covers affirmation categories, affirmations, and backgrounds whose image URI contains the gallery object path.
+      - Referenced media displays the matching entity types and IDs and cannot be removed.
+      - Failure to verify usage blocks removal.
+      - Authenticated clients cannot delete gallery metadata directly.
+      - The guarded database function repeats the usage check while locking the media record.
+      - Successful removal deletes both the gallery metadata row and the private Storage object.
+    verification:
+      status: admin_build_test_and_local_supabase_migration_validation

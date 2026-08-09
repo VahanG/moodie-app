@@ -6,6 +6,7 @@ import {
   type GalleryMedia,
 } from '../lib/gallery';
 import { GalleryEditor } from './GalleryEditor';
+import { GalleryDeleteDialog } from './GalleryDeleteDialog';
 import styles from './GalleryManager.module.css';
 
 function messageFrom(error: unknown): string {
@@ -25,6 +26,7 @@ export function GalleryManager() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<GalleryMedia | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -266,6 +268,7 @@ export function GalleryManager() {
             items={selectedItems}
             key={selectedItems.map(item => item.id).sort().join(':')}
             onClose={() => setEditorOpen(false)}
+            onRemove={() => setDeletingItem(selectedItems[0])}
             onSaved={async () => {
               await reload();
               setNotice(
@@ -277,6 +280,20 @@ export function GalleryManager() {
           />
         )}
       </div>
+
+      {deletingItem && (
+        <GalleryDeleteDialog
+          item={deletingItem}
+          onClose={() => setDeletingItem(null)}
+          onDeleted={async () => {
+            setDeletingItem(null);
+            setEditorOpen(false);
+            setSelectedIds(new Set());
+            await reload();
+            setNotice('Media and its stored file were permanently removed.');
+          }}
+        />
+      )}
     </section>
   );
 }
