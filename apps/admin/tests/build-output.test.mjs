@@ -21,10 +21,16 @@ test('keeps the admin app independent and client-only', async () => {
     config,
     dashboard,
     gallery,
+    galleryBrowser,
+    galleryPicker,
     galleryEditor,
     galleryService,
     galleryAttachment,
     galleryDelete,
+    imageUrlField,
+    topicEditor,
+    affirmationEditor,
+    backgroundEditor,
     portal,
     main,
     packageJson,
@@ -34,11 +40,29 @@ test('keeps the admin app independent and client-only', async () => {
     readFile(new URL('src/lib/config.ts', adminRoot), 'utf8'),
     readFile(new URL('src/components/AdminDashboard.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/components/GalleryManager.tsx', adminRoot), 'utf8'),
+    readFile(
+      new URL('src/components/GalleryMediaBrowser.tsx', adminRoot),
+      'utf8',
+    ),
+    readFile(
+      new URL('src/components/GalleryImagePicker.tsx', adminRoot),
+      'utf8',
+    ),
     readFile(new URL('src/components/GalleryEditor.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/lib/gallery.ts', adminRoot), 'utf8'),
     readFile(new URL('src/lib/galleryAttachment.ts', adminRoot), 'utf8'),
     readFile(
       new URL('src/components/GalleryDeleteDialog.tsx', adminRoot),
+      'utf8',
+    ),
+    readFile(new URL('src/components/ImageUrlField.tsx', adminRoot), 'utf8'),
+    readFile(new URL('src/components/TopicEditor.tsx', adminRoot), 'utf8'),
+    readFile(
+      new URL('src/components/AffirmationEditor.tsx', adminRoot),
+      'utf8',
+    ),
+    readFile(
+      new URL('src/components/BackgroundEditor.tsx', adminRoot),
       'utf8',
     ),
     readFile(new URL('src/components/AdminPortal.tsx', adminRoot), 'utf8'),
@@ -53,9 +77,17 @@ test('keeps the admin app independent and client-only', async () => {
   assert.match(dashboard, /GalleryManager/);
   assert.match(gallery, /multiple/);
   assert.match(gallery, /setEditorOpen\(true\)/);
-  assert.match(gallery, /Awaiting upload/);
+  assert.match(gallery, /GalleryMediaGrid/);
   assert.match(gallery, /Attach by Asset ID/);
   assert.match(gallery, /Files not saved/);
+  assert.match(galleryBrowser, /Awaiting upload/);
+  assert.match(galleryBrowser, /Search names, descriptions, or tags/);
+  assert.match(galleryPicker, /GalleryMediaGrid/);
+  assert.match(galleryPicker, /galleryMediaMatchesQuery/);
+  assert.match(imageUrlField, /Select from gallery/);
+  assert.match(topicEditor, /ImageUrlField/);
+  assert.match(affirmationEditor, /ImageUrlField/);
+  assert.match(backgroundEditor, /ImageUrlField/);
   assert.match(galleryEditor, /Asset ID/);
   assert.match(galleryEditor, /Source and licensing/);
   assert.match(galleryService, /asset_id: crypto\.randomUUID\(\)/);

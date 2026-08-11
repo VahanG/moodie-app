@@ -4,6 +4,7 @@ import {
   type AdminBackground,
   type AdminLanguage,
 } from '../lib/content';
+import { ImageUrlField } from './ImageUrlField';
 import styles from './ContentEditor.module.css';
 
 export function BackgroundEditor({
@@ -79,20 +80,11 @@ export function BackgroundEditor({
             }
           />
         </label>
-        <label className={styles.wide}>
-          Image URL
-          <input
-            required
-            type="url"
-            value={background.imageUri}
-            onChange={event =>
-              setBackground({
-                ...background,
-                imageUri: event.target.value,
-              })
-            }
-          />
-        </label>
+        <ImageUrlField
+          label="Image URL"
+          onChange={imageUri => setBackground({ ...background, imageUri })}
+          value={background.imageUri}
+        />
         {languages.map(language => (
           <label className={styles.wide} key={language.code}>
             Tags · {language.nativeName} ({language.code}, comma separated)

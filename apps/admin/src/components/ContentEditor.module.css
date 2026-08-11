@@ -20,6 +20,59 @@
   grid-column: 1 / -1;
 }
 
+.imageField {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 7px;
+}
+
+.imageField > label {
+  color: #405049;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.imageInputRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.galleryButton {
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid #cbd5c8;
+  border-radius: 10px;
+  color: #31513f;
+  background: #edf3e7;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.imageSelection {
+  width: fit-content;
+  padding: 6px 10px 6px 6px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #dce2d8;
+  border-radius: 10px;
+  color: #52645d;
+  background: #f5f7f1;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.imageSelection img {
+  width: 42px;
+  height: 34px;
+  display: block;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
 .fields label {
   display: grid;
   gap: 7px;
@@ -107,5 +160,13 @@
 
   .wide {
     grid-column: auto;
+  }
+
+  .imageField {
+    grid-column: auto;
+  }
+
+  .imageInputRow {
+    grid-template-columns: 1fr;
   }
 }

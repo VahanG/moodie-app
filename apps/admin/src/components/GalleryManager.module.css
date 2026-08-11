@@ -688,6 +688,74 @@
   box-shadow: 0 28px 80px rgba(18, 34, 27, 0.24);
 }
 
+.pickerDialog {
+  width: min(1100px, 100%);
+  max-height: calc(100vh - 48px);
+  padding: 24px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(42, 60, 52, 0.16);
+  border-radius: 20px;
+  color: #243a33;
+  background: #fffdf9;
+  box-shadow: 0 28px 80px rgba(18, 34, 27, 0.24);
+}
+
+.pickerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.pickerHeader h2 {
+  margin: 6px 0 4px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.pickerHeader p {
+  margin: 0;
+  color: #747c75;
+  font-size: 12px;
+}
+
+.pickerToolbar {
+  padding: 9px;
+  border: 1px solid #e0e1dc;
+  border-radius: 14px;
+  background: #f8f7f2;
+}
+
+.pickerPanel {
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #e0e1dc;
+  border-radius: 16px;
+  background: #fffdf9;
+}
+
+.pickerPanel .empty {
+  min-height: 360px;
+}
+
+.pickerPanel .grid {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+
+.pickerError {
+  margin: 12px 12px 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  color: #9a4141;
+  background: #f7e8e5;
+  font-size: 12px;
+}
+
 .deleteDialogHeader {
   display: flex;
   align-items: flex-start;
@@ -936,6 +1004,11 @@
   .deleteDialog {
     max-height: calc(100vh - 24px);
     padding: 19px;
+  }
+
+  .pickerDialog {
+    max-height: calc(100vh - 24px);
+    padding: 16px;
   }
 }
 

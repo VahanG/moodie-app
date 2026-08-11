@@ -8,6 +8,8 @@ import {
   type AdminLanguage,
   type AdminTopic,
 } from '../lib/content';
+import { loadGalleryMedia, type GalleryMedia } from '../lib/gallery';
+import { galleryMediaContentUri } from '../lib/galleryPresentation';
 import { AffirmationEditor } from './AffirmationEditor';
 import { BackgroundEditor } from './BackgroundEditor';
 import { TopicEditor } from './TopicEditor';
@@ -53,8 +55,32 @@ function translationCount(
   return `${completed}/${languages.length} languages`;
 }
 
+function galleryPreviewMap(items: GalleryMedia[]): Map<string, string> {
+  return new Map(
+    items.flatMap(item =>
+      item.objectPath && item.previewUrl
+        ? [[galleryMediaContentUri(item), item.previewUrl] as const]
+        : [],
+    ),
+  );
+}
+
+async function loadContentView(): Promise<{
+  content: AdminContent;
+  galleryPreviews: Map<string, string>;
+}> {
+  const [content, gallery] = await Promise.all([
+    loadAdminContent(),
+    loadGalleryMedia().catch(() => []),
+  ]);
+  return { content, galleryPreviews: galleryPreviewMap(gallery) };
+}
+
 export function ContentManager() {
   const [content, setContent] = useState<AdminContent>(emptyContent);
+  const [galleryPreviews, setGalleryPreviews] = useState<Map<string, string>>(
+    new Map(),
+  );
   const [section, setSection] = useState<Section>('languages');
   const [editor, setEditor] = useState<Editor>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +89,9 @@ export function ContentManager() {
   const reload = useCallback(async () => {
     setError(null);
     try {
-      setContent(await loadAdminContent());
+      const loaded = await loadContentView();
+      setContent(loaded.content);
+      setGalleryPreviews(loaded.galleryPreviews);
       setEditor(null);
     } catch (loadError) {
       setError(messageFrom(loadError));
@@ -76,9 +104,12 @@ export function ContentManager() {
   useEffect(() => {
     let active = true;
 
-    loadAdminContent()
-      .then(loadedContent => {
-        if (active) setContent(loadedContent);
+    loadContentView()
+      .then(loaded => {
+        if (active) {
+          setContent(loaded.content);
+          setGalleryPreviews(loaded.galleryPreviews);
+        }
       })
       .catch(loadError => {
         if (active) setError(messageFrom(loadError));
@@ -245,7 +276,7 @@ export function ContentManager() {
                 topic.translations,
                 content.languages,
               )} · order ${topic.sortOrder}`,
-              imageUri: topic.imageUri,
+              imageUri: galleryPreviews.get(topic.imageUri) ?? topic.imageUri,
               isPublished: topic.isPublished,
               edit: () => setEditor({ kind: 'topic', value: topic }),
               remove: () => remove('topic', topic.id),
@@ -265,7 +296,9 @@ export function ContentManager() {
                 affirmation.translations,
                 content.languages,
               )} · order ${affirmation.sortOrder}`,
-              imageUri: affirmation.imageUri,
+              imageUri:
+                galleryPreviews.get(affirmation.imageUri) ??
+                affirmation.imageUri,
               isPublished: affirmation.isPublished,
               edit: () =>
                 setEditor({ kind: 'affirmation', value: affirmation }),
@@ -284,7 +317,8 @@ export function ContentManager() {
                 background.translations,
                 content.languages,
               )} · order ${background.sortOrder}`,
-              imageUri: background.imageUri,
+              imageUri:
+                galleryPreviews.get(background.imageUri) ?? background.imageUri,
               isPublished: background.isPublished,
               edit: () => setEditor({ kind: 'background', value: background }),
               remove: () => remove('background', background.id),

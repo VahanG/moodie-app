@@ -4,6 +4,7 @@ import {
   type AdminLanguage,
   type AdminTopic,
 } from '../lib/content';
+import { ImageUrlField } from './ImageUrlField';
 import styles from './ContentEditor.module.css';
 
 export function TopicEditor({
@@ -78,17 +79,11 @@ export function TopicEditor({
             />
           </label>
         ))}
-        <label className={styles.wide}>
-          Image URL
-          <input
-            required
-            type="url"
-            value={topic.imageUri}
-            onChange={event =>
-              setTopic({ ...topic, imageUri: event.target.value })
-            }
-          />
-        </label>
+        <ImageUrlField
+          label="Image URL"
+          onChange={imageUri => setTopic({ ...topic, imageUri })}
+          value={topic.imageUri}
+        />
         <label>
           Sort order
           <input

@@ -5,6 +5,7 @@ import {
   type AdminLanguage,
   type AdminTopic,
 } from '../lib/content';
+import { ImageUrlField } from './ImageUrlField';
 import styles from './ContentEditor.module.css';
 
 export function AffirmationEditor({
@@ -105,20 +106,13 @@ export function AffirmationEditor({
             />
           </label>
         ))}
-        <label className={styles.wide}>
-          Suggested image URL
-          <input
-            required
-            type="url"
-            value={affirmation.imageUri}
-            onChange={event =>
-              setAffirmation({
-                ...affirmation,
-                imageUri: event.target.value,
-              })
-            }
-          />
-        </label>
+        <ImageUrlField
+          label="Suggested image URL"
+          onChange={imageUri =>
+            setAffirmation({ ...affirmation, imageUri })
+          }
+          value={affirmation.imageUri}
+        />
         <label className={styles.checkbox}>
           <input
             checked={affirmation.isPublished}

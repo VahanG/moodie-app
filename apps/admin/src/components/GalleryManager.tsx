@@ -9,18 +9,14 @@ import {
   type GalleryMedia,
 } from '../lib/gallery';
 import { GALLERY_ATTACHMENT_ACCEPT } from '../lib/galleryAttachment';
+import { galleryMediaMatchesQuery } from '../lib/galleryPresentation';
 import { GalleryEditor } from './GalleryEditor';
 import { GalleryDeleteDialog } from './GalleryDeleteDialog';
+import { GalleryMediaGrid, GallerySearch } from './GalleryMediaBrowser';
 import styles from './GalleryManager.module.css';
 
 function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : 'Gallery operation failed.';
-}
-
-function formatSize(bytes: number | null): string {
-  if (bytes === null) return 'Awaiting file';
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function GalleryManager() {
@@ -76,25 +72,7 @@ export function GalleryManager() {
   }, []);
 
   const visibleItems = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return items;
-    return items.filter(item =>
-      [
-        item.assetId,
-        item.name,
-        item.description,
-        item.mimeType ?? '',
-        item.sourceProvider,
-        item.creatorName,
-        item.creatorHandle ?? '',
-        item.licenseName,
-        item.assetStatus,
-        ...item.tags,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalized),
-    );
+    return items.filter(item => galleryMediaMatchesQuery(item, query));
   }, [items, query]);
 
   const selectedItems = useMemo(
@@ -243,14 +221,7 @@ export function GalleryManager() {
       </header>
 
       <div className={styles.toolbar}>
-        <input
-          aria-label="Search media"
-          className={styles.search}
-          onChange={event => setQuery(event.target.value)}
-          placeholder="Search names, descriptions, or tags"
-          type="search"
-          value={query}
-        />
+        <GallerySearch onQueryChange={setQuery} query={query} />
         <button
           className={styles.selectButton}
           disabled={visibleItems.length === 0}
@@ -305,89 +276,16 @@ export function GalleryManager() {
         }`}
       >
         <div className={styles.galleryPanel}>
-          {loading && <div className={styles.empty}>Loading gallery…</div>}
-          {!loading && visibleItems.length === 0 && (
-            <div className={styles.empty}>
-              <strong>
-                {items.length === 0 ? 'No media yet' : 'No matches'}
-              </strong>
-              <span>
-                {items.length === 0
-                  ? 'Upload images or videos to start the library.'
-                  : 'Try a different name, description, or tag.'}
-              </span>
-            </div>
-          )}
-          {!loading && visibleItems.length > 0 && (
-            <div className={styles.grid}>
-              {visibleItems.map(item => {
-                const selected = selectedIds.has(item.id);
-                return (
-                  <article
-                    className={`${styles.card} ${
-                      selected ? styles.selectedCard : ''
-                    }`}
-                    key={item.id}
-                  >
-                    <label className={styles.checkbox}>
-                      <input
-                        aria-label={`Select ${item.name}`}
-                        checked={selected}
-                        onChange={() => toggleSelected(item.id)}
-                        type="checkbox"
-                      />
-                    </label>
-                    <div className={styles.mediaPreview}>
-                      {!item.objectPath ? (
-                        <div className={styles.pendingPreview}>
-                          <strong>Awaiting upload</strong>
-                          <span>{item.assetId}</span>
-                        </div>
-                      ) : item.mimeType?.startsWith('video/') ? (
-                        <video muted preload="metadata" src={item.previewUrl} />
-                      ) : (
-                        <img
-                          alt={item.name}
-                          loading="lazy"
-                          src={item.previewUrl}
-                        />
-                      )}
-                      {item.objectPath && (
-                        <span>
-                          {item.mimeType?.startsWith('video/')
-                            ? 'Video'
-                            : 'Image'}
-                        </span>
-                      )}
-                    </div>
-                    <div className={styles.cardBody}>
-                      <strong title={item.name}>{item.name}</strong>
-                      <small className={styles.assetId}>{item.assetId}</small>
-                      <p>{item.description || 'No description yet'}</p>
-                      <div className={styles.tags}>
-                        {item.tags.length > 0 ? (
-                          item.tags
-                            .slice(0, 3)
-                            .map(tag => <span key={tag}>{tag}</span>)
-                        ) : (
-                          <span className={styles.missingTag}>No tags</span>
-                        )}
-                      </div>
-                      <div className={styles.cardFooter}>
-                        <small>{formatSize(item.sizeBytes)}</small>
-                        <button
-                          onClick={() => openSingleEditor(item.id)}
-                          type="button"
-                        >
-                          Edit
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
+          <GalleryMediaGrid
+            actionLabel="Edit"
+            items={visibleItems}
+            loading={loading}
+            onAction={item => openSingleEditor(item.id)}
+            onSelect={toggleSelected}
+            selectedIds={selectedIds}
+            selectionType="checkbox"
+            totalItems={items.length}
+          />
         </div>
 
         {editorOpen && selectedItems.length > 0 && (
