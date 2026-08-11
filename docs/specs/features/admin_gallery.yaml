@@ -63,13 +63,14 @@ requirements:
 
   - id: GAL-005
     title: Gallery Authorization
-    description: Gallery records and objects are restricted to database-managed administrators.
+    description: Gallery metadata and mutations are restricted to administrators while uploaded objects can be delivered to supporter clients.
     priority: MUST
     acceptance_criteria:
       - The gallery metadata table has RLS enabled.
       - Select, insert, update, and delete operations require public.is_admin().
-      - Storage object policies scope access to the gallery bucket and require public.is_admin().
-      - Anonymous and non-admin authenticated users cannot access gallery media.
+      - Storage insert, update, and delete policies require public.is_admin().
+      - Anonymous and authenticated supporter clients can read uploaded gallery objects through signed URLs.
+      - The gallery bucket remains private and stable gallery:// references are not persisted as expiring signed URLs.
     verification:
       status: local_supabase_migration_and_schema_lint
 

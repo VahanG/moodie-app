@@ -36,6 +36,7 @@ requirements:
       - A translated affirmation remains eligible when its topic name has not yet been translated; untranslated topic labels are omitted.
       - Content loaded for a previously selected language is hidden while the current language loads or fails.
       - Missing translated background metadata does not prevent otherwise translated affirmations from loading.
+      - Stable gallery:// image references are resolved to signed Gallery Storage URLs before content is rendered or cached.
     verification:
       test_id: database_managed_affirmation_content
       status: integration_contract_check

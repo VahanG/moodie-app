@@ -1,0 +1,12 @@
+release:
+  id: gallery-content-delivery
+  date: '2026-08-11'
+  type: content_delivery
+  summary: Resolve stable gallery image references for supporter-app rendering.
+  changes:
+    - Supporter clients can read uploaded objects from the private gallery bucket through signed URLs.
+    - Affirmation content loading converts gallery:// object paths to 24-hour signed URLs.
+    - Gallery metadata and every Storage mutation remain restricted to administrators.
+  verification:
+    - affirmation content unit tests
+    - local Supabase migration validation

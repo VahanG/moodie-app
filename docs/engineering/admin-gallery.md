@@ -25,10 +25,13 @@ reusable by future content workflows.
   `gallery` bucket.
 - Files are limited to 50 MB and to the image/video MIME types configured on
   the bucket.
-- Gallery rows and Storage objects are available only to authenticated users
-  that pass `public.is_admin()`.
-- Admin previews use short-lived signed URLs; the private bucket is never made
-  public.
+- Gallery rows remain available only to authenticated users that pass
+  `public.is_admin()`.
+- Uploaded Storage objects can be resolved by supporter clients from stable
+  `gallery://<object-path>` references. The app exchanges those references for
+  24-hour signed URLs; the bucket itself remains private.
+- Upload, update, and delete access to Storage objects remains admin-only.
+- Admin previews also use short-lived signed URLs.
 
 ## Admin workflow
 
