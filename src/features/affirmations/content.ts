@@ -10,6 +10,9 @@ import {
 
 const CONTENT_CACHE_PREFIX = '@moodie/affirmation-content-v3:';
 const CONTENT_CACHE_VERSION = 3;
+const GALLERY_BUCKET = 'gallery';
+const GALLERY_URI_PREFIX = 'gallery://';
+const GALLERY_SIGNED_URL_TTL_SECONDS = 24 * 60 * 60;
 
 type TopicRow = {
   id: unknown;
@@ -92,6 +95,71 @@ function compareOrdered(
   b: { sortOrder: number; id: string },
 ): number {
   return a.sortOrder - b.sortOrder || a.id.localeCompare(b.id);
+}
+
+function galleryObjectPath(imageUri: string): string | null {
+  if (!imageUri.startsWith(GALLERY_URI_PREFIX)) return null;
+  const objectPath = imageUri.slice(GALLERY_URI_PREFIX.length);
+  if (!objectPath) {
+    throw new Error('Invalid gallery image URI in affirmation content.');
+  }
+  return objectPath;
+}
+
+async function resolveGalleryImageUris(
+  content: AffirmationContent,
+): Promise<AffirmationContent> {
+  const imageUris = [
+    ...content.topics.flatMap(topic => [
+      topic.imageUri,
+      ...topic.affirmations.map(affirmation => affirmation.imageUri),
+    ]),
+    ...content.backgrounds.map(background => background.imageUri),
+  ];
+  const objectPaths = [
+    ...new Set(
+      imageUris.flatMap(imageUri => {
+        const objectPath = galleryObjectPath(imageUri);
+        return objectPath ? [objectPath] : [];
+      }),
+    ),
+  ];
+  if (objectPaths.length === 0) return content;
+
+  const { data, error } = await getSupabaseClient()
+    .storage.from(GALLERY_BUCKET)
+    .createSignedUrls(objectPaths, GALLERY_SIGNED_URL_TTL_SECONDS);
+  if (error) throw error;
+
+  const signedUrlByPath = new Map(
+    (data ?? []).flatMap(item =>
+      item.path && item.signedUrl ? [[item.path, item.signedUrl] as const] : [],
+    ),
+  );
+  const resolveImageUri = (imageUri: string): string => {
+    const objectPath = galleryObjectPath(imageUri);
+    if (!objectPath) return imageUri;
+    const signedUrl = signedUrlByPath.get(objectPath);
+    if (!signedUrl) {
+      throw new Error('A gallery image could not be loaded.');
+    }
+    return signedUrl;
+  };
+
+  return {
+    topics: content.topics.map(topic => ({
+      ...topic,
+      imageUri: resolveImageUri(topic.imageUri),
+      affirmations: topic.affirmations.map(affirmation => ({
+        ...affirmation,
+        imageUri: resolveImageUri(affirmation.imageUri),
+      })),
+    })),
+    backgrounds: content.backgrounds.map(background => ({
+      ...background,
+      imageUri: resolveImageUri(background.imageUri),
+    })),
+  };
 }
 
 export function parseAffirmationContentRows(
@@ -266,7 +334,7 @@ async function fetchPublishedAffirmationContent(
     backgroundTranslationsResult.error;
   if (error) throw error;
 
-  return parseAffirmationContentRows(
+  const content = parseAffirmationContentRows(
     (topicsResult.data ?? []) as TopicRow[],
     (topicTranslationsResult.data ?? []) as TopicTranslationRow[],
     (affirmationsResult.data ?? []) as AffirmationRow[],
@@ -274,6 +342,7 @@ async function fetchPublishedAffirmationContent(
     (backgroundsResult.data ?? []) as BackgroundRow[],
     (backgroundTranslationsResult.data ?? []) as BackgroundTranslationRow[],
   );
+  return resolveGalleryImageUris(content);
 }
 
 function parseCachedContent(value: string): AffirmationContent {

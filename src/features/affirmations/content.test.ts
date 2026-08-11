@@ -2,13 +2,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadAffirmationContent, parseAffirmationContentRows } from './content';
 
 const mockFrom = jest.fn();
+const mockCreateSignedUrls = jest.fn();
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
 }));
 jest.mock('../supabase', () => ({
-  getSupabaseClient: () => ({ from: mockFrom }),
+  getSupabaseClient: () => ({
+    from: mockFrom,
+    storage: {
+      from: () => ({ createSignedUrls: mockCreateSignedUrls }),
+    },
+  }),
 }));
 
 const mockGetItem = AsyncStorage.getItem as jest.MockedFunction<
@@ -229,6 +235,7 @@ describe('affirmation content loading', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSetItem.mockResolvedValue();
+    mockCreateSignedUrls.mockResolvedValue({ data: [], error: null });
   });
 
   test('retrieves one language and caches it separately', async () => {
@@ -244,6 +251,70 @@ describe('affirmation content loading', () => {
     expect(mockSetItem).toHaveBeenCalledWith(
       '@moodie/affirmation-content-v3:en',
       expect.stringContaining('"version":3'),
+    );
+  });
+
+  test('resolves stable gallery references to signed image URLs', async () => {
+    const galleryRows: Record<string, unknown[]> = {
+      ...rowsByTable,
+      affirmation_topics: [
+        {
+          ...(rowsByTable.affirmation_topics[0] as Record<string, unknown>),
+          image_uri: 'gallery://admin/topic.jpg',
+        },
+      ],
+      affirmations: [
+        {
+          ...(rowsByTable.affirmations[0] as Record<string, unknown>),
+          image_uri: 'gallery://admin/affirmation.jpg',
+        },
+      ],
+      affirmation_backgrounds: [
+        {
+          ...(rowsByTable.affirmation_backgrounds[0] as Record<
+            string,
+            unknown
+          >),
+          image_uri: 'gallery://admin/background.jpg',
+        },
+      ],
+    };
+    mockFrom.mockImplementation((table: string) =>
+      buildQuery({ data: galleryRows[table], error: null }),
+    );
+    mockCreateSignedUrls.mockResolvedValue({
+      data: [
+        { path: 'admin/topic.jpg', signedUrl: 'https://signed/topic.jpg' },
+        {
+          path: 'admin/affirmation.jpg',
+          signedUrl: 'https://signed/affirmation.jpg',
+        },
+        {
+          path: 'admin/background.jpg',
+          signedUrl: 'https://signed/background.jpg',
+        },
+      ],
+      error: null,
+    });
+
+    const loaded = await loadAffirmationContent('en');
+
+    expect(mockCreateSignedUrls).toHaveBeenCalledWith(
+      [
+        'admin/topic.jpg',
+        'admin/affirmation.jpg',
+        'admin/background.jpg',
+      ],
+      86400,
+    );
+    expect(loaded.content.topics[0].imageUri).toBe(
+      'https://signed/topic.jpg',
+    );
+    expect(loaded.content.topics[0].affirmations[0].imageUri).toBe(
+      'https://signed/affirmation.jpg',
+    );
+    expect(loaded.content.backgrounds[0].imageUri).toBe(
+      'https://signed/background.jpg',
     );
   });
 
