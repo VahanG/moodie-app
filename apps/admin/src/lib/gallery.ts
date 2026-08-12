@@ -4,6 +4,7 @@ import {
   planGalleryMediaAttachments,
   type GalleryAttachmentRejectionCode,
 } from './galleryAttachment';
+import { optimizeGalleryUploadFiles } from './galleryImageOptimization';
 
 const GALLERY_BUCKET = 'gallery';
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -244,6 +245,8 @@ export async function uploadGalleryMedia(
   files: File[],
 ): Promise<GalleryMedia[]> {
   validateFiles(files);
+  const preparedFiles = await optimizeGalleryUploadFiles(files);
+  validateFiles(preparedFiles.map(prepared => prepared.file));
 
   const client = getAdminSupabaseClient();
   const { data: userData, error: userError } = await client.auth.getUser();
@@ -251,7 +254,8 @@ export async function uploadGalleryMedia(
   if (!userData.user) throw new Error('Your admin session has expired.');
 
   const uploads = await Promise.allSettled(
-    files.map(async file => {
+    preparedFiles.map(async prepared => {
+      const file = prepared.file;
       const objectPath = `${
         userData.user.id
       }/${crypto.randomUUID()}-${safeFilename(file.name)}`;
@@ -263,7 +267,7 @@ export async function uploadGalleryMedia(
           upsert: false,
         });
       throwIfError(error);
-      return { file, objectPath };
+      return { ...prepared, objectPath };
     }),
   );
 
@@ -286,7 +290,7 @@ export async function uploadGalleryMedia(
   const { data, error } = await client
     .from('gallery_media')
     .insert(
-      completed.map(({ file, objectPath }) => ({
+      completed.map(({ file, objectPath, originalWidth, originalHeight }) => ({
         asset_id: crypto.randomUUID(),
         object_path: objectPath,
         name: titleFromFilename(file.name),
@@ -297,6 +301,8 @@ export async function uploadGalleryMedia(
         source_provider: 'unknown',
         creator_name: 'Unknown',
         license_name: 'Unverified',
+        original_width: originalWidth,
+        original_height: originalHeight,
         asset_status: 'pending_review',
         created_by: userData.user.id,
       })),
@@ -337,6 +343,27 @@ export async function attachGalleryMediaFiles(
     return { attachedMediaIds: [], rejected };
   }
 
+  let preparedMatches: Array<
+    (typeof plan.matches)[number] & { uploadFile: File }
+  >;
+  try {
+    const preparedFiles = await optimizeGalleryUploadFiles(
+      plan.matches.map(match => match.file),
+    );
+    preparedMatches = plan.matches.map((match, index) => ({
+      ...match,
+      uploadFile: preparedFiles[index].file,
+    }));
+    validateFiles(preparedMatches.map(match => match.uploadFile));
+  } catch (error) {
+    throw new GalleryAttachmentUploadError(
+      error instanceof Error
+        ? error.message
+        : 'One or more images could not be optimized.',
+      rejected,
+    );
+  }
+
   const client = getAdminSupabaseClient();
   const { data: userData, error: userError } = await client.auth.getUser();
   if (userError) {
@@ -350,19 +377,20 @@ export async function attachGalleryMediaFiles(
   }
 
   const uploads = await Promise.allSettled(
-    plan.matches.map(async match => {
+    preparedMatches.map(async match => {
+      const file = match.uploadFile;
       const objectPath = `${userData.user.id}/registered/${safeFilename(
         match.asset.assetId,
-      )}/${crypto.randomUUID()}-${safeFilename(match.file.name)}`;
+      )}/${crypto.randomUUID()}-${safeFilename(file.name)}`;
       const { error } = await client.storage
         .from(GALLERY_BUCKET)
-        .upload(objectPath, match.file, {
+        .upload(objectPath, file, {
           cacheControl: '3600',
-          contentType: match.file.type,
+          contentType: file.type,
           upsert: false,
         });
       throwIfError(error);
-      return { ...match, objectPath };
+      return { ...match, file, objectPath };
     }),
   );
 

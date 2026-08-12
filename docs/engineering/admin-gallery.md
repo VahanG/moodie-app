@@ -25,6 +25,13 @@ reusable by future content workflows.
   `gallery` bucket.
 - Files are limited to 50 MB and to the image/video MIME types configured on
   the bucket.
+- JPEG files are optimized entirely in the admin browser before upload. The
+  browser corrects the decoded orientation, limits width to 1440 pixels without
+  upscaling, encodes WebP at 80% quality, and uploads only the WebP result.
+  Drawing through the browser canvas also removes embedded JPEG metadata from
+  the stored copy.
+- Other supported image formats and videos are uploaded unchanged. The gallery
+  does not create or store thumbnail variants.
 - Gallery rows remain available only to authenticated users that pass
   `public.is_admin()`.
 - Uploaded Storage objects can be resolved by supporter clients from stable
@@ -36,7 +43,8 @@ reusable by future content workflows.
 ## Admin workflow
 
 1. Open **Gallery** in the admin navigation.
-2. Choose **Upload media** and select one or more image or video files.
+2. Choose **Upload media** and select one or more image or video files. JPEGs
+   are optimized and converted to WebP before the upload begins.
 3. A registered asset without a file appears with an **Awaiting upload**
    placeholder and remains searchable by asset ID and source metadata.
 4. After a regular upload completes, every new item is selected and the metadata
@@ -62,7 +70,9 @@ fileless registered assets. This mode never creates gallery rows.
 2. Before upload, the client rejects empty, unsupported, oversized, unmatched,
    ambiguous, already-attached, and duplicate files. Rejected files are not
    sent to Storage.
-3. Every accepted file uploads to a new private `gallery` object path.
+3. Every accepted JPEG is optimized and converted to WebP, then the resulting
+   file uploads to a new private `gallery` object path. Asset ID matching still
+   uses the administrator-selected filename.
 4. An admin-only database function locks and attaches the complete accepted
    batch in one transaction. It sets object path, MIME type, size, uploader,
    download date when missing, and `pending_review` status.
@@ -115,6 +125,8 @@ rows. Candidate fields map to gallery metadata as follows:
 ## Failure behavior
 
 - Unsupported or oversized files are rejected before upload.
+- If a JPEG cannot be decoded or encoded as WebP, the upload attempt stops
+  before any file from that attempt is written to Storage.
 - If one file in a batch fails, successfully uploaded files from that batch are
   removed so the gallery is not left with partial uploads.
 - If metadata creation fails, the uploaded Storage objects are removed.

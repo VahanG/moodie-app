@@ -1,0 +1,14 @@
+release:
+  id: admin-gallery-image-optimization
+  date: '2026-08-12'
+  type: admin_gallery
+  summary: Optimize JPEG assets in the admin browser before gallery upload.
+  changes:
+    - Resize JPEGs wider than 1440 pixels while preserving aspect ratio.
+    - Convert JPEGs to 80 percent quality WebP before Supabase Storage upload.
+    - Apply optimization to both new gallery uploads and Asset ID attachments.
+    - Store no original JPEG or thumbnail variant.
+  verification:
+    - admin image optimization unit tests
+    - admin production build
+    - admin lint

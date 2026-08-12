@@ -26,6 +26,7 @@ test('keeps the admin app independent and client-only', async () => {
     galleryEditor,
     galleryService,
     galleryAttachment,
+    galleryImageOptimization,
     galleryDelete,
     imageUrlField,
     topicEditor,
@@ -51,6 +52,7 @@ test('keeps the admin app independent and client-only', async () => {
     readFile(new URL('src/components/GalleryEditor.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/lib/gallery.ts', adminRoot), 'utf8'),
     readFile(new URL('src/lib/galleryAttachment.ts', adminRoot), 'utf8'),
+    readFile(new URL('src/lib/galleryImageOptimization.ts', adminRoot), 'utf8'),
     readFile(
       new URL('src/components/GalleryDeleteDialog.tsx', adminRoot),
       'utf8',
@@ -61,10 +63,7 @@ test('keeps the admin app independent and client-only', async () => {
       new URL('src/components/AffirmationEditor.tsx', adminRoot),
       'utf8',
     ),
-    readFile(
-      new URL('src/components/BackgroundEditor.tsx', adminRoot),
-      'utf8',
-    ),
+    readFile(new URL('src/components/BackgroundEditor.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/components/AdminPortal.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/main.tsx', adminRoot), 'utf8'),
     readFile(new URL('package.json', adminRoot), 'utf8'),
@@ -92,9 +91,12 @@ test('keeps the admin app independent and client-only', async () => {
   assert.match(galleryEditor, /Source and licensing/);
   assert.match(galleryService, /asset_id: crypto\.randomUUID\(\)/);
   assert.match(galleryService, /attach_gallery_media_uploads/);
+  assert.match(galleryService, /optimizeGalleryUploadFiles/);
   assert.match(galleryService, /removeGalleryObjects/);
   assert.match(galleryService, /if \(!objectPath\) return \{ deleted: true \}/);
   assert.match(galleryAttachment, /planGalleryMediaAttachments/);
+  assert.match(galleryImageOptimization, /image\/webp/);
+  assert.match(galleryImageOptimization, /GALLERY_IMAGE_MAX_WIDTH = 1440/);
   assert.match(galleryDelete, /getGalleryMediaReferences/);
   assert.match(galleryDelete, /deleteGalleryMedia/);
   assert.match(galleryDelete, /Removal is blocked/);

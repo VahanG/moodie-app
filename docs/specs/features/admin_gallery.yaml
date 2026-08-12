@@ -1,4 +1,4 @@
-schema_version: '1.2.0'
+schema_version: '1.3.0'
 
 feature:
   id: FEATURE-ADMIN-GALLERY
@@ -119,3 +119,20 @@ requirements:
       - Successful attachment records object path, MIME type, file size, uploader, download date when absent, and pending-review status.
     verification:
       status: matching_unit_tests_admin_build_and_migration_validation
+
+  - id: GAL-009
+    title: Admin-Side JPEG Optimization
+    description: JPEGs are resized and converted before Storage upload so supporter clients receive compact mobile-ready assets.
+    priority: MUST
+    acceptance_criteria:
+      - Optimization runs only in the standalone admin web application and requires no supporter-app processing.
+      - JPEG width is limited to 1440 pixels without upscaling and aspect ratio is preserved.
+      - JPEGs are encoded as WebP at 80 percent quality and only the WebP result is uploaded.
+      - Both create-new and attach-by-Asset-ID upload modes use the same optimization behavior.
+      - Asset-ID matching uses the original selected filename before conversion.
+      - The stored object path, MIME type, and size describe the optimized WebP file.
+      - Original JPEG dimensions are retained as gallery metadata for create-new uploads.
+      - No thumbnail variant is created or stored.
+      - A decode or encode failure stops the attempt before any Storage upload begins.
+    verification:
+      status: image_optimization_unit_tests_admin_build_and_lint

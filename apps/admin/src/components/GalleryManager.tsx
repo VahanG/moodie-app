@@ -207,15 +207,15 @@ export function GalleryManager() {
               type="file"
             />
             {uploading
-              ? 'Uploading…'
+              ? 'Optimizing & uploading…'
               : uploadMode === 'attach'
               ? 'Select images to attach'
               : 'Upload media'}
           </label>
           <small className={styles.uploadHelp}>
             {uploadMode === 'attach'
-              ? 'Filenames must contain the exact, case-sensitive Asset ID. Unmatched files are not saved.'
-              : 'Upload files and create new gallery items.'}
+              ? 'Filenames must contain the exact, case-sensitive Asset ID. JPEGs become optimized WebP files before upload.'
+              : 'JPEGs become optimized WebP files (max 1440 px wide, 80% quality) before upload.'}
           </small>
         </div>
       </header>
