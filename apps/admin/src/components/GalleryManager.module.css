@@ -463,6 +463,10 @@
   padding: 20px;
   position: sticky;
   top: 20px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
 }
 
 .editorHeader {

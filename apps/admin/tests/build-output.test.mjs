@@ -21,6 +21,7 @@ test('keeps the admin app independent and client-only', async () => {
     config,
     dashboard,
     gallery,
+    galleryStyles,
     galleryBrowser,
     galleryPicker,
     galleryEditor,
@@ -41,6 +42,10 @@ test('keeps the admin app independent and client-only', async () => {
     readFile(new URL('src/lib/config.ts', adminRoot), 'utf8'),
     readFile(new URL('src/components/AdminDashboard.tsx', adminRoot), 'utf8'),
     readFile(new URL('src/components/GalleryManager.tsx', adminRoot), 'utf8'),
+    readFile(
+      new URL('src/components/GalleryManager.module.css', adminRoot),
+      'utf8',
+    ),
     readFile(
       new URL('src/components/GalleryMediaBrowser.tsx', adminRoot),
       'utf8',
@@ -79,6 +84,11 @@ test('keeps the admin app independent and client-only', async () => {
   assert.match(gallery, /GalleryMediaGrid/);
   assert.match(gallery, /Attach by Asset ID/);
   assert.match(gallery, /Files not saved/);
+  assert.match(
+    galleryStyles,
+    /\.editor\s*\{[^}]*max-height:[^;}]+;[^}]*overflow-y:\s*auto;/s,
+    'the gallery editor must scroll independently within the viewport',
+  );
   assert.match(galleryBrowser, /Awaiting upload/);
   assert.match(galleryBrowser, /Search names, descriptions, or tags/);
   assert.match(galleryPicker, /GalleryMediaGrid/);
@@ -101,6 +111,11 @@ test('keeps the admin app independent and client-only', async () => {
   assert.match(galleryDelete, /deleteGalleryMedia/);
   assert.match(galleryDelete, /Removal is blocked/);
   assert.match(portal, /verifyCurrentAdmin/);
+  assert.match(
+    portal,
+    /verifiedAdminId\.current === session\.user\.id/,
+    'repeated auth events for the verified admin must retain the dashboard',
+  );
   assert.match(main, /createRoot\(root\)\.render/);
   assert.match(packageJson, /"vite":/);
   assert.match(viteConfig, /envDir: "\.\.\/\.\."/);

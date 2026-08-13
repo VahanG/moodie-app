@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   getCurrentSession,
   signInWithGoogle,
@@ -29,6 +29,7 @@ function messageFrom(error: unknown): string {
 
 export function AdminPortal() {
   const [portal, setPortal] = useState<PortalState>({ kind: "checking" });
+  const verifiedAdminId = useRef<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState<"password" | "google" | null>(
@@ -44,6 +45,7 @@ export function AdminPortal() {
       const currentVerification = ++verification;
 
       if (!session) {
+        verifiedAdminId.current = null;
         if (active) setPortal({ kind: "signed-out" });
         return;
       }
@@ -54,6 +56,7 @@ export function AdminPortal() {
       try {
         const isAdmin = await verifyCurrentAdmin();
         if (!active || currentVerification !== verification) return;
+        verifiedAdminId.current = isAdmin ? identity.id : null;
         setPortal(
           isAdmin ? { kind: "ready", identity } : { kind: "denied", identity },
         );
@@ -79,6 +82,9 @@ export function AdminPortal() {
     try {
       const client = getAdminSupabaseClient();
       const { data } = client.auth.onAuthStateChange((_event, session) => {
+        // Focus and token refreshes can repeat auth events for the same user.
+        // Keep the dashboard mounted so its current section and drafts survive.
+        if (session && verifiedAdminId.current === session.user.id) return;
         evaluateSessionSafely(session);
       });
       unsubscribe = () => data.subscription.unsubscribe();
