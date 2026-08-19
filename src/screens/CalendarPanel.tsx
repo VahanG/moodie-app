@@ -1,13 +1,33 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, useWindowDimensions, View } from 'react-native';
 import { AppText } from '../components/ui';
 import { useTheme } from '../theme';
 import { useCalendarPanelStyles } from './CalendarPanel.styles';
 import { useLocalization } from '../features/localization';
+import type { AffirmationBackground } from '../features/affirmations/types';
 
-const CALENDAR_BACKGROUND_URI =
-  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80';
+type Props = {
+  backgrounds: AffirmationBackground[];
+};
+
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export function getDailyBackgroundImageUri(
+  backgrounds: AffirmationBackground[],
+  date: Date,
+): string | null {
+  if (backgrounds.length === 0) return null;
+
+  const localDay = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const backgroundIndex =
+    Math.floor(localDay / MILLISECONDS_PER_DAY) % backgrounds.length;
+  return backgrounds[backgroundIndex].imageUri;
+}
 
 function getDateParts(date: Date, languageCode: string) {
   const day = date.getDate().toString().padStart(2, '0');
@@ -17,16 +37,15 @@ function getDateParts(date: Date, languageCode: string) {
   return { day, month, weekday, year };
 }
 
-const CalendarPanel: React.FC = () => {
+const CalendarPanel: React.FC<Props> = ({ backgrounds }) => {
   const styles = useCalendarPanelStyles();
   const { theme } = useTheme();
   const { languageCode, t } = useLocalization();
   const { height: windowHeight } = useWindowDimensions();
   const isCompactLayout = windowHeight < 700;
-  const { day, month, weekday, year } = useMemo(
-    () => getDateParts(new Date(), languageCode),
-    [languageCode],
-  );
+  const today = new Date();
+  const { day, month, weekday, year } = getDateParts(today, languageCode);
+  const backgroundImageUri = getDailyBackgroundImageUri(backgrounds, today);
   const accessibleDate = `${weekday}, ${month} ${day}, ${year}`;
 
   return (
@@ -40,20 +59,20 @@ const CalendarPanel: React.FC = () => {
         <AppText testID="text-calendar-heading" variant="title">
           {t('calendar.title')}
         </AppText>
-        <AppText tone="muted">
-          {t('calendar.subtitle')}
-        </AppText>
+        <AppText tone="muted">{t('calendar.subtitle')}</AppText>
       </View>
 
       <View style={styles.mediaCard}>
-        <Image
-          accessibilityIgnoresInvertColors
-          accessible={false}
-          source={{ uri: CALENDAR_BACKGROUND_URI }}
-          style={styles.image}
-          resizeMode="cover"
-          testID="image-calendar-background"
-        />
+        {backgroundImageUri ? (
+          <Image
+            accessibilityIgnoresInvertColors
+            accessible={false}
+            source={{ uri: backgroundImageUri }}
+            style={styles.image}
+            resizeMode="cover"
+            testID="image-calendar-background"
+          />
+        ) : null}
         <View pointerEvents="none" style={styles.imageOverlay} />
         <View
           style={[styles.content, isCompactLayout && styles.contentCompact]}

@@ -575,7 +575,7 @@ const HomeScreen: React.FC = () => {
           />
         </View>
         <View style={[styles.page, styles.calendarPage, { width: pagerWidth }]}>
-          <CalendarPanel />
+          <CalendarPanel backgrounds={visibleAffirmationContent.backgrounds} />
         </View>
         <View style={[styles.page, { width: pagerWidth }]}>
           <SettingsPanel

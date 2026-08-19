@@ -60,6 +60,8 @@ requirements:
       - The Calendar page remains reachable from the home pager.
       - A Calendar heading and supporting description establish the page hierarchy.
       - The current local weekday, day, month, and year are readable within a large rounded media card.
+      - The media-card background comes from the remotely delivered affirmation background catalog; no bundled or hardcoded image URL is used as an editorial fallback.
+      - When remote or last-known-good cached backgrounds are unavailable, the calendar remains usable without rendering a background image.
       - A protective image overlay keeps the date and daily message readable over the background.
       - The daily message remains visible and is visually separated from the date.
       - The layout uses themed outer spacing and adapts typography and padding for compact mobile heights.

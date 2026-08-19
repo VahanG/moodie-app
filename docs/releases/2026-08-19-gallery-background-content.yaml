@@ -1,0 +1,32 @@
+release:
+  id: gallery-background-content
+  date: '2026-08-19'
+  type: content_drop
+  summary: Publish every uploaded Gallery image as an affirmation background.
+  feature_spec: docs/specs/features/admin_gallery.yaml
+
+content:
+  gallery_images: 100
+  affirmation_backgrounds: 100
+  publication_state: published
+  image_reference_format: gallery://<object-path>
+  enabled_languages:
+    - en
+    - hy
+  background_translation_rows: 200
+
+delivery:
+  operation: one-time transactional data population
+  schema_migration: none
+  gallery_rows_modified: 0
+  duplicate_image_references: 0
+  calendar_background_source: remote_affirmation_background_catalog
+  hardcoded_app_background_images: 0
+
+verification:
+  - Every uploaded Gallery image maps to one published affirmation background.
+  - Every background uses a durable Gallery object reference.
+  - Every background has tags for each enabled language.
+  - Background sort orders span 10 through 1000 in increments of 10.
+  - The affirmation picker and Calendar render only API-delivered or last-known-good cached background images.
+schema_version: '1.0.0'
