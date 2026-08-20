@@ -197,6 +197,25 @@ describe('affirmation content parsing', () => {
       },
     ]);
   });
+
+  test('keeps a translated affirmation when its suggested image is empty', () => {
+    expect(
+      parseAffirmationContentRows(
+        topics,
+        topicTranslations,
+        [{ ...affirmations[0], image_uri: null }],
+        [affirmationTranslations[0]],
+        backgrounds,
+        backgroundTranslations,
+      ).topics[0].affirmations,
+    ).toEqual([
+      {
+        id: 'affirmation-2',
+        text: 'Second',
+        imageUri: '',
+      },
+    ]);
+  });
 });
 
 describe('affirmation content loading', () => {
@@ -300,16 +319,10 @@ describe('affirmation content loading', () => {
     const loaded = await loadAffirmationContent('en');
 
     expect(mockCreateSignedUrls).toHaveBeenCalledWith(
-      [
-        'admin/topic.jpg',
-        'admin/affirmation.jpg',
-        'admin/background.jpg',
-      ],
+      ['admin/topic.jpg', 'admin/affirmation.jpg', 'admin/background.jpg'],
       86400,
     );
-    expect(loaded.content.topics[0].imageUri).toBe(
-      'https://signed/topic.jpg',
-    );
+    expect(loaded.content.topics[0].imageUri).toBe('https://signed/topic.jpg');
     expect(loaded.content.topics[0].affirmations[0].imageUri).toBe(
       'https://signed/affirmation.jpg',
     );

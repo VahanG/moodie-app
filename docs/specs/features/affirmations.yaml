@@ -36,7 +36,8 @@ requirements:
       - A translated affirmation remains eligible when its topic name has not yet been translated; untranslated topic labels are omitted.
       - Content loaded for a previously selected language is hidden while the current language loads or fails.
       - Missing translated background metadata does not prevent otherwise translated affirmations from loading.
-      - Stable gallery:// image references are resolved to signed Gallery Storage URLs before content is rendered or cached.
+      - An affirmation image is optional and does not affect affirmation eligibility.
+      - Stable gallery:// image references, when present, are resolved to signed Gallery Storage URLs before content is rendered or cached.
     verification:
       test_id: database_managed_affirmation_content
       status: integration_contract_check
@@ -151,12 +152,13 @@ requirements:
           selector: "[data-testid='animation-affirmation'][data-direction='down']"
 
   - id: AFF-005
-    title: Deterministic Background Mode
+    title: Background Mode and Fallback
     description: Fixed and Free modes determine which visual accompanies affirmation text.
     priority: MUST
     acceptance_criteria:
       - Fixed mode always renders the selected fixed background regardless of topic or text changes.
       - Free mode renders a background weakly connected to the current affirmation text.
+      - If an affirmation has no suggested image and no valid fixed background is active, the app chooses a random image from the published background catalog.
       - Topic selection controls text eligibility while background mode controls the image.
     verification:
       test_id: affirmations_background_mode

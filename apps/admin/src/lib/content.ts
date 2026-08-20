@@ -177,7 +177,7 @@ export async function loadAdminContent(): Promise<AdminContent> {
       id: row.id,
       topicId: row.topic_id,
       translations: affirmationTexts.get(row.id) ?? {},
-      imageUri: row.image_uri,
+      imageUri: row.image_uri ?? '',
       sortOrder: row.sort_order,
       isPublished: row.is_published,
     })),
@@ -203,7 +203,11 @@ async function saveTranslationSet(
   await Promise.all(
     Object.entries(translations).map(async ([languageCode, value]) => {
       const normalized = Array.isArray(value)
-        ? [...new Set(value.map(item => item.trim().toLowerCase()).filter(Boolean))]
+        ? [
+            ...new Set(
+              value.map(item => item.trim().toLowerCase()).filter(Boolean),
+            ),
+          ]
         : value.trim();
 
       if (normalized.length === 0) {
@@ -274,7 +278,7 @@ export async function saveAffirmation(
 ): Promise<void> {
   const values = {
     topic_id: affirmation.topicId,
-    image_uri: affirmation.imageUri.trim(),
+    image_uri: affirmation.imageUri.trim() || null,
     sort_order: affirmation.sortOrder,
     is_published: affirmation.isPublished,
   };

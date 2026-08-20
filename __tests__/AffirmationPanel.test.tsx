@@ -140,3 +140,46 @@ test('renders translated affirmation text without an untranslated topic label', 
     renderer!.root.findAllByProps({ testID: 'text-current-topic' }),
   ).toHaveLength(0);
 });
+
+test('renders a catalog background when the affirmation image is empty', async () => {
+  const topic: AffirmationTopic = {
+    id: 'calm',
+    name: 'Calm',
+    imageUri: 'https://example.com/calm.jpg',
+    affirmations: [
+      {
+        id: 'affirmation-without-image',
+        imageUri: '',
+        text: 'You can take this one breath at a time.',
+      },
+    ],
+  };
+  const fallbackImageUri = 'https://example.com/fallback.jpg';
+  let renderer: ReactTestRenderer.ReactTestRenderer;
+
+  await ReactTestRenderer.act(async () => {
+    renderer = ReactTestRenderer.create(
+      <ThemeProvider>
+        <AffirmationPanel
+          backgrounds={[
+            { id: 'fallback', imageUri: fallbackImageUri, tags: ['calm'] },
+          ]}
+          backgroundPreference={{ mode: 'free', backgroundId: null }}
+          contentStatus="ready"
+          likedAffirmationKeys={[]}
+          onBackgroundPreferenceChange={jest.fn()}
+          onRetryContent={jest.fn()}
+          onSelectTopics={jest.fn()}
+          onToggleAffirmationLike={jest.fn()}
+          selectedTopicIds={[]}
+          topics={[topic]}
+        />
+      </ThemeProvider>,
+    );
+  });
+
+  expect(
+    renderer!.root.findByProps({ testID: 'image-affirmation-background' }).props
+      .source,
+  ).toEqual({ uri: fallbackImageUri });
+});

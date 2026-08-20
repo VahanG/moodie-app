@@ -69,7 +69,7 @@ export function AffirmationEditor({
           >
             {topics.map(topic => (
               <option key={topic.id} value={topic.id}>
-              {topic.translations.en ?? topic.id}
+                {topic.translations.en ?? topic.id}
               </option>
             ))}
           </select>
@@ -107,10 +107,9 @@ export function AffirmationEditor({
           </label>
         ))}
         <ImageUrlField
-          label="Suggested image URL"
-          onChange={imageUri =>
-            setAffirmation({ ...affirmation, imageUri })
-          }
+          label="Suggested image URL (optional)"
+          onChange={imageUri => setAffirmation({ ...affirmation, imageUri })}
+          required={false}
           value={affirmation.imageUri}
         />
         <label className={styles.checkbox}>

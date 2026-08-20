@@ -78,6 +78,7 @@ requirements:
       - Admin can add and enable supported languages without a schema change.
       - Admin can provide topic names, affirmation text, and background tags for each supported language.
       - An affirmation or background missing its selected-language text is omitted.
+      - An affirmation without an image remains eligible; its visual falls back to the published background catalog unless a fixed background is active.
       - A missing topic-name translation hides that topic label and selector entry without suppressing translated affirmations assigned to it.
       - Editorial content never falls back to a different language.
       - App UI text may fall back from admin override to bundled selected-language text and then bundled English.

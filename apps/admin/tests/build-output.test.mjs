@@ -96,6 +96,8 @@ test('keeps the admin app independent and client-only', async () => {
   assert.match(imageUrlField, /Select from gallery/);
   assert.match(topicEditor, /ImageUrlField/);
   assert.match(affirmationEditor, /ImageUrlField/);
+  assert.match(affirmationEditor, /required=\{false\}/);
+  assert.match(affirmationEditor, /Suggested image URL \(optional\)/);
   assert.match(backgroundEditor, /ImageUrlField/);
   assert.match(galleryEditor, /Asset ID/);
   assert.match(galleryEditor, /Source and licensing/);

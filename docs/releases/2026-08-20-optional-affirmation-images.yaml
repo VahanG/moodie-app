@@ -1,0 +1,27 @@
+release:
+  id: optional-affirmation-images
+  date: '2026-08-20'
+  type: behavior_change
+  summary: Allow affirmations without a suggested image and use a catalog background at display time.
+  feature_spec: docs/specs/features/affirmations.yaml
+
+content:
+  affirmation_image_requirement: optional
+  persisted_empty_value: null
+  fallback_source: published_affirmation_background_catalog
+
+delivery:
+  schema_migration: allow null public.affirmations.image_uri values
+  admin_behavior: affirmation image selection is optional
+  supporter_behavior:
+    fixed_background: takes precedence when selected and available
+    suggested_image: used when present and no fixed background is active
+    random_background: used when neither of the above is available
+
+verification:
+  - An administrator can save an affirmation without selecting or entering an image.
+  - A published affirmation with a null image_uri remains in the supporter feed.
+  - A valid fixed background is rendered for an imageless affirmation.
+  - Without a valid fixed background, an imageless affirmation renders a random published background.
+
+schema_version: '1.0.0'

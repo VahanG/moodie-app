@@ -55,9 +55,9 @@ entities:
         required: true
       - name: background_suggestion_uris
         type: list<uri>
-        required: true
+        required: false
         constraints:
-          min_items: 1
+          max_items: 1
         implementation_field: image_uri
       - name: sort_order
         type: integer
@@ -73,7 +73,8 @@ entities:
         target: AffirmationTranslation
         foreign_key: affirmation_id
     notes:
-      - Text has one or more weakly connected background suggestions.
+      - Text may have one weakly connected background suggestion.
+      - A missing suggestion is stored as a null image_uri.
       - Text is not strictly bound one-to-one to gallery backgrounds.
 
   - name: AffirmationBackground

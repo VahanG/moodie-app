@@ -6,10 +6,12 @@ export function ImageUrlField({
   label,
   value,
   onChange,
+  required = true,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
 }) {
   const inputId = useId();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -28,7 +30,7 @@ export function ImageUrlField({
             setSelectedPreviewUrl(null);
             onChange(event.target.value);
           }}
-          required
+          required={required}
           type="url"
           value={value}
         />

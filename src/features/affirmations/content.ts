@@ -62,6 +62,17 @@ function requireString(value: unknown, field: string): string {
   return value;
 }
 
+function optionalImageUri(value: unknown, field: string): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (typeof value !== 'string') {
+    throw new Error(`Invalid ${field} in affirmation content.`);
+  }
+
+  return value.trim();
+}
+
 function requireOrder(value: unknown, field: string): number {
   if (!Number.isInteger(value) || (value as number) < 0) {
     throw new Error(`Invalid ${field} in affirmation content.`);
@@ -217,7 +228,7 @@ export function parseAffirmationContentRows(
     topic.affirmations.push({
       id,
       text,
-      imageUri: requireString(row.image_uri, 'affirmation image URI'),
+      imageUri: optionalImageUri(row.image_uri, 'affirmation image URI'),
       sortOrder: requireOrder(row.sort_order, 'affirmation sort order'),
     });
   });

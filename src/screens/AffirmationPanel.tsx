@@ -21,6 +21,7 @@ import {
   AffirmationTopicId,
 } from '../features/affirmations/types';
 import { buildAffirmationLikeKey } from '../features/affirmations/storage';
+import { resolveAffirmationBackground } from '../features/affirmations/background';
 import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
 import { AppButton, AppText, IconButton } from '../components/ui';
@@ -255,16 +256,6 @@ const AffirmationPanel: React.FC<Props> = ({
   }, [activeAffirmationIndex, affirmationFeed]);
   const activeAffirmation = affirmationFeed[safeActiveAffirmationIndex];
 
-  const selectedFixedBackground = useMemo(() => {
-    if (backgroundPreference.backgroundId === null) {
-      return undefined;
-    }
-
-    return backgrounds.find(
-      background => background.id === backgroundPreference.backgroundId,
-    );
-  }, [backgroundPreference.backgroundId, backgrounds]);
-
   const activeAffirmationLikeKey = useMemo(() => {
     if (!activeAffirmation) {
       return null;
@@ -276,11 +267,16 @@ const AffirmationPanel: React.FC<Props> = ({
     activeAffirmationLikeKey !== null &&
     likedAffirmationKeys.includes(activeAffirmationLikeKey);
 
-  const activeImageUri =
-    backgroundPreference.mode === 'fixed' && selectedFixedBackground
-      ? selectedFixedBackground.imageUri
-      : activeAffirmation?.imageUri;
-  const shouldAnimateImage = backgroundPreference.mode !== 'fixed';
+  const activeBackground = useMemo(
+    () =>
+      resolveAffirmationBackground({
+        affirmationImageUri: activeAffirmation?.imageUri ?? '',
+        backgrounds,
+        preference: backgroundPreference,
+      }),
+    [activeAffirmation, backgroundPreference, backgrounds],
+  );
+  const shouldAnimateImage = activeBackground?.source !== 'fixed';
   const handleShareAffirmation = useCallback(async () => {
     if (!activeAffirmation) {
       return;
@@ -295,7 +291,7 @@ const AffirmationPanel: React.FC<Props> = ({
     }
   }, [activeAffirmation]);
 
-  if (!activeAffirmation || !activeImageUri) {
+  if (!activeAffirmation || !activeBackground) {
     return (
       <View style={styles.screen} testID="screen-affirmations">
         <View style={styles.emptyState} testID="state-affirmation-content">
@@ -331,7 +327,7 @@ const AffirmationPanel: React.FC<Props> = ({
     >
       <View style={styles.mediaCard}>
         <Animated.Image
-          source={{ uri: activeImageUri }}
+          source={{ uri: activeBackground.imageUri }}
           style={[
             styles.image,
             shouldAnimateImage && {
