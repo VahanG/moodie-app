@@ -3,7 +3,6 @@
  */
 
 import React from 'react';
-import { StatusBar } from 'react-native';
 import { NavigationBar } from 'expo-navigation-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -33,10 +32,6 @@ function AppContent() {
 
   return (
     <>
-      <StatusBar
-        barStyle={theme.isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.colors.background}
-      />
       <NavigationBar style={theme.isDark ? 'light' : 'dark'} />
       <HomeScreen />
     </>

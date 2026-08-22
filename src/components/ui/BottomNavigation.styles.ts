@@ -11,6 +11,10 @@ export function createBottomNavigationStyles(theme: MoodieTheme) {
       paddingBottom: spacing.sm,
       backgroundColor: colors.background,
     },
+    shellMinimal: {
+      paddingTop: spacing.xs,
+      backgroundColor: 'transparent',
+    },
     navigation: {
       minHeight: 68,
       flexDirection: 'row',
@@ -26,6 +30,15 @@ export function createBottomNavigationStyles(theme: MoodieTheme) {
       shadowRadius: 18,
       elevation: 5,
     },
+    navigationMinimal: {
+      minHeight: 60,
+      padding: 0,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
+    },
     item: {
       flex: 1,
       minHeight: 56,
@@ -36,6 +49,11 @@ export function createBottomNavigationStyles(theme: MoodieTheme) {
     },
     itemSelected: {
       backgroundColor: colors.accentSoft,
+    },
+    itemMinimal: {
+      minHeight: 52,
+      gap: 0,
+      backgroundColor: 'transparent',
     },
     itemPressed: {
       opacity: 0.72,

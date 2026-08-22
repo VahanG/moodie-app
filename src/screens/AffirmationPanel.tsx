@@ -14,6 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   AffirmationBackground,
   AffirmationBackgroundPreference,
@@ -30,7 +31,7 @@ import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
 import AffirmationBackgroundImage from './AffirmationBackgroundImage';
 import { AppButton, AppText, IconButton } from '../components/ui';
-import { useTheme } from '../theme';
+import { MOBILE_LAYOUT_BREAKPOINT, useTheme } from '../theme';
 import { useAffirmationPanelStyles } from './AffirmationPanel.styles';
 import { useLocalization } from '../features/localization';
 
@@ -108,9 +109,11 @@ const AffirmationPanel: React.FC<Props> = ({
 }) => {
   const styles = useAffirmationPanelStyles();
   const { theme } = useTheme();
+  const safeAreaInsets = useSafeAreaInsets();
   const { languageCode, t } = useLocalization();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const isCompactLayout = windowHeight < 700;
+  const isMobileLayout = windowWidth < MOBILE_LAYOUT_BREAKPOINT;
   const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
   const [isBackgroundModalVisible, setIsBackgroundModalVisible] =
     useState(false);
@@ -369,11 +372,14 @@ const AffirmationPanel: React.FC<Props> = ({
 
   return (
     <View
-      style={styles.screen}
+      style={[styles.screen, isMobileLayout && styles.screenMobile]}
       testID="screen-affirmations"
       {...panResponder.panHandlers}
     >
-      <View style={styles.mediaCard} testID="card-affirmation-media">
+      <View
+        style={[styles.mediaCard, isMobileLayout && styles.mediaCardMobile]}
+        testID="card-affirmation-media"
+      >
         <AffirmationBackgroundImage
           imageUri={activeBackground.imageUri}
           onImageLoad={imageUri => {
@@ -384,7 +390,15 @@ const AffirmationPanel: React.FC<Props> = ({
         />
         <View pointerEvents="none" style={styles.imageOverlay} />
         <View
-          style={[styles.content, isCompactLayout && styles.contentCompact]}
+          style={[
+            styles.content,
+            isCompactLayout && styles.contentCompact,
+            isMobileLayout && styles.contentMobile,
+            isMobileLayout && {
+              paddingTop: safeAreaInsets.top + theme.spacing.lg,
+              paddingBottom: safeAreaInsets.bottom + 76,
+            },
+          ]}
         >
           <View style={styles.header}>
             <View style={styles.headingBlock}>
@@ -409,7 +423,7 @@ const AffirmationPanel: React.FC<Props> = ({
                 setIsBackgroundModalVisible(true);
               }}
               testID="btn-open-background-selection"
-              variant="onImage"
+              variant={isMobileLayout ? 'ghost' : 'onImage'}
             />
           </View>
 
@@ -434,6 +448,7 @@ const AffirmationPanel: React.FC<Props> = ({
                 }}
                 style={({ pressed }) => [
                   styles.topicChip,
+                  isMobileLayout && styles.topicChipMobile,
                   pressed && { opacity: 0.72 },
                 ]}
                 testID="btn-open-topic-selection"
@@ -443,18 +458,22 @@ const AffirmationPanel: React.FC<Props> = ({
                   name="sparkles-outline"
                   size={16}
                 />
-                <AppText
-                  style={styles.topicText}
-                  testID="text-current-topic"
-                  variant="label"
-                >
-                  {activeAffirmation.topicName}
-                </AppText>
-                <Ionicons
-                  color={theme.colors.onImageMuted}
-                  name="chevron-down"
-                  size={15}
-                />
+                {!isMobileLayout ? (
+                  <>
+                    <AppText
+                      style={styles.topicText}
+                      testID="text-current-topic"
+                      variant="label"
+                    >
+                      {activeAffirmation.topicName}
+                    </AppText>
+                    <Ionicons
+                      color={theme.colors.onImageMuted}
+                      name="chevron-down"
+                      size={15}
+                    />
+                  </>
+                ) : null}
               </Pressable>
             ) : null}
 
@@ -482,6 +501,7 @@ const AffirmationPanel: React.FC<Props> = ({
               style={[
                 styles.actionDock,
                 isCompactLayout && styles.actionDockCompact,
+                isMobileLayout && styles.actionDockMobile,
               ]}
             >
               <IconButton
@@ -506,7 +526,12 @@ const AffirmationPanel: React.FC<Props> = ({
                 testID="btn-like-affirmation"
                 variant="ghost"
               />
-              <View style={styles.actionDivider} />
+              <View
+                style={[
+                  styles.actionDivider,
+                  isMobileLayout && styles.actionDividerMobile,
+                ]}
+              />
               <IconButton
                 accessibilityLabel={t('affirmations.share')}
                 compact
@@ -532,13 +557,15 @@ const AffirmationPanel: React.FC<Props> = ({
                 name="swap-vertical-outline"
                 size={18}
               />
-              <AppText
-                style={styles.swipeHintText}
-                tone="onImage"
-                variant="caption"
-              >
-                {t('affirmations.swipe')}
-              </AppText>
+              {!isMobileLayout ? (
+                <AppText
+                  style={styles.swipeHintText}
+                  tone="onImage"
+                  variant="caption"
+                >
+                  {t('affirmations.swipe')}
+                </AppText>
+              ) : null}
             </View>
             <AppText
               style={styles.position}

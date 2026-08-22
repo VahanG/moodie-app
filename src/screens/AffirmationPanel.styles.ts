@@ -12,6 +12,11 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       paddingHorizontal: spacing.md,
       backgroundColor: colors.background,
     },
+    screenMobile: {
+      paddingTop: 0,
+      paddingHorizontal: 0,
+      backgroundColor: 'transparent',
+    },
     emptyState: {
       flex: 1,
       alignItems: 'center',
@@ -33,6 +38,13 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       shadowRadius: 24,
       elevation: 6,
     },
+    mediaCardMobile: {
+      borderWidth: 0,
+      borderRadius: 0,
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
+    },
     image: {
       ...StyleSheet.absoluteFill,
       width: undefined,
@@ -49,6 +61,11 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
     },
     contentCompact: {
       padding: spacing.md,
+    },
+    contentMobile: {
+      paddingTop: spacing.lg,
+      paddingHorizontal: spacing.lg,
+      paddingBottom: 76,
     },
     header: {
       flexDirection: 'row',
@@ -93,6 +110,16 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       borderColor: colors.imageControlBorder,
       borderRadius: radii.pill,
       backgroundColor: colors.imageControl,
+    },
+    topicChipMobile: {
+      width: 44,
+      minHeight: 44,
+      justifyContent: 'center',
+      gap: 0,
+      paddingHorizontal: 0,
+      paddingVertical: 0,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
     },
     topicText: {
       color: colors.onImage,
@@ -141,6 +168,12 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
     actionDockCompact: {
       marginTop: spacing.md,
     },
+    actionDockMobile: {
+      gap: spacing.md,
+      padding: 0,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+    },
     actionButton: {
       borderColor: 'transparent',
       backgroundColor: 'transparent',
@@ -149,6 +182,9 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       width: StyleSheet.hairlineWidth,
       height: 24,
       backgroundColor: colors.imageControlBorder,
+    },
+    actionDividerMobile: {
+      display: 'none',
     },
     footer: {
       minHeight: 44,

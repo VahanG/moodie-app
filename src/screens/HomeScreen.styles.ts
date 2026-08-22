@@ -20,11 +20,21 @@ export function createHomeScreenStyles(theme: MoodieTheme) {
       flex: 1,
       backgroundColor: colors.background,
     },
+    pageWithMobileNavigation: {
+      paddingBottom: 72,
+    },
     affirmationPage: {
       overflow: 'hidden',
     },
     calendarPage: {
       overflow: 'hidden',
+    },
+    mobileFooter: {
+      position: 'absolute',
+      right: 0,
+      bottom: 0,
+      left: 0,
+      zIndex: 10,
     },
     topicList: {
       gap: 12,

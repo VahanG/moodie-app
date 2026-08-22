@@ -5,8 +5,11 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, StatusBar, useWindowDimensions, View } from 'react-native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import {
   cancelDailyReminder,
   configureNotificationChannel,
@@ -53,6 +56,7 @@ import {
   getAffirmationContentStatusForLanguage,
   type AffirmationContentStatus,
 } from '../features/affirmations/localizedState';
+import { MOBILE_LAYOUT_BREAKPOINT, useTheme } from '../theme';
 
 function formatTime(hour: number, minute: number): string {
   return `${hour.toString().padStart(2, '0')}:${minute
@@ -62,10 +66,19 @@ function formatTime(hour: number, minute: number): string {
 
 const HomeScreen: React.FC = () => {
   const { languageCode, t } = useLocalization();
+  const { theme } = useTheme();
   const styles = useHomeScreenStyles();
+  const safeAreaInsets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const contentRequestIdRef = useRef(0);
   const { width: windowWidth } = useWindowDimensions();
+  const isMobileLayout = windowWidth < MOBILE_LAYOUT_BREAKPOINT;
+  const mobileSecondaryPageInsets = isMobileLayout
+    ? {
+        paddingTop: safeAreaInsets.top,
+        paddingBottom: safeAreaInsets.bottom + 72,
+      }
+    : undefined;
   const [pagerWidth, setPagerWidth] = useState(windowWidth);
   const [preferences, setPreferences] = useState<ReminderPreferences>(
     DEFAULT_REMINDER_PREFERENCES,
@@ -80,6 +93,10 @@ const HomeScreen: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activePage, setActivePage] = useState(0);
+  const statusBarStyle =
+    (isMobileLayout && activePage === 0) || theme.isDark
+      ? 'light-content'
+      : 'dark-content';
   const [selectedTopicIds, setSelectedTopicIds] = useState<
     AffirmationTopicId[]
   >(DEFAULT_SELECTED_AFFIRMATION_TOPICS);
@@ -525,76 +542,120 @@ const HomeScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container} testID="screen-home">
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.pager}
-        horizontal
-        pagingEnabled
-        bounces={false}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-        onLayout={event => {
-          handlePagerLayout(event.nativeEvent.layout.width);
-        }}
-        onScroll={event => {
-          handlePageChange(
-            event.nativeEvent.contentOffset.x,
-            event.nativeEvent.layoutMeasurement.width,
-          );
-        }}
-        onScrollEndDrag={event => {
-          handlePageChange(
-            event.nativeEvent.contentOffset.x,
-            event.nativeEvent.layoutMeasurement.width,
-          );
-        }}
-        onMomentumScrollEnd={event => {
-          handlePageChange(
-            event.nativeEvent.contentOffset.x,
-            event.nativeEvent.layoutMeasurement.width,
-          );
-        }}
-        scrollEventThrottle={16}
-        testID="pager-home"
+    <>
+      <StatusBar
+        backgroundColor="transparent"
+        barStyle={statusBarStyle}
+        translucent={isMobileLayout}
+      />
+      <SafeAreaView
+        edges={isMobileLayout ? ['left', 'right'] : undefined}
+        style={styles.container}
+        testID="screen-home"
       >
-        <View
-          style={[styles.page, styles.affirmationPage, { width: pagerWidth }]}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.pager}
+          horizontal
+          pagingEnabled
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
+          onLayout={event => {
+            handlePagerLayout(event.nativeEvent.layout.width);
+          }}
+          onScroll={event => {
+            handlePageChange(
+              event.nativeEvent.contentOffset.x,
+              event.nativeEvent.layoutMeasurement.width,
+            );
+          }}
+          onScrollEndDrag={event => {
+            handlePageChange(
+              event.nativeEvent.contentOffset.x,
+              event.nativeEvent.layoutMeasurement.width,
+            );
+          }}
+          onMomentumScrollEnd={event => {
+            handlePageChange(
+              event.nativeEvent.contentOffset.x,
+              event.nativeEvent.layoutMeasurement.width,
+            );
+          }}
+          scrollEventThrottle={16}
+          testID="pager-home"
         >
-          <AffirmationPanel
-            topics={visibleAffirmationContent.topics}
-            backgrounds={visibleAffirmationContent.backgrounds}
-            contentStatus={visibleContentStatus}
-            onRetryContent={refreshAffirmationContent}
-            selectedTopicIds={selectedTopicIds}
-            onSelectTopics={handleTopicSelect}
-            backgroundPreference={backgroundPreference}
-            onBackgroundPreferenceChange={handleBackgroundPreferenceChange}
-            likedAffirmationKeys={likedAffirmationKeys}
-            onToggleAffirmationLike={handleToggleAffirmationLike}
-          />
-        </View>
-        <View style={[styles.page, styles.calendarPage, { width: pagerWidth }]}>
-          <CalendarPanel backgrounds={visibleAffirmationContent.backgrounds} />
-        </View>
-        <View style={[styles.page, { width: pagerWidth }]}>
-          <SettingsPanel
-            isLoading={isLoading}
-            isSaving={isSaving}
-            preferences={preferences}
-            hourInput={hourInput}
-            minuteInput={minuteInput}
-            setHourInput={setHourInput}
-            setMinuteInput={setMinuteInput}
-            onToggle={handleToggle}
-            onSaveTime={handleSaveTime}
-            statusMessage={statusMessage}
-            reminderTimeText={reminderTimeText}
-          />
-        </View>
-      </ScrollView>
-      <HomeFooter activePage={activePage} onSelectPage={handlePageSelect} />
-    </SafeAreaView>
+          <View
+            style={[styles.page, styles.affirmationPage, { width: pagerWidth }]}
+          >
+            <AffirmationPanel
+              topics={visibleAffirmationContent.topics}
+              backgrounds={visibleAffirmationContent.backgrounds}
+              contentStatus={visibleContentStatus}
+              onRetryContent={refreshAffirmationContent}
+              selectedTopicIds={selectedTopicIds}
+              onSelectTopics={handleTopicSelect}
+              backgroundPreference={backgroundPreference}
+              onBackgroundPreferenceChange={handleBackgroundPreferenceChange}
+              likedAffirmationKeys={likedAffirmationKeys}
+              onToggleAffirmationLike={handleToggleAffirmationLike}
+            />
+          </View>
+          <View
+            style={[
+              styles.page,
+              styles.calendarPage,
+              isMobileLayout && styles.pageWithMobileNavigation,
+              mobileSecondaryPageInsets,
+              { width: pagerWidth },
+            ]}
+          >
+            <CalendarPanel
+              backgrounds={visibleAffirmationContent.backgrounds}
+            />
+          </View>
+          <View
+            style={[
+              styles.page,
+              isMobileLayout && styles.pageWithMobileNavigation,
+              mobileSecondaryPageInsets,
+              { width: pagerWidth },
+            ]}
+          >
+            <SettingsPanel
+              isLoading={isLoading}
+              isSaving={isSaving}
+              preferences={preferences}
+              hourInput={hourInput}
+              minuteInput={minuteInput}
+              setHourInput={setHourInput}
+              setMinuteInput={setMinuteInput}
+              onToggle={handleToggle}
+              onSaveTime={handleSaveTime}
+              statusMessage={statusMessage}
+              reminderTimeText={reminderTimeText}
+            />
+          </View>
+        </ScrollView>
+        {isMobileLayout ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.mobileFooter,
+              { paddingBottom: safeAreaInsets.bottom },
+            ]}
+          >
+            <HomeFooter
+              activePage={activePage}
+              onSelectPage={handlePageSelect}
+              variant={activePage === 0 ? 'onImage' : 'minimal'}
+            />
+          </View>
+        ) : (
+          <HomeFooter activePage={activePage} onSelectPage={handlePageSelect} />
+        )}
+      </SafeAreaView>
+    </>
   );
 };
 

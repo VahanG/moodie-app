@@ -1,7 +1,9 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import HomeFooter from '../src/screens/HomeFooter';
 import { ThemeProvider } from '../src/theme';
+import { AppText } from '../src/components/ui';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(async () => null),
@@ -28,4 +30,24 @@ test('renders accessible tabs and selects a requested page', async () => {
   renderer!.root.findByProps({ testID: 'btn-nav-settings' }).props.onPress();
 
   expect(onSelectPage).toHaveBeenCalledWith(2);
+});
+
+test('renders mobile image navigation as surface-free icons', async () => {
+  let renderer: ReactTestRenderer.ReactTestRenderer;
+
+  await ReactTestRenderer.act(async () => {
+    renderer = ReactTestRenderer.create(
+      <ThemeProvider>
+        <HomeFooter activePage={0} onSelectPage={jest.fn()} variant="onImage" />
+      </ThemeProvider>,
+    );
+  });
+
+  expect(
+    StyleSheet.flatten(
+      renderer!.root.findAllByProps({ testID: 'navigation-home' }).at(-1)!.props
+        .style,
+    ),
+  ).toMatchObject({ backgroundColor: 'transparent', borderWidth: 0 });
+  expect(renderer!.root.findAllByType(AppText)).toHaveLength(0);
 });

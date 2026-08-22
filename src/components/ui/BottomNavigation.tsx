@@ -18,11 +18,14 @@ export type BottomNavigationItem<Key extends React.Key> = {
   renderIcon: (props: BottomNavigationIconProps) => ReactNode;
 };
 
+export type BottomNavigationVariant = 'default' | 'minimal' | 'onImage';
+
 type Props<Key extends React.Key> = {
   activeKey: Key;
   items: BottomNavigationItem<Key>[];
   onSelect: (key: Key) => void;
   testID?: string;
+  variant?: BottomNavigationVariant;
 };
 
 export function BottomNavigation<Key extends React.Key>({
@@ -30,24 +33,33 @@ export function BottomNavigation<Key extends React.Key>({
   items,
   onSelect,
   testID,
+  variant = 'default',
 }: Props<Key>) {
   const { theme } = useTheme();
   const { t } = useLocalization();
   const styles = useMemo(() => createBottomNavigationStyles(theme), [theme]);
+  const isMinimal = variant !== 'default';
+  const isOnImage = variant === 'onImage';
 
   return (
-    <View style={styles.shell}>
+    <View style={[styles.shell, isMinimal && styles.shellMinimal]}>
       <View
         accessibilityLabel={t('navigation.primary')}
         accessibilityRole="tablist"
-        style={styles.navigation}
+        style={[styles.navigation, isMinimal && styles.navigationMinimal]}
         testID={testID}
       >
         {items.map(item => {
           const isSelected = item.key === activeKey;
-          const color = isSelected
+          let color = isSelected
             ? theme.colors.accent
             : theme.colors.textMuted;
+
+          if (isOnImage) {
+            color = isSelected
+              ? theme.colors.onImage
+              : theme.colors.onImageMuted;
+          }
 
           return (
             <Pressable
@@ -58,19 +70,26 @@ export function BottomNavigation<Key extends React.Key>({
               onPress={() => onSelect(item.key)}
               style={({ pressed }) => [
                 styles.item,
-                isSelected && styles.itemSelected,
+                isMinimal && styles.itemMinimal,
+                isSelected && !isMinimal && styles.itemSelected,
                 pressed && styles.itemPressed,
               ]}
               testID={item.testID}
             >
-              {item.renderIcon({ color, selected: isSelected, size: 22 })}
-              <AppText
-                style={styles.label}
-                tone={isSelected ? 'accent' : 'muted'}
-                variant="caption"
-              >
-                {item.label}
-              </AppText>
+              {item.renderIcon({
+                color,
+                selected: isSelected,
+                size: isMinimal ? 25 : 22,
+              })}
+              {!isMinimal ? (
+                <AppText
+                  style={styles.label}
+                  tone={isSelected ? 'accent' : 'muted'}
+                  variant="caption"
+                >
+                  {item.label}
+                </AppText>
+              ) : null}
             </Pressable>
           );
         })}

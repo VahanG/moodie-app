@@ -5,6 +5,7 @@ export {
   BottomNavigation,
   type BottomNavigationIconProps,
   type BottomNavigationItem,
+  type BottomNavigationVariant,
 } from './BottomNavigation';
 export { Card } from './Card';
 export { IconButton } from './IconButton';

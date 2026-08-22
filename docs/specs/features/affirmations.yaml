@@ -164,6 +164,9 @@ requirements:
       - Once ready, the incoming background crossfades over the current background in approximately 220 milliseconds.
       - A successfully prefetched image begins its crossfade immediately.
       - Free mode prefetches no more than the immediate previous and next unique resolved background URLs, including catalog fallbacks; fixed mode does not prefetch adjacent images.
+      - On mobile, the resolved background fills the affirmation app canvas without a card border, rounded corners, or surrounding page background.
+      - Mobile topic, background, like, share, and bottom-navigation controls use accessible surface-free icon targets over the image.
+      - Tablet and web layouts may retain labeled control surfaces and the contained image-card presentation.
     verification:
       test_id: affirmations_background_mode
       preconditions:

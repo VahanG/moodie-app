@@ -1,14 +1,23 @@
 import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { BottomNavigation, type BottomNavigationItem } from '../components/ui';
+import {
+  BottomNavigation,
+  type BottomNavigationItem,
+  type BottomNavigationVariant,
+} from '../components/ui';
 import { useLocalization } from '../features/localization';
 
 type Props = {
   activePage: number;
   onSelectPage: (page: number) => void;
+  variant?: BottomNavigationVariant;
 };
 
-const HomeFooter: React.FC<Props> = ({ activePage, onSelectPage }) => {
+const HomeFooter: React.FC<Props> = ({
+  activePage,
+  onSelectPage,
+  variant = 'default',
+}) => {
   const { t } = useLocalization();
   const navigationItems: BottomNavigationItem<number>[] = [
     {
@@ -55,6 +64,7 @@ const HomeFooter: React.FC<Props> = ({ activePage, onSelectPage }) => {
       items={navigationItems}
       onSelect={onSelectPage}
       testID="navigation-home"
+      variant={variant}
     />
   );
 };

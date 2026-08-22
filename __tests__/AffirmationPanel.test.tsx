@@ -11,6 +11,11 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(async () => undefined),
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
+
 const animatedTimingSpy = jest
   .spyOn(Animated, 'timing')
   .mockImplementation((value, config) => {
@@ -95,6 +100,20 @@ test('renders the modern Today card and keeps core actions functional', async ()
   expect(
     renderer!.root.findByProps({ testID: 'text-affirmation-position' }),
   ).toBeTruthy();
+  expect(
+    StyleSheet.flatten(
+      renderer!.root.findByProps({ testID: 'screen-affirmations' }).props.style,
+    ).paddingHorizontal,
+  ).toBe(0);
+  expect(
+    StyleSheet.flatten(
+      renderer!.root.findByProps({ testID: 'card-affirmation-media' }).props
+        .style,
+    ),
+  ).toMatchObject({ borderRadius: 0, borderWidth: 0, shadowOpacity: 0 });
+  expect(
+    renderer!.root.findAllByProps({ testID: 'text-current-topic' }),
+  ).toHaveLength(0);
   expect(
     findInteractiveNode(renderer!, 'btn-like-affirmation').props
       .accessibilityState,
@@ -206,8 +225,7 @@ test('prefetches the resolved catalog fallback for an adjacent affirmation', asy
   const backgrounds = [
     { id: 'fallback', imageUri: fallbackImageUri, tags: ['calm'] },
   ];
-  const dailyIndex =
-    Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % 2;
+  const dailyIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % 2;
   const affirmations = [
     { id: 'affirmation-1', imageUri: '', text: 'One' },
     { id: 'affirmation-2', imageUri: '', text: 'Two' },
@@ -346,9 +364,7 @@ test('keeps the previous image visible while crossfading to a new background', a
   const settledImage = renderer!.root.findByProps({
     testID: 'image-affirmation-background',
   });
-  expect(
-    StyleSheet.flatten(settledImage.props.style).opacity,
-  ).toBe(1);
+  expect(StyleSheet.flatten(settledImage.props.style).opacity).toBe(1);
   expect(settledImage.props.source).toEqual({
     uri: secondBackground.imageUri,
   });

@@ -7,6 +7,8 @@ Deliver a focused affirmation experience that users can personalize by topic and
 ## Core UI
 
 - Full-screen visual background.
+- On mobile, the visual extends edge to edge across the app canvas and beneath the system bars without a card border, radius, or surrounding page background; controls remain safely inset.
+- Mobile controls and bottom navigation use surface-free icon targets over the image; tablet and web layouts may retain labeled surfaces.
 - Centered affirmation text for readability.
 - Two action icons directly below the affirmation text:
   - Heart-shaped Like icon.
@@ -81,3 +83,4 @@ Deliver a focused affirmation experience that users can personalize by topic and
 - Heart and share icons are visible below the affirmation text.
 - Like toggle updates icon state immediately and persists between sessions.
 - Share action opens the native share UI with the current affirmation text.
+- Mobile renders the affirmation image edge to edge and keeps overlaid controls free of card, pill, and navigation backgrounds.
