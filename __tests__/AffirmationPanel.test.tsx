@@ -1,15 +1,32 @@
 import React from 'react';
-import { Share } from 'react-native';
+import { Animated, Image, Share, StyleSheet } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import AffirmationPanel from '../src/screens/AffirmationPanel';
 import { AffirmationTopic } from '../src/features/affirmations/types';
 import { buildAffirmationLikeKey } from '../src/features/affirmations/storage';
-import { ThemeProvider } from '../src/theme';
+import { lightTheme, ThemeProvider } from '../src/theme';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(async () => null),
   setItem: jest.fn(async () => undefined),
 }));
+
+const animatedTimingSpy = jest
+  .spyOn(Animated, 'timing')
+  .mockImplementation((value, config) => {
+    return {
+      reset: jest.fn(),
+      start: callback => {
+        (value as Animated.Value).setValue(config.toValue as number);
+        callback?.({ finished: true });
+      },
+      stop: jest.fn(),
+    } as ReturnType<typeof Animated.timing>;
+  });
+
+afterAll(() => {
+  animatedTimingSpy.mockRestore();
+});
 
 function findInteractiveNode(
   renderer: ReactTestRenderer.ReactTestRenderer,
@@ -182,4 +199,239 @@ test('renders a catalog background when the affirmation image is empty', async (
     renderer!.root.findByProps({ testID: 'image-affirmation-background' }).props
       .source,
   ).toEqual({ uri: fallbackImageUri });
+});
+
+test('prefetches the resolved catalog fallback for an adjacent affirmation', async () => {
+  const fallbackImageUri = 'https://example.com/fallback.jpg';
+  const backgrounds = [
+    { id: 'fallback', imageUri: fallbackImageUri, tags: ['calm'] },
+  ];
+  const dailyIndex =
+    Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % 2;
+  const affirmations = [
+    { id: 'affirmation-1', imageUri: '', text: 'One' },
+    { id: 'affirmation-2', imageUri: '', text: 'Two' },
+  ];
+  affirmations[dailyIndex].imageUri = 'https://example.com/active.jpg';
+  const topic: AffirmationTopic = {
+    id: 'calm',
+    name: 'Calm',
+    imageUri: '',
+    affirmations,
+  };
+  const prefetchSpy = jest.spyOn(Image, 'prefetch').mockResolvedValue(true);
+
+  await ReactTestRenderer.act(async () => {
+    ReactTestRenderer.create(
+      <ThemeProvider>
+        <AffirmationPanel
+          backgrounds={backgrounds}
+          backgroundPreference={{ mode: 'free', backgroundId: null }}
+          contentStatus="ready"
+          likedAffirmationKeys={[]}
+          onBackgroundPreferenceChange={jest.fn()}
+          onRetryContent={jest.fn()}
+          onSelectTopics={jest.fn()}
+          onToggleAffirmationLike={jest.fn()}
+          selectedTopicIds={[]}
+          topics={[topic]}
+        />
+      </ThemeProvider>,
+    );
+    await Promise.resolve();
+  });
+
+  expect(prefetchSpy).toHaveBeenCalledWith(fallbackImageUri);
+
+  prefetchSpy.mockRestore();
+});
+
+test('keeps the previous image visible while crossfading to a new background', async () => {
+  const topic: AffirmationTopic = {
+    id: 'calm',
+    name: 'Calm',
+    imageUri: '',
+    affirmations: [
+      {
+        id: 'affirmation-1',
+        imageUri: '',
+        text: 'You can move gently.',
+      },
+    ],
+  };
+  const firstBackground = {
+    id: 'first',
+    imageUri: 'https://example.com/first.jpg',
+    tags: ['calm'],
+  };
+  const secondBackground = {
+    id: 'second',
+    imageUri: 'https://example.com/second.jpg',
+    tags: ['calm'],
+  };
+  const renderPanel = (
+    background: typeof firstBackground,
+  ): React.ReactElement => (
+    <ThemeProvider>
+      <AffirmationPanel
+        backgrounds={[background]}
+        backgroundPreference={{
+          mode: 'fixed',
+          backgroundId: background.id,
+        }}
+        contentStatus="ready"
+        likedAffirmationKeys={[]}
+        onBackgroundPreferenceChange={jest.fn()}
+        onRetryContent={jest.fn()}
+        onSelectTopics={jest.fn()}
+        onToggleAffirmationLike={jest.fn()}
+        selectedTopicIds={[]}
+        topics={[topic]}
+      />
+    </ThemeProvider>
+  );
+  let renderer: ReactTestRenderer.ReactTestRenderer;
+
+  await ReactTestRenderer.act(async () => {
+    renderer = ReactTestRenderer.create(renderPanel(firstBackground));
+  });
+
+  expect(
+    StyleSheet.flatten(
+      renderer!.root.findByProps({ testID: 'card-affirmation-media' }).props
+        .style,
+    ).backgroundColor,
+  ).toBe(lightTheme.colors.affirmationPlaceholder);
+
+  const firstImage = renderer!.root.findByProps({
+    testID: 'image-affirmation-background',
+  });
+  expect(StyleSheet.flatten(firstImage.props.style).opacity).toBe(0);
+
+  await ReactTestRenderer.act(async () => {
+    firstImage.props.onLoad();
+  });
+  expect(
+    StyleSheet.flatten(
+      renderer!.root.findByProps({
+        testID: 'image-affirmation-background',
+      }).props.style,
+    ).opacity,
+  ).toBe(1);
+
+  await ReactTestRenderer.act(async () => {
+    renderer!.update(renderPanel(secondBackground));
+  });
+
+  const visibleImage = renderer!.root.findByProps({
+    testID: 'image-affirmation-background',
+  });
+  const incomingImage = renderer!.root.findByProps({
+    testID: 'image-affirmation-background-incoming',
+  });
+
+  expect(visibleImage.props.source).toEqual({ uri: firstBackground.imageUri });
+  expect(StyleSheet.flatten(visibleImage.props.style).opacity).toBe(1);
+  expect(incomingImage.props.source).toEqual({
+    uri: secondBackground.imageUri,
+  });
+  expect(
+    StyleSheet.flatten(incomingImage.props.style).opacity.__getValue(),
+  ).toBe(0);
+
+  await ReactTestRenderer.act(async () => {
+    incomingImage.props.onLoad();
+  });
+
+  const settledImage = renderer!.root.findByProps({
+    testID: 'image-affirmation-background',
+  });
+  expect(
+    StyleSheet.flatten(settledImage.props.style).opacity,
+  ).toBe(1);
+  expect(settledImage.props.source).toEqual({
+    uri: secondBackground.imageUri,
+  });
+
+  await ReactTestRenderer.act(async () => {
+    settledImage.props.onLoad();
+  });
+
+  expect(
+    renderer!.root.findAllByProps({
+      testID: 'image-affirmation-background-incoming',
+    }),
+  ).toHaveLength(0);
+});
+
+test('shows a successfully prefetched background without the neutral loading state', async () => {
+  const prefetchSpy = jest.spyOn(Image, 'prefetch').mockResolvedValue(true);
+  const affirmations = [
+    {
+      id: 'affirmation-1',
+      imageUri: 'https://example.com/one.jpg',
+      text: 'One',
+    },
+    {
+      id: 'affirmation-2',
+      imageUri: 'https://example.com/two.jpg',
+      text: 'Two',
+    },
+    {
+      id: 'affirmation-3',
+      imageUri: 'https://example.com/three.jpg',
+      text: 'Three',
+    },
+  ];
+  const dailyIndex =
+    Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % affirmations.length;
+  const prefetchedAffirmation =
+    affirmations[(dailyIndex + 1) % affirmations.length];
+  const renderPanel = (
+    activeAffirmations: typeof affirmations,
+  ): React.ReactElement => (
+    <ThemeProvider>
+      <AffirmationPanel
+        backgrounds={[]}
+        backgroundPreference={{ mode: 'free', backgroundId: null }}
+        contentStatus="ready"
+        likedAffirmationKeys={[]}
+        onBackgroundPreferenceChange={jest.fn()}
+        onRetryContent={jest.fn()}
+        onSelectTopics={jest.fn()}
+        onToggleAffirmationLike={jest.fn()}
+        selectedTopicIds={[]}
+        topics={[
+          {
+            id: 'calm',
+            name: 'Calm',
+            imageUri: '',
+            affirmations: activeAffirmations,
+          },
+        ]}
+      />
+    </ThemeProvider>
+  );
+  let renderer: ReactTestRenderer.ReactTestRenderer;
+
+  await ReactTestRenderer.act(async () => {
+    renderer = ReactTestRenderer.create(renderPanel(affirmations));
+    await Promise.resolve();
+  });
+
+  await ReactTestRenderer.act(async () => {
+    renderer!.update(renderPanel([prefetchedAffirmation]));
+  });
+
+  const prefetchedImage = renderer!.root.findByProps({
+    testID: 'image-affirmation-background',
+  });
+  const opacity = StyleSheet.flatten(prefetchedImage.props.style).opacity;
+
+  expect(prefetchedImage.props.source).toEqual({
+    uri: prefetchedAffirmation.imageUri,
+  });
+  expect(typeof opacity === 'number' ? opacity : opacity.__getValue()).toBe(1);
+
+  prefetchSpy.mockRestore();
 });

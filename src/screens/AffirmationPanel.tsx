@@ -22,8 +22,13 @@ import {
 } from '../features/affirmations/types';
 import { buildAffirmationLikeKey } from '../features/affirmations/storage';
 import { resolveAffirmationBackground } from '../features/affirmations/background';
+import {
+  getAdjacentAffirmationImageUris,
+  prefetchAffirmationImages,
+} from '../features/affirmations/imagePrefetch';
 import TopicSelectionModal from './TopicSelectionModal';
 import BackgroundSelectionModal from './BackgroundSelectionModal';
+import AffirmationBackgroundImage from './AffirmationBackgroundImage';
 import { AppButton, AppText, IconButton } from '../components/ui';
 import { useTheme } from '../theme';
 import { useAffirmationPanelStyles } from './AffirmationPanel.styles';
@@ -51,6 +56,8 @@ type TopicAffirmation = {
   imageUri: string;
   text: string;
 };
+
+const READY_BACKGROUND_URI_LIMIT = 3;
 
 function getDailyIndex(length: number): number {
   if (length <= 0) {
@@ -129,6 +136,7 @@ const AffirmationPanel: React.FC<Props> = ({
   const [activeAffirmationIndex, setActiveAffirmationIndex] = useState(
     dailyAffirmationIndex,
   );
+  const [readyBackgroundUris, setReadyBackgroundUris] = useState<string[]>([]);
   const totalAffirmations = affirmationFeed.length;
   const affirmationTranslateY = useRef(new Animated.Value(0)).current;
   const affirmationOpacity = useRef(new Animated.Value(1)).current;
@@ -255,6 +263,17 @@ const AffirmationPanel: React.FC<Props> = ({
     );
   }, [activeAffirmationIndex, affirmationFeed]);
   const activeAffirmation = affirmationFeed[safeActiveAffirmationIndex];
+  const resolvedBackgrounds = useMemo(
+    () =>
+      affirmationFeed.map(affirmation =>
+        resolveAffirmationBackground({
+          affirmationImageUri: affirmation.imageUri,
+          backgrounds,
+          preference: backgroundPreference,
+        }),
+      ),
+    [affirmationFeed, backgroundPreference, backgrounds],
+  );
 
   const activeAffirmationLikeKey = useMemo(() => {
     if (!activeAffirmation) {
@@ -267,16 +286,45 @@ const AffirmationPanel: React.FC<Props> = ({
     activeAffirmationLikeKey !== null &&
     likedAffirmationKeys.includes(activeAffirmationLikeKey);
 
-  const activeBackground = useMemo(
-    () =>
-      resolveAffirmationBackground({
-        affirmationImageUri: activeAffirmation?.imageUri ?? '',
-        backgrounds,
-        preference: backgroundPreference,
-      }),
-    [activeAffirmation, backgroundPreference, backgrounds],
-  );
-  const shouldAnimateImage = activeBackground?.source !== 'fixed';
+  const activeBackground =
+    resolvedBackgrounds[safeActiveAffirmationIndex] ?? null;
+  const markBackgroundUrisReady = useCallback((imageUris: string[]) => {
+    setReadyBackgroundUris(currentImageUris =>
+      [
+        ...currentImageUris.filter(imageUri => !imageUris.includes(imageUri)),
+        ...imageUris,
+      ].slice(-READY_BACKGROUND_URI_LIMIT),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (backgroundPreference.mode === 'fixed') {
+      return;
+    }
+
+    let isActive = true;
+
+    const adjacentImageUris = getAdjacentAffirmationImageUris(
+      resolvedBackgrounds.map(background => background?.imageUri ?? ''),
+      safeActiveAffirmationIndex,
+    );
+
+    prefetchAffirmationImages(adjacentImageUris).then(prefetchedImageUris => {
+      if (isActive && prefetchedImageUris.length > 0) {
+        markBackgroundUrisReady(prefetchedImageUris);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    backgroundPreference.mode,
+    markBackgroundUrisReady,
+    resolvedBackgrounds,
+    safeActiveAffirmationIndex,
+  ]);
+
   const handleShareAffirmation = useCallback(async () => {
     if (!activeAffirmation) {
       return;
@@ -325,19 +373,14 @@ const AffirmationPanel: React.FC<Props> = ({
       testID="screen-affirmations"
       {...panResponder.panHandlers}
     >
-      <View style={styles.mediaCard}>
-        <Animated.Image
-          source={{ uri: activeBackground.imageUri }}
-          style={[
-            styles.image,
-            shouldAnimateImage && {
-              transform: [{ translateY: affirmationTranslateY }],
-              opacity: affirmationOpacity,
-            },
-          ]}
-          accessibilityIgnoresInvertColors
-          resizeMode="cover"
-          testID="image-affirmation-background"
+      <View style={styles.mediaCard} testID="card-affirmation-media">
+        <AffirmationBackgroundImage
+          imageUri={activeBackground.imageUri}
+          onImageLoad={imageUri => {
+            markBackgroundUrisReady([imageUri]);
+          }}
+          readyImageUris={readyBackgroundUris}
+          style={styles.image}
         />
         <View pointerEvents="none" style={styles.imageOverlay} />
         <View

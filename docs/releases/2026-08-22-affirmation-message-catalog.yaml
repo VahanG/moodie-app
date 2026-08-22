@@ -1,0 +1,36 @@
+schema_version: '1.0.0'
+
+release:
+  id: affirmation-message-catalog
+  date: '2026-08-22'
+  type: content_drop
+  summary: Publish the reviewed Moodie message catalog in English and Armenian.
+  feature_spec: docs/specs/features/affirmations.yaml
+
+content:
+  source_record: Texts - Moodie Messages.csv
+  topics:
+    motivation-focus: 130
+    self-care: 130
+    self-acceptance: 120
+    mental-health: 120
+  affirmations: 500
+  enabled_languages:
+    - en
+    - hy
+  affirmation_translation_rows: 1000
+  publication_state: published
+  suggested_images: 0
+
+delivery:
+  operation: transactional idempotent content import
+  importer: scripts/import-affirmation-catalog.js
+  schema_migration: none
+  stable_id_namespace: aaff0000-0000-4000-8000-<source-id>
+
+verification:
+  - Source IDs are unique and contiguous from 1 through 500.
+  - Every source row has a recognized topic and nonblank English and Armenian text.
+  - Every imported affirmation is published with no suggested image.
+  - Every imported affirmation has exactly one English and one Armenian translation.
+  - Re-running the importer updates the same records instead of creating duplicates.

@@ -26,7 +26,7 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       borderWidth: 1,
       borderColor: colors.imageControlBorder,
       borderRadius: radii.xl,
-      backgroundColor: colors.surfaceElevated,
+      backgroundColor: colors.affirmationPlaceholder,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 10 },
       shadowOpacity: 1,
@@ -37,6 +37,7 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       ...StyleSheet.absoluteFill,
       width: undefined,
       height: undefined,
+      opacity: 1,
     },
     imageOverlay: {
       ...StyleSheet.absoluteFill,

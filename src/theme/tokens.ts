@@ -18,6 +18,7 @@ export type ThemeColors = {
   placeholder: string;
   scrim: string;
   imageOverlay: string;
+  affirmationPlaceholder: string;
   imageControl: string;
   imageControlBorder: string;
   onImage: string;
@@ -105,6 +106,7 @@ export const lightTheme: MoodieTheme = {
     placeholder: '#918A96',
     scrim: 'rgba(20, 17, 26, 0.58)',
     imageOverlay: 'rgba(12, 10, 16, 0.38)',
+    affirmationPlaceholder: '#817A86',
     imageControl: 'rgba(12, 10, 16, 0.48)',
     imageControlBorder: 'rgba(255, 255, 255, 0.58)',
     onImage: '#FFFFFF',
@@ -134,6 +136,7 @@ export const darkTheme: MoodieTheme = {
     placeholder: '#8E8894',
     scrim: 'rgba(3, 3, 6, 0.72)',
     imageOverlay: 'rgba(3, 3, 6, 0.44)',
+    affirmationPlaceholder: '#292A34',
     imageControl: 'rgba(3, 3, 6, 0.56)',
     imageControlBorder: 'rgba(255, 255, 255, 0.48)',
     onImage: '#FFFFFF',
