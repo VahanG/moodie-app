@@ -6,19 +6,44 @@ import {
   type BottomNavigationVariant,
 } from '../components/ui';
 import { useLocalization } from '../features/localization';
+import {
+  CALENDAR_PAGE_VISIBLE,
+  HOME_SETTINGS_PAGE_INDEX,
+} from './homePager';
 
 type Props = {
   activePage: number;
+  onOpenTopicSelection: () => void;
   onSelectPage: (page: number) => void;
   variant?: BottomNavigationVariant;
 };
 
 const HomeFooter: React.FC<Props> = ({
   activePage,
+  onOpenTopicSelection,
   onSelectPage,
   variant = 'default',
 }) => {
   const { t } = useLocalization();
+  const calendarNavigationItems: BottomNavigationItem<number>[] =
+    CALENDAR_PAGE_VISIBLE
+      ? [
+          {
+            key: 1,
+            label: t('navigation.calendar'),
+            testID: 'btn-nav-calendar',
+            renderIcon: ({ color, selected, size }) => (
+              <Ionicons
+                color={color}
+                name={
+                  selected ? 'calendar-clear' : 'calendar-clear-outline'
+                }
+                size={size}
+              />
+            ),
+          },
+        ]
+      : [];
   const navigationItems: BottomNavigationItem<number>[] = [
     {
       key: 0,
@@ -32,20 +57,9 @@ const HomeFooter: React.FC<Props> = ({
         />
       ),
     },
+    ...calendarNavigationItems,
     {
-      key: 1,
-      label: t('navigation.calendar'),
-      testID: 'btn-nav-calendar',
-      renderIcon: ({ color, selected, size }) => (
-        <Ionicons
-          color={color}
-          name={selected ? 'calendar-clear' : 'calendar-clear-outline'}
-          size={size}
-        />
-      ),
-    },
-    {
-      key: 2,
+      key: HOME_SETTINGS_PAGE_INDEX,
       label: t('navigation.settings'),
       testID: 'btn-nav-settings',
       renderIcon: ({ color, selected, size }) => (
@@ -62,7 +76,14 @@ const HomeFooter: React.FC<Props> = ({
     <BottomNavigation
       activeKey={activePage}
       items={navigationItems}
-      onSelect={onSelectPage}
+      onSelect={page => {
+        if (page === 0) {
+          onOpenTopicSelection();
+          return;
+        }
+
+        onSelectPage(page);
+      }}
       testID="navigation-home"
       variant={variant}
     />

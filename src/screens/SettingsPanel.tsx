@@ -10,6 +10,7 @@ import {
   AppText,
   AppTextField,
   Card,
+  IconButton,
   Screen,
   SettingsRow,
   SettingsSectionHeader,
@@ -26,10 +27,24 @@ type Props = {
   minuteInput: string;
   setHourInput: (value: string) => void;
   setMinuteInput: (value: string) => void;
+  randomStartHourInput: string;
+  randomStartMinuteInput: string;
+  randomEndHourInput: string;
+  randomEndMinuteInput: string;
+  setRandomStartHourInput: (value: string) => void;
+  setRandomStartMinuteInput: (value: string) => void;
+  setRandomEndHourInput: (value: string) => void;
+  setRandomEndMinuteInput: (value: string) => void;
   onToggle: (nextEnabled: boolean) => Promise<void>;
   onSaveTime: () => Promise<void>;
+  onRandomToggle: (nextEnabled: boolean) => Promise<void>;
+  onSaveRandomRange: () => Promise<void>;
   statusMessage: string | null;
   reminderTimeText: string;
+  randomReminderStartTimeText: string;
+  randomReminderEndTimeText: string;
+  randomRemindersPerDay: number;
+  onClose: () => void;
 };
 
 const SettingsPanel: React.FC<Props> = ({
@@ -40,10 +55,24 @@ const SettingsPanel: React.FC<Props> = ({
   minuteInput,
   setHourInput,
   setMinuteInput,
+  randomStartHourInput,
+  randomStartMinuteInput,
+  randomEndHourInput,
+  randomEndMinuteInput,
+  setRandomStartHourInput,
+  setRandomStartMinuteInput,
+  setRandomEndHourInput,
+  setRandomEndMinuteInput,
   onToggle,
   onSaveTime,
+  onRandomToggle,
+  onSaveRandomRange,
   statusMessage,
   reminderTimeText,
+  randomReminderStartTimeText,
+  randomReminderEndTimeText,
+  randomRemindersPerDay,
+  onClose,
 }) => {
   const styles = useSettingsPanelStyles();
   const { theme } = useTheme();
@@ -57,8 +86,20 @@ const SettingsPanel: React.FC<Props> = ({
       testID="screen-settings"
     >
       <View style={styles.pageHeader}>
-        <AppText variant="title">{t('settings.title')}</AppText>
-        <AppText tone="muted">{t('settings.subtitle')}</AppText>
+        <IconButton
+          accessibilityLabel={t('common.closeNamed', {
+            title: t('settings.title'),
+          })}
+          compact
+          icon={<Ionicons color={theme.colors.text} name="close" size={24} />}
+          onPress={onClose}
+          testID="btn-close-settings"
+          variant="ghost"
+        />
+        <View style={styles.pageHeaderText}>
+          <AppText variant="title">{t('settings.title')}</AppText>
+          <AppText tone="muted">{t('settings.subtitle')}</AppText>
+        </View>
       </View>
       <AppearanceSection />
       <LanguageSection />
@@ -87,69 +128,172 @@ const SettingsPanel: React.FC<Props> = ({
           </View>
         ) : (
           <>
-            <SettingsRow
-              label={t('notifications.daily')}
-              description={t('notifications.currentTime', {
-                time: reminderTimeText,
-              })}
-              style={styles.reminderRow}
-              trailing={
-                <Switch
-                  accessibilityLabel={t(
-                    'notifications.enableAccessibility',
-                  )}
-                  value={preferences.enabled}
-                  onValueChange={value => onToggle(value)}
-                  disabled={isSaving}
-                  trackColor={{
-                    false: theme.colors.border,
-                    true: theme.colors.accent,
-                  }}
-                  ios_backgroundColor={theme.colors.border}
-                  testID="toggle-daily-reminders"
-                />
-              }
-            />
+            <View style={styles.notificationMode}>
+              <SettingsRow
+                label={t('notifications.daily')}
+                description={t('notifications.currentTime', {
+                  time: reminderTimeText,
+                })}
+                style={styles.reminderRow}
+                trailing={
+                  <Switch
+                    accessibilityLabel={t('notifications.enableAccessibility')}
+                    value={preferences.enabled}
+                    onValueChange={value => onToggle(value)}
+                    disabled={isSaving}
+                    trackColor={{
+                      false: theme.colors.border,
+                      true: theme.colors.accent,
+                    }}
+                    ios_backgroundColor={theme.colors.border}
+                    testID="toggle-daily-reminders"
+                  />
+                }
+              />
 
-            <View style={styles.timeInputs}>
-              <View style={styles.inputBlock}>
-                <AppTextField
-                  label={t('notifications.hour')}
-                  helperText={t('notifications.hourHelp')}
-                  value={hourInput}
-                  onChangeText={text =>
-                    setHourInput(text.replace(/[^0-9]/g, ''))
-                  }
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  testID="input-reminder-hour"
-                />
+              <View style={styles.timeInputs}>
+                <View style={styles.inputBlock}>
+                  <AppTextField
+                    label={t('notifications.hour')}
+                    helperText={t('notifications.hourHelp')}
+                    value={hourInput}
+                    onChangeText={text =>
+                      setHourInput(text.replace(/[^0-9]/g, ''))
+                    }
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    testID="input-reminder-hour"
+                  />
+                </View>
+                <View style={styles.inputBlock}>
+                  <AppTextField
+                    label={t('notifications.minute')}
+                    helperText={t('notifications.minuteHelp')}
+                    value={minuteInput}
+                    onChangeText={text =>
+                      setMinuteInput(text.replace(/[^0-9]/g, ''))
+                    }
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    testID="input-reminder-minute"
+                  />
+                </View>
               </View>
-              <View style={styles.inputBlock}>
-                <AppTextField
-                  label={t('notifications.minute')}
-                  helperText={t('notifications.minuteHelp')}
-                  value={minuteInput}
-                  onChangeText={text =>
-                    setMinuteInput(text.replace(/[^0-9]/g, ''))
-                  }
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  testID="input-reminder-minute"
-                />
-              </View>
+
+              <AppButton
+                label={
+                  isSaving
+                    ? t('notifications.saving')
+                    : t('notifications.saveTime')
+                }
+                loading={isSaving}
+                onPress={onSaveTime}
+                testID="btn-save-reminder-time"
+              />
             </View>
 
-            <AppButton
-              label={
-                isSaving
-                  ? t('notifications.saving')
-                  : t('notifications.saveTime')
-              }
-              loading={isSaving}
-              onPress={onSaveTime}
-              testID="btn-save-reminder-time"
-            />
+            <View style={styles.modeDivider} />
+
+            <View style={styles.notificationMode}>
+              <SettingsRow
+                label={t('notifications.random')}
+                description={t('notifications.randomRange', {
+                  count: randomRemindersPerDay,
+                  start: randomReminderStartTimeText,
+                  end: randomReminderEndTimeText,
+                })}
+                style={styles.reminderRow}
+                trailing={
+                  <Switch
+                    accessibilityLabel={t(
+                      'notifications.enableRandomAccessibility',
+                    )}
+                    value={preferences.randomEnabled}
+                    onValueChange={value => onRandomToggle(value)}
+                    disabled={isSaving}
+                    trackColor={{
+                      false: theme.colors.border,
+                      true: theme.colors.accent,
+                    }}
+                    ios_backgroundColor={theme.colors.border}
+                    testID="toggle-random-reminders"
+                  />
+                }
+              />
+
+              <AppText tone="muted">
+                {t('notifications.randomDescription')}
+              </AppText>
+
+              <View style={styles.timeInputs}>
+                <View style={styles.inputBlock}>
+                  <AppTextField
+                    label={t('notifications.startHour')}
+                    helperText={t('notifications.hourHelp')}
+                    value={randomStartHourInput}
+                    onChangeText={text =>
+                      setRandomStartHourInput(text.replace(/[^0-9]/g, ''))
+                    }
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    testID="input-random-reminder-start-hour"
+                  />
+                </View>
+                <View style={styles.inputBlock}>
+                  <AppTextField
+                    label={t('notifications.startMinute')}
+                    helperText={t('notifications.minuteHelp')}
+                    value={randomStartMinuteInput}
+                    onChangeText={text =>
+                      setRandomStartMinuteInput(text.replace(/[^0-9]/g, ''))
+                    }
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    testID="input-random-reminder-start-minute"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.timeInputs}>
+                <View style={styles.inputBlock}>
+                  <AppTextField
+                    label={t('notifications.endHour')}
+                    helperText={t('notifications.hourHelp')}
+                    value={randomEndHourInput}
+                    onChangeText={text =>
+                      setRandomEndHourInput(text.replace(/[^0-9]/g, ''))
+                    }
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    testID="input-random-reminder-end-hour"
+                  />
+                </View>
+                <View style={styles.inputBlock}>
+                  <AppTextField
+                    label={t('notifications.endMinute')}
+                    helperText={t('notifications.minuteHelp')}
+                    value={randomEndMinuteInput}
+                    onChangeText={text =>
+                      setRandomEndMinuteInput(text.replace(/[^0-9]/g, ''))
+                    }
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    testID="input-random-reminder-end-minute"
+                  />
+                </View>
+              </View>
+
+              <AppButton
+                label={
+                  isSaving
+                    ? t('notifications.saving')
+                    : t('notifications.saveRange')
+                }
+                loading={isSaving}
+                onPress={onSaveRandomRange}
+                testID="btn-save-random-reminder-range"
+              />
+            </View>
           </>
         )}
 

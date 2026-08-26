@@ -50,10 +50,12 @@ requirements:
       - The application lands on Affirmations by default.
       - A large rounded media card fills the available Today page while preserving a small themed outer margin.
       - A background image, protective contrast overlay, and centered readable affirmation text are visible.
+      - No decorative quotation mark is rendered above the affirmation text.
       - The card header identifies the Today experience and the current calendar date.
       - Like and Share icons are visible directly below the affirmation text.
-      - Topic and background selection use recognizable icon-and-label controls and are each reachable in one tap.
-      - The footer communicates vertical swipe navigation and the current position in the eligible affirmation feed.
+      - Topic selection is reachable from the bottom-left navigation control, and background selection remains reachable from the affirmation card in one tap.
+      - No separate Topic Selection control is rendered inside the affirmation card.
+      - The media card does not show a swipe-arrow hint or eligible-feed position counter.
       - All controls remain usable at compact mobile heights without relying on fixed absolute text offsets.
     verification:
       test_id: affirmations_default_layout
@@ -72,7 +74,7 @@ requirements:
           selector: "[data-testid='btn-like-affirmation']"
         - action: expect_visible
           selector: "[data-testid='btn-share-affirmation']"
-        - action: expect_visible
+        - action: expect_not_visible
           selector: "[data-testid='btn-open-topic-selection']"
         - action: expect_visible
           selector: "[data-testid='btn-open-background-selection']"
@@ -84,7 +86,9 @@ requirements:
     acceptance_criteria:
       - Only affirmations belonging to selected topics are eligible.
       - When zero topics are selected, affirmations from all topics are eligible.
-      - The topic button displays the topic of the current affirmation.
+      - The in-app feed, notification text, notification-opened text, and widget text all use the same active-topic eligibility rule.
+      - Opening an older notification never injects text from a topic that is no longer selected.
+      - No current-topic chip or Topic Selection button is displayed inside the affirmation card.
     verification:
       test_id: affirmations_follow_active_topics
       preconditions:
@@ -92,10 +96,10 @@ requirements:
       steps:
         - action: goto
           url: moodie://affirmations
-        - action: expect_visible
-          selector: "[data-testid='text-current-topic'][data-value='topic-a']"
         - action: expect_not_visible
-          selector: "[data-testid='text-current-topic'][data-value='topic-b']"
+          selector: "[data-testid='text-current-topic']"
+        - action: expect_not_visible
+          selector: "[data-testid='btn-open-topic-selection']"
 
   - id: AFF-003
     title: Bidirectional Wrapped Text Navigation

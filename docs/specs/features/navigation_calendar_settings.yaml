@@ -4,26 +4,29 @@ feature:
   id: FEATURE-NAVIGATION-CALENDAR-SETTINGS
   name: Home Navigation, Calendar, and Settings
   lifecycle: current
-  purpose: Preserve the three-page Affirmations, Calendar, and Settings experience.
+  purpose: Preserve Calendar for a future return while temporarily exposing only Affirmations and Settings.
   entry_route: moodie://affirmations
 
 requirements:
   - id: NAV-001
-    title: Three-Page Home Navigation
-    description: The home experience provides horizontal navigation among Affirmations, Calendar, and Settings.
+    title: Two-Page Home Navigation
+    description: The home experience temporarily provides horizontal navigation between Affirmations and Settings.
     priority: MUST
     acceptance_criteria:
-      - Exactly three primary pages are present in this order: Affirmations, Calendar, Settings.
+      - Exactly two primary pages are visible in this order: Affirmations, Settings.
       - Affirmations is the default landing page.
-      - Horizontal swiping moves between adjacent pages.
-      - A persistent bottom navigation exposes Today (Affirmations), Calendar, and Settings with an icon and text label.
-      - Tapping a bottom-navigation item scrolls directly to its corresponding page.
-      - Horizontal swiping updates the active navigation item as the pager crosses the nearest-page midpoint and remains synchronized when scrolling settles.
+      - Horizontal swiping does not move between pages.
+      - A persistent bottom navigation exposes Today (Affirmations) and Settings with an icon and text label.
+      - Calendar has no bottom-navigation item and cannot be reached by swiping.
+      - Tapping Settings scrolls directly to Settings.
+      - Tapping the bottom-left control returns to Affirmations and opens Topic Selection.
+      - A top-left close control on Settings returns to Affirmations without opening Topic Selection.
+      - Programmatic pager movement updates the active navigation item and remains synchronized when scrolling settles.
       - Direct tab selection keeps the pager and active navigation item on the same page.
       - The active navigation item has a visible selected treatment.
       - Every navigation item exposes a tab role, selected state, accessible label, and minimum 44-point touch target.
     verification:
-      test_id: navigate_three_home_pages
+      test_id: navigate_visible_home_pages
       steps:
         - action: goto
           url: moodie://launch
@@ -32,15 +35,11 @@ requirements:
         - action: click
           selector: "[data-testid='gesture-home-next']"
         - action: expect_visible
+          selector: "[data-testid='screen-affirmations']"
+        - action: expect_not_visible
           selector: "[data-testid='screen-calendar']"
-        - action: click
-          selector: "[data-testid='gesture-home-next']"
-        - action: expect_visible
-          selector: "[data-testid='screen-settings']"
-        - action: click
-          selector: "[data-testid='gesture-home-previous']"
-        - action: expect_visible
-          selector: "[data-testid='screen-calendar']"
+        - action: expect_not_visible
+          selector: "[data-testid='btn-nav-calendar']"
         - action: click
           selector: "[data-testid='btn-nav-settings']"
         - action: expect_visible
@@ -48,16 +47,23 @@ requirements:
         - action: click
           selector: "[data-testid='btn-nav-affirmations']"
         - action: expect_visible
+          selector: "[data-testid='modal-topic-selection']"
+        - action: click
+          selector: "[data-testid='btn-close-topic-selection']"
+        - action: expect_visible
           selector: "[data-testid='screen-affirmations']"
       notes:
-        - Gesture selectors are E2E adapter controls that perform native horizontal swipes.
+        - Horizontal swipe adapter controls must leave the selected page unchanged.
 
   - id: CAL-001
     title: Daily Calendar Presentation
-    description: Calendar presents the current local date and a daily reflection in a focused, media-rich layout.
+    description: Calendar remains implemented for a future return but is temporarily hidden from the home experience.
     priority: MUST
     acceptance_criteria:
-      - The Calendar page remains reachable from the home pager.
+      - The Calendar component and its tests remain in the codebase.
+      - The Calendar page is not mounted in the home pager while its visibility flag is disabled.
+      - The Calendar navigation control is not rendered while its visibility flag is disabled.
+      - Re-enabling Calendar restores it between Affirmations and Settings.
       - A Calendar heading and supporting description establish the page hierarchy.
       - The current local weekday, day, month, and year are readable within a large rounded media card.
       - The media-card background comes from the remotely delivered affirmation background catalog; no bundled or hardcoded image URL is used as an editorial fallback.
@@ -67,16 +73,14 @@ requirements:
       - The layout uses themed outer spacing and adapts typography and padding for compact mobile heights.
       - No scheduling, event creation, or date-navigation behavior is implied.
     verification:
-      test_id: calendar_page_remains_available
+      test_id: calendar_page_remains_dormant
       steps:
         - action: goto
-          url: moodie://calendar
-        - action: expect_visible
+          url: moodie://launch
+        - action: expect_not_visible
           selector: "[data-testid='screen-calendar']"
-        - action: expect_visible
-          selector: "[data-testid='text-calendar-date']"
-        - action: expect_visible
-          selector: "[data-testid='text-calendar-message']"
+        - action: expect_not_visible
+          selector: "[data-testid='btn-nav-calendar']"
 
   - id: SET-001
     title: Structured Settings Page
@@ -85,6 +89,7 @@ requirements:
     acceptance_criteria:
       - The Settings page remains reachable from the home pager.
       - A Settings heading and supporting description establish the page hierarchy.
+      - A top-left close control exits Settings and returns to Affirmations.
       - Appearance, Notifications, and Account are presented as distinct themed cards in that order.
       - Each settings card uses an icon, title, and short description to communicate its purpose.
       - Settings content uses responsive outer spacing and a readable maximum width on larger viewports.

@@ -1,11 +1,11 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: DOCS-MANIFEST
   title: Moodie Perfect Docs Manifest
   status: approved
   source_of_truth: true
-  canonical_since: "2026-07-22"
+  canonical_since: '2026-07-22'
 
 authority:
   canonical_root: docs/specs
@@ -67,6 +67,7 @@ specification_index:
     - docs/specs/features/authentication.yaml
     - docs/specs/features/user_settings_sync.yaml
     - docs/specs/features/reminders.yaml
+    - docs/specs/features/affirmation_widget.yaml
     - docs/specs/features/catalog.yaml
     - docs/specs/features/commerce.yaml
     - docs/specs/features/content_delivery.yaml

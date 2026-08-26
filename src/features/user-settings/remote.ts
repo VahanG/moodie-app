@@ -8,6 +8,11 @@ type SettingsRow = {
   reminder_enabled: unknown;
   reminder_hour: unknown;
   reminder_minute: unknown;
+  random_reminder_enabled: unknown;
+  random_reminder_start_hour: unknown;
+  random_reminder_start_minute: unknown;
+  random_reminder_end_hour: unknown;
+  random_reminder_end_minute: unknown;
   selected_topic_ids: unknown;
   background_mode: unknown;
   background_id: unknown;
@@ -54,6 +59,30 @@ export function parseUserSettingsRow(row: SettingsRow): UserSettingsSnapshot {
     throw new Error('Invalid reminder preferences in database user settings.');
   }
   if (
+    typeof row.random_reminder_enabled !== 'boolean' ||
+    !Number.isInteger(row.random_reminder_start_hour) ||
+    !Number.isInteger(row.random_reminder_start_minute) ||
+    !Number.isInteger(row.random_reminder_end_hour) ||
+    !Number.isInteger(row.random_reminder_end_minute) ||
+    (row.random_reminder_start_hour as number) < 0 ||
+    (row.random_reminder_start_hour as number) > 23 ||
+    (row.random_reminder_start_minute as number) < 0 ||
+    (row.random_reminder_start_minute as number) > 59 ||
+    (row.random_reminder_end_hour as number) < 0 ||
+    (row.random_reminder_end_hour as number) > 23 ||
+    (row.random_reminder_end_minute as number) < 0 ||
+    (row.random_reminder_end_minute as number) > 59 ||
+    (row.random_reminder_end_hour as number) * 60 +
+      (row.random_reminder_end_minute as number) <=
+      (row.random_reminder_start_hour as number) * 60 +
+        (row.random_reminder_start_minute as number) ||
+    (row.reminder_enabled && row.random_reminder_enabled)
+  ) {
+    throw new Error(
+      'Invalid random reminder preferences in database user settings.',
+    );
+  }
+  if (
     row.background_id !== null &&
     (typeof row.background_id !== 'string' ||
       row.background_id.trim().length === 0)
@@ -73,6 +102,11 @@ export function parseUserSettingsRow(row: SettingsRow): UserSettingsSnapshot {
       enabled: row.reminder_enabled,
       hour: row.reminder_hour as number,
       minute: row.reminder_minute as number,
+      randomEnabled: row.random_reminder_enabled,
+      randomStartHour: row.random_reminder_start_hour as number,
+      randomStartMinute: row.random_reminder_start_minute as number,
+      randomEndHour: row.random_reminder_end_hour as number,
+      randomEndMinute: row.random_reminder_end_minute as number,
     },
     selectedTopicIds: parseStringArray(
       row.selected_topic_ids,
@@ -108,7 +142,7 @@ export async function loadDatabaseUserSettings(
   const { data, error } = await getSupabaseClient()
     .from('user_settings')
     .select(
-      'user_id,language_code,theme_preference,reminder_enabled,reminder_hour,reminder_minute,selected_topic_ids,background_mode,background_id,liked_affirmation_keys',
+      'user_id,language_code,theme_preference,reminder_enabled,reminder_hour,reminder_minute,random_reminder_enabled,random_reminder_start_hour,random_reminder_start_minute,random_reminder_end_hour,random_reminder_end_minute,selected_topic_ids,background_mode,background_id,liked_affirmation_keys',
     )
     .eq('user_id', userId)
     .maybeSingle();
@@ -132,6 +166,12 @@ export async function upsertDatabaseUserSettings(
       reminder_enabled: settings.reminderPreferences.enabled,
       reminder_hour: settings.reminderPreferences.hour,
       reminder_minute: settings.reminderPreferences.minute,
+      random_reminder_enabled: settings.reminderPreferences.randomEnabled,
+      random_reminder_start_hour: settings.reminderPreferences.randomStartHour,
+      random_reminder_start_minute:
+        settings.reminderPreferences.randomStartMinute,
+      random_reminder_end_hour: settings.reminderPreferences.randomEndHour,
+      random_reminder_end_minute: settings.reminderPreferences.randomEndMinute,
       selected_topic_ids: settings.selectedTopicIds,
       background_mode: settings.backgroundPreference.mode,
       background_id: settings.backgroundPreference.backgroundId,

@@ -1,10 +1,10 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 feature:
   id: FEATURE-REMINDERS
-  name: Daily Reminders
+  name: Reminder Notifications
   lifecycle: current
-  purpose: Provide a reliable device-local daily reminder experience.
+  purpose: Provide reliable fixed-time and randomized device-local reminder experiences.
   entry_route: moodie://settings
   provenance:
     product_intent: docs/product/requirements.md
@@ -21,6 +21,11 @@ requirements:
       - Minute accepts an integer from 0 through 59.
       - Boundary times 00:00 and 23:59 are valid and persist without modification.
       - Saving a valid time persists the preference and schedules a repeating daily local notification.
+      - Exactly one local reminder is delivered at the selected time each day.
+      - When a reminder schedule is created or refreshed, its message is randomly selected from the same affirmation texts eligible for the user's selected topics.
+      - The scheduled notification carries the selected affirmation identifier and exact text as local notification data.
+      - Opening the app by tapping a daily reminder returns to Affirmations and displays exactly the affirmation text contained in that notification.
+      - No reminder is scheduled until at least one affirmation eligible for the active topic selection is available.
       - If today's selected time has passed, the first notification is scheduled for the next local day.
       - The default preference is disabled at 09:00 local time.
     verification:
@@ -32,10 +37,10 @@ requirements:
           selector: "[data-testid='toggle-daily-reminders'][data-state='off']"
         - action: type
           selector: "[data-testid='input-reminder-hour']"
-          value: "8"
+          value: '8'
         - action: type
           selector: "[data-testid='input-reminder-minute']"
-          value: "30"
+          value: '30'
         - action: click
           selector: "[data-testid='btn-save-reminder-time']"
         - action: expect_visible
@@ -112,6 +117,59 @@ requirements:
         - action: expect_visible
           selector: "[data-testid='input-reminder-minute'][data-value='30']"
 
+  - id: REM-005
+    title: Configure Random Reminder Range
+    description: A device session can choose random reminders within a same-day local time range instead of a fixed daily time.
+    priority: MUST
+    acceptance_criteria:
+      - Settings exposes a random-reminder enable control and local start and end time inputs.
+      - Fixed daily reminders and random reminders are mutually exclusive; enabling one disables and cancels the other mode.
+      - The end time must be later than the start time on the same local day.
+      - The configured range must provide at least 60 minutes per admin-controlled notification so delivery times retain randomized slack while remaining at least 60 minutes apart.
+      - Enabling random reminders requires operating-system notification permission when the platform requires it.
+      - Saving valid inputs persists the range and refreshes all queued random notifications when the mode is enabled.
+      - The default random-reminder preference is disabled with a 09:00–17:00 local range.
+    verification:
+      test_id: configure_random_reminder_range
+      steps:
+        - action: goto
+          url: moodie://settings?fresh=true
+        - action: type
+          selector: "[data-testid='input-random-reminder-start-hour']"
+          value: '9'
+        - action: type
+          selector: "[data-testid='input-random-reminder-start-minute']"
+          value: '0'
+        - action: type
+          selector: "[data-testid='input-random-reminder-end-hour']"
+          value: '17'
+        - action: type
+          selector: "[data-testid='input-random-reminder-end-minute']"
+          value: '0'
+        - action: click
+          selector: "[data-testid='btn-save-random-reminder-range']"
+        - action: click
+          selector: "[data-testid='toggle-random-reminders']"
+        - action: expect_visible
+          selector: "[data-testid='toggle-random-reminders'][data-state='on']"
+
+  - id: REM-006
+    title: Randomized Daily Delivery
+    description: Enabled random reminders are delivered at non-fixed times without notification bursts.
+    priority: MUST
+    acceptance_criteria:
+      - The number of random notifications per day comes from the globally readable admin notification setting.
+      - Admins can set the daily count from 1 through 8; clients use 3 when remote and cached configuration are unavailable.
+      - Each queued local day receives the configured number of randomized notification times inside the selected range.
+      - Random notifications on the same day are always at least 60 minutes apart.
+      - Random times are generated independently per local day and queued as one-off notifications rather than repeating at fixed times.
+      - The queue uses no more than 60 notification slots and is canceled and rebuilt on app launch or foreground, relevant preference changes, content changes, or admin-count refresh.
+      - When only part of today's range remains, past generated occurrences are skipped; later days retain the full configured count.
+      - Random notifications use the same eligible affirmation selection, tap payload, and localized title as fixed daily reminders.
+      - No random reminder is scheduled until at least one affirmation eligible for the active topic selection is available.
+      - Rebuilding either reminder mode after a topic change discards queued notifications from topics that are no longer active.
+      - If remote configuration cannot be loaded, the last valid device cache is used before the documented default.
+
 automated_verification:
   runner: Jest
   command: npm test
@@ -128,7 +186,19 @@ automated_verification:
         - Android channel configuration
         - Android and iOS permission decisions
         - next-occurrence scheduling
+        - random affirmation-message selection
+        - randomized multi-day range scheduling
+        - minimum spacing and notification-slot limits
         - cancellation
+    - path: src/features/notifications/config.test.ts
+      covers:
+        - admin notification-count validation
+        - remote, cached, and default configuration precedence
+    - path: src/features/notifications/openedAffirmation.test.ts
+      covers:
+        - notification interaction payload parsing
+        - cold-start notification delivery
+        - notification taps while the app is running
 
 open_decisions:
   - id: REM-TBD-001

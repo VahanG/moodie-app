@@ -17,8 +17,14 @@
     },
     "ios": {
       "bundleIdentifier": "com.moodie.am",
-      "buildNumber": "7",
+      "buildNumber": "11",
       "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.moodie.am.shared"
+        ]
+      },
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -28,6 +34,7 @@
     },
     "plugins": [
       "expo-updates",
+      "expo-apple-authentication",
       [
         "expo-web-browser",
         {

@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { getSupabaseClient, readSupabaseConfig } from '../supabase';
@@ -29,6 +30,15 @@ function requireAuthUser(session: Session | null, method: string): AuthUser {
   }
 
   return user;
+}
+
+function isAppleRequestCanceled(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'ERR_REQUEST_CANCELED'
+  );
 }
 
 function readOAuthParameter(url: URL, name: string): string | null {
@@ -182,6 +192,37 @@ export async function signInWithGoogle(): Promise<AuthUser | null> {
   }
 
   return createSessionFromOAuthUrl(result.url);
+}
+
+export async function signInWithApple(): Promise<AuthUser | null> {
+  let credential: AppleAuthentication.AppleAuthenticationCredential;
+
+  try {
+    credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL],
+    });
+  } catch (requestError) {
+    if (isAppleRequestCanceled(requestError)) {
+      return null;
+    }
+
+    throw requestError;
+  }
+
+  if (!credential.identityToken) {
+    throw new Error('Apple sign-in returned no identity token.');
+  }
+
+  const { data, error } = await getSupabaseClient().auth.signInWithIdToken({
+    provider: 'apple',
+    token: credential.identityToken,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return requireAuthUser(data.session, 'Apple sign-in');
 }
 
 export async function signOut(): Promise<void> {

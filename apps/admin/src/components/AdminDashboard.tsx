@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { type AdminIdentity } from '../lib/auth';
 import { ContentManager } from './ContentManager';
 import { GalleryManager } from './GalleryManager';
+import { NotificationSettingsManager } from './NotificationSettingsManager';
 import styles from './AdminPortal.module.css';
 
 const navigation = [
   { id: 'overview', label: 'Overview', enabled: true },
   { id: 'content', label: 'Content', enabled: true },
   { id: 'gallery', label: 'Gallery', enabled: true },
+  { id: 'notifications', label: 'Notifications', enabled: true },
   { id: 'catalog', label: 'Catalog', enabled: false },
   { id: 'commerce', label: 'Commerce', enabled: false },
   { id: 'insights', label: 'Insights', enabled: false },
@@ -73,6 +75,8 @@ export function AdminDashboard({
           <GalleryManager />
         ) : activeSection === 'content' ? (
           <ContentManager />
+        ) : activeSection === 'notifications' ? (
+          <NotificationSettingsManager />
         ) : (
           <>
             <header className={styles.pageHeader}>

@@ -3,6 +3,7 @@ export {
   loadAuthUser,
   sendEmailOtp,
   signInWithEmailAndPassword,
+  signInWithApple,
   signInWithGoogle,
   signOut,
   subscribeToAuthUser,

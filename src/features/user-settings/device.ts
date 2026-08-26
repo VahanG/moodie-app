@@ -9,13 +9,11 @@ import {
 } from '../affirmations/storage';
 import {
   loadReminderPreferences,
+  parseReminderPreferences,
   saveReminderPreferences,
 } from '../notifications/storage';
 import { loadThemePreference, saveThemePreference } from '../../theme/storage';
-import {
-  loadLanguageCode,
-  saveLanguageCode,
-} from '../localization/storage';
+import { loadLanguageCode, saveLanguageCode } from '../localization/storage';
 import { UserSettingsSnapshot } from './types';
 
 const PENDING_USER_SETTINGS_KEY = '@moodie/pending-user-settings-v1';
@@ -88,7 +86,21 @@ export async function loadPendingUserSettings(): Promise<PendingUserSettings | n
     return null;
   }
 
-  return candidate as PendingUserSettings;
+  const pendingSettings = candidate.settings as Partial<UserSettingsSnapshot>;
+  const reminderPreferences = parseReminderPreferences(
+    pendingSettings.reminderPreferences,
+  );
+  if (!reminderPreferences) {
+    return null;
+  }
+
+  return {
+    userId: candidate.userId,
+    settings: {
+      ...pendingSettings,
+      reminderPreferences,
+    } as UserSettingsSnapshot,
+  };
 }
 
 export async function savePendingUserSettings(

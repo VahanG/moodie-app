@@ -54,7 +54,16 @@ function makeSettings(languageCode: string): UserSettingsSnapshot {
   return {
     languageCode,
     themePreference: 'system',
-    reminderPreferences: { enabled: false, hour: 9, minute: 0 },
+    reminderPreferences: {
+      enabled: false,
+      hour: 9,
+      minute: 0,
+      randomEnabled: false,
+      randomStartHour: 9,
+      randomStartMinute: 0,
+      randomEndHour: 17,
+      randomEndMinute: 0,
+    },
     selectedTopicIds: [],
     backgroundPreference: { mode: 'free', backgroundId: null },
     likedAffirmationKeys: [],

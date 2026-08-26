@@ -9,14 +9,13 @@ Deliver a focused affirmation experience that users can personalize by topic and
 - Full-screen visual background.
 - On mobile, the visual extends edge to edge across the app canvas and beneath the system bars without a card border, radius, or surrounding page background; controls remain safely inset.
 - Mobile controls and bottom navigation use surface-free icon targets over the image; tablet and web layouts may retain labeled surfaces.
-- Centered affirmation text for readability.
+- Centered affirmation text for readability, without a decorative quotation mark above it.
 - Two action icons directly below the affirmation text:
   - Heart-shaped Like icon.
   - Share icon.
 - Vertical swipe gestures on the Affirmations page for text navigation.
-- Quick entry points to:
-  - Topic selection screen.
-  - Background selection screen.
+- The bottom-left navigation control opens Topic Selection.
+- The affirmation card retains a quick entry point to Background Selection.
 
 ## Content behavior
 
@@ -25,7 +24,7 @@ Deliver a focused affirmation experience that users can personalize by topic and
 3. If no topics are selected, affirmations from all topics are eligible for display.
 4. Affirmation text is not strictly bound to gallery images.
 5. Each affirmation text should have one or more weakly connected background images for adaptive visuals.
-6. Topic button label shows the topic of the currently displayed affirmation text.
+6. The affirmation card does not show a current-topic chip or a second Topic Selection control.
 
 ## Affirmation navigation behavior
 

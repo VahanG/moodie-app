@@ -12,6 +12,7 @@ feature:
     - email_password
     - email_otp
     - google_oauth
+    - apple_native_ios
 
 requirements:
   - id: AUTH-001
@@ -86,6 +87,18 @@ requirements:
       - The Settings account section identifies an administrator after the database check succeeds.
       - No role-assignment, role-update, or role-revocation control exists in the app.
 
+  - id: AUTH-006
+    title: Native Sign in with Apple on iOS
+    description: An iOS user can create a Supabase session with Apple's native authentication sheet from the inline account section.
+    priority: MUST
+    acceptance_criteria:
+      - The Apple option is rendered only when native Apple authentication is available on the current iOS device.
+      - The control uses Apple's system-provided Sign in with Apple button.
+      - The native request asks for the user's email and exchanges the returned Apple identity token through Supabase signInWithIdToken.
+      - A successful exchange creates and persists the Supabase session without browser navigation.
+      - Canceling or failing the native flow leaves the user signed out and shows inline status.
+      - Android and web builds do not render an Apple sign-in option.
+
 supabase_dashboard_setup:
   email:
     - Enable the Email provider under Authentication providers.
@@ -95,6 +108,10 @@ supabase_dashboard_setup:
     - Create a Web application OAuth client in Google Auth Platform.
     - Add https://vwougnsbyqqeessdkbae.supabase.co/auth/v1/callback as an authorized Google redirect URI.
     - Enable Google in Supabase Authentication providers and store the Google client ID and client secret there.
+  apple:
+    - Enable Sign in with Apple for the com.moodie.am App ID in the Apple Developer portal.
+    - Enable Apple in Supabase Authentication providers and register com.moodie.am in the Client IDs list.
+    - Native-only Apple authentication does not require a Services ID, OAuth secret, or redirect URL.
   redirects:
     - Add moodie-app://auth/callback to the Supabase Authentication URL Configuration redirect allow list.
     - Add http://localhost:5173 for local admin development.
@@ -104,7 +121,7 @@ supabase_dashboard_setup:
 out_of_scope:
   - Account registration.
   - Password recovery.
-  - OAuth providers other than Google.
+  - Social authentication providers other than Google and native Apple authentication on iOS.
   - Admin management UI.
   - Protected admin application pages until an administrative feature is specified.
 

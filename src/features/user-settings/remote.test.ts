@@ -14,6 +14,11 @@ describe('database user settings parsing', () => {
     reminder_enabled: true,
     reminder_hour: 8,
     reminder_minute: 30,
+    random_reminder_enabled: false,
+    random_reminder_start_hour: 9,
+    random_reminder_start_minute: 0,
+    random_reminder_end_hour: 17,
+    random_reminder_end_minute: 0,
     selected_topic_ids: ['growth', 'growth', 'calm'],
     background_mode: 'fixed',
     background_id: 'forest',
@@ -24,7 +29,16 @@ describe('database user settings parsing', () => {
     expect(parseUserSettingsRow(row)).toEqual({
       languageCode: 'en',
       themePreference: 'dark',
-      reminderPreferences: { enabled: true, hour: 8, minute: 30 },
+      reminderPreferences: {
+        enabled: true,
+        hour: 8,
+        minute: 30,
+        randomEnabled: false,
+        randomStartHour: 9,
+        randomStartMinute: 0,
+        randomEndHour: 17,
+        randomEndMinute: 0,
+      },
       selectedTopicIds: ['growth', 'calm'],
       backgroundPreference: { mode: 'fixed', backgroundId: 'forest' },
       likedAffirmationKeys: ['affirmation-1'],
@@ -42,5 +56,20 @@ describe('database user settings parsing', () => {
         background_id: null,
       }),
     ).toThrow('fixed background is missing');
+    expect(() =>
+      parseUserSettingsRow({
+        ...row,
+        reminder_enabled: true,
+        random_reminder_enabled: true,
+      }),
+    ).toThrow('Invalid random reminder preferences');
+    expect(() =>
+      parseUserSettingsRow({
+        ...row,
+        reminder_enabled: false,
+        random_reminder_enabled: true,
+        random_reminder_end_hour: 8,
+      }),
+    ).toThrow('Invalid random reminder preferences');
   });
 });

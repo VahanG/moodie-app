@@ -17,8 +17,14 @@ export function createSettingsPanelStyles(theme: MoodieTheme) {
       gap: spacing.md,
     },
     pageHeader: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
       paddingHorizontal: spacing.xs,
       paddingBottom: spacing.xs,
+    },
+    pageHeaderText: {
+      flex: 1,
       gap: 2,
     },
     card: {
@@ -66,6 +72,13 @@ export function createSettingsPanelStyles(theme: MoodieTheme) {
       padding: spacing.md,
       borderRadius: radii.md,
       backgroundColor: colors.accentSoft,
+    },
+    notificationMode: {
+      gap: spacing.md,
+    },
+    modeDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
     },
     timeInputs: {
       flexDirection: 'row',

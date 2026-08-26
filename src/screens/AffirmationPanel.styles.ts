@@ -99,46 +99,6 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
       paddingHorizontal: spacing.xs,
       paddingVertical: spacing.sm,
     },
-    topicChip: {
-      minHeight: 38,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      borderWidth: 1,
-      borderColor: colors.imageControlBorder,
-      borderRadius: radii.pill,
-      backgroundColor: colors.imageControl,
-    },
-    topicChipMobile: {
-      width: 44,
-      minHeight: 44,
-      justifyContent: 'center',
-      gap: 0,
-      paddingHorizontal: 0,
-      paddingVertical: 0,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
-    },
-    topicText: {
-      color: colors.onImage,
-    },
-    quoteMark: {
-      marginTop: spacing.lg,
-      marginBottom: -spacing.md,
-      color: colors.onImageMuted,
-      fontSize: 54,
-      lineHeight: 58,
-      fontWeight: '700',
-      opacity: 0.9,
-    },
-    quoteMarkCompact: {
-      marginTop: spacing.sm,
-      marginBottom: -spacing.sm,
-      fontSize: 42,
-      lineHeight: 46,
-    },
     affirmationText: {
       maxWidth: 440,
       color: colors.onImage,
@@ -185,25 +145,6 @@ export function createAffirmationPanelStyles(theme: MoodieTheme) {
     },
     actionDividerMobile: {
       display: 'none',
-    },
-    footer: {
-      minHeight: 44,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: spacing.md,
-    },
-    swipeHint: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-    },
-    swipeHintText: {
-      color: colors.onImageMuted,
-    },
-    position: {
-      color: colors.onImage,
-      fontVariant: ['tabular-nums'],
     },
   });
 }

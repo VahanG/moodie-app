@@ -6,6 +6,7 @@ import { ThemeProvider } from '../src/theme';
 const mockIsAuthConfigured = jest.fn(() => true);
 const mockLoadAuthUser = jest.fn();
 const mockSendEmailOtp = jest.fn();
+const mockSignInWithApple = jest.fn();
 const mockSignInWithEmailAndPassword = jest.fn();
 const mockSignInWithGoogle = jest.fn();
 const mockSignOut = jest.fn();
@@ -22,6 +23,7 @@ jest.mock('../src/features/auth', () => ({
   isAuthConfigured: () => mockIsAuthConfigured(),
   loadAuthUser: () => mockLoadAuthUser(),
   sendEmailOtp: (email: string) => mockSendEmailOtp(email),
+  signInWithApple: () => mockSignInWithApple(),
   signInWithEmailAndPassword: (email: string, password: string) =>
     mockSignInWithEmailAndPassword(email, password),
   signInWithGoogle: () => mockSignInWithGoogle(),
@@ -47,6 +49,7 @@ describe('AccountSection', () => {
     mockIsAuthConfigured.mockReturnValue(true);
     mockLoadAuthUser.mockResolvedValue(null);
     mockSendEmailOtp.mockResolvedValue(undefined);
+    mockSignInWithApple.mockResolvedValue(null);
     mockSignInWithGoogle.mockResolvedValue(null);
     mockSignOut.mockResolvedValue(undefined);
     mockLoadAdminStatus.mockResolvedValue(false);
@@ -206,6 +209,27 @@ describe('AccountSection', () => {
     });
 
     expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1);
+    expect(renderer!.root.findByProps({ testID: 'btn-sign-out' })).toBeTruthy();
+  });
+
+  test('signs in with Apple from the same inline section on iOS', async () => {
+    mockSignInWithApple.mockResolvedValue({
+      id: 'apple-user',
+      email: 'apple@example.com',
+    });
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(renderAccountSection());
+    });
+
+    await ReactTestRenderer.act(async () => {
+      await renderer!.root
+        .findByProps({ testID: 'btn-sign-in-apple' })
+        .props.onPress();
+    });
+
+    expect(mockSignInWithApple).toHaveBeenCalledTimes(1);
     expect(renderer!.root.findByProps({ testID: 'btn-sign-out' })).toBeTruthy();
   });
 

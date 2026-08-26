@@ -1,11 +1,23 @@
-import { sendEmailOtp, signInWithGoogle, verifyEmailOtp } from './service';
+import {
+  sendEmailOtp,
+  signInWithApple,
+  signInWithGoogle,
+  verifyEmailOtp,
+} from './service';
 
+const mockAppleSignInAsync = jest.fn();
 const mockSignInWithOtp = jest.fn();
 const mockVerifyOtp = jest.fn();
 const mockSignInWithOAuth = jest.fn();
+const mockSignInWithIdToken = jest.fn();
 const mockExchangeCodeForSession = jest.fn();
 const mockSetSession = jest.fn();
 const mockOpenAuthSessionAsync = jest.fn();
+
+jest.mock('expo-apple-authentication', () => ({
+  AppleAuthenticationScope: { EMAIL: 0 },
+  signInAsync: (...args: unknown[]) => mockAppleSignInAsync(...args),
+}));
 
 jest.mock('../supabase', () => ({
   getSupabaseClient: () => ({
@@ -13,6 +25,7 @@ jest.mock('../supabase', () => ({
       signInWithOtp: mockSignInWithOtp,
       verifyOtp: mockVerifyOtp,
       signInWithOAuth: mockSignInWithOAuth,
+      signInWithIdToken: mockSignInWithIdToken,
       exchangeCodeForSession: mockExchangeCodeForSession,
       setSession: mockSetSession,
     },
@@ -137,5 +150,38 @@ describe('auth service passwordless methods', () => {
     });
 
     await expect(signInWithGoogle()).rejects.toThrow('Access denied');
+  });
+
+  test('creates a Supabase session from an Apple identity token', async () => {
+    mockAppleSignInAsync.mockResolvedValue({ identityToken: 'apple-token' });
+    mockSignInWithIdToken.mockResolvedValue({
+      data: {
+        session: {
+          user: { id: 'apple-user', email: 'apple@example.com' },
+        },
+      },
+      error: null,
+    });
+
+    await expect(signInWithApple()).resolves.toEqual({
+      id: 'apple-user',
+      email: 'apple@example.com',
+    });
+    expect(mockAppleSignInAsync).toHaveBeenCalledWith({
+      requestedScopes: [0],
+    });
+    expect(mockSignInWithIdToken).toHaveBeenCalledWith({
+      provider: 'apple',
+      token: 'apple-token',
+    });
+  });
+
+  test('treats a canceled Apple request as a canceled sign-in', async () => {
+    mockAppleSignInAsync.mockRejectedValue({
+      code: 'ERR_REQUEST_CANCELED',
+    });
+
+    await expect(signInWithApple()).resolves.toBeNull();
+    expect(mockSignInWithIdToken).not.toHaveBeenCalled();
   });
 });

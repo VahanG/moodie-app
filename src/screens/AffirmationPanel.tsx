@@ -9,7 +9,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   Animated,
   PanResponder,
-  Pressable,
   Share,
   useWindowDimensions,
   View,
@@ -34,6 +33,7 @@ import { AppButton, AppText, IconButton } from '../components/ui';
 import { MOBILE_LAYOUT_BREAKPOINT, useTheme } from '../theme';
 import { useAffirmationPanelStyles } from './AffirmationPanel.styles';
 import { useLocalization } from '../features/localization';
+import type { OpenedNotificationAffirmation } from '../features/notifications/openedAffirmation';
 
 type Props = {
   topics: AffirmationTopic[];
@@ -42,6 +42,9 @@ type Props = {
   onRetryContent: () => Promise<void> | void;
   selectedTopicIds: AffirmationTopicId[];
   onSelectTopics: (topicIds: AffirmationTopicId[]) => Promise<void> | void;
+  topicSelectionVisible: boolean;
+  onCloseTopicSelection: () => void;
+  openedNotificationAffirmation: OpenedNotificationAffirmation | null;
   backgroundPreference: AffirmationBackgroundPreference;
   onBackgroundPreferenceChange: (
     preference: AffirmationBackgroundPreference,
@@ -53,7 +56,6 @@ type Props = {
 type TopicAffirmation = {
   id: string;
   topicId: AffirmationTopicId;
-  topicName: string | null;
   imageUri: string;
   text: string;
 };
@@ -85,7 +87,6 @@ function buildAffirmationFeed(topics: AffirmationTopic[]): TopicAffirmation[] {
       feed.push({
         id: affirmation.id,
         topicId: topic.id,
-        topicName: topic.name,
         imageUri: affirmation.imageUri,
         text: affirmation.text,
       });
@@ -102,6 +103,9 @@ const AffirmationPanel: React.FC<Props> = ({
   onRetryContent,
   selectedTopicIds,
   onSelectTopics,
+  topicSelectionVisible,
+  onCloseTopicSelection,
+  openedNotificationAffirmation,
   backgroundPreference,
   onBackgroundPreferenceChange,
   likedAffirmationKeys,
@@ -114,7 +118,6 @@ const AffirmationPanel: React.FC<Props> = ({
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const isCompactLayout = windowHeight < 700;
   const isMobileLayout = windowWidth < MOBILE_LAYOUT_BREAKPOINT;
-  const [isTopicModalVisible, setIsTopicModalVisible] = useState(false);
   const [isBackgroundModalVisible, setIsBackgroundModalVisible] =
     useState(false);
   const normalizedSelectedTopicIds = useMemo(
@@ -128,10 +131,25 @@ const AffirmationPanel: React.FC<Props> = ({
         : topics,
     [normalizedSelectedTopicIds, topics],
   );
-  const affirmationFeed = useMemo(
-    () => buildAffirmationFeed(activeTopics),
-    [activeTopics],
-  );
+  const affirmationFeed = useMemo(() => {
+    const feed = buildAffirmationFeed(activeTopics);
+    if (!openedNotificationAffirmation) {
+      return feed;
+    }
+
+    const existingAffirmation = feed.find(
+      affirmation => affirmation.id === openedNotificationAffirmation.id,
+    );
+    if (existingAffirmation) {
+      return feed.map(affirmation =>
+        affirmation.id === openedNotificationAffirmation.id
+          ? { ...affirmation, text: openedNotificationAffirmation.text }
+          : affirmation,
+      );
+    }
+
+    return feed;
+  }, [activeTopics, openedNotificationAffirmation]);
   const dailyAffirmationIndex = useMemo(
     () => getDailyIndex(affirmationFeed.length),
     [affirmationFeed.length],
@@ -155,8 +173,18 @@ const AffirmationPanel: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    setActiveAffirmationIndex(dailyAffirmationIndex);
-  }, [dailyAffirmationIndex]);
+    const openedAffirmationIndex = openedNotificationAffirmation
+      ? affirmationFeed.findIndex(
+          affirmation => affirmation.id === openedNotificationAffirmation.id,
+        )
+      : -1;
+
+    setActiveAffirmationIndex(
+      openedAffirmationIndex >= 0
+        ? openedAffirmationIndex
+        : dailyAffirmationIndex,
+    );
+  }, [affirmationFeed, dailyAffirmationIndex, openedNotificationAffirmation]);
 
   const showPreviousAffirmation = useCallback(() => {
     if (totalAffirmations === 0) {
@@ -437,55 +465,6 @@ const AffirmationPanel: React.FC<Props> = ({
               },
             ]}
           >
-            {activeAffirmation.topicName !== null ? (
-              <Pressable
-                accessibilityLabel={t('affirmations.chooseTopic', {
-                  topic: activeAffirmation.topicName,
-                })}
-                accessibilityRole="button"
-                onPress={() => {
-                  setIsTopicModalVisible(true);
-                }}
-                style={({ pressed }) => [
-                  styles.topicChip,
-                  isMobileLayout && styles.topicChipMobile,
-                  pressed && { opacity: 0.72 },
-                ]}
-                testID="btn-open-topic-selection"
-              >
-                <Ionicons
-                  color={theme.colors.onImage}
-                  name="sparkles-outline"
-                  size={16}
-                />
-                {!isMobileLayout ? (
-                  <>
-                    <AppText
-                      style={styles.topicText}
-                      testID="text-current-topic"
-                      variant="label"
-                    >
-                      {activeAffirmation.topicName}
-                    </AppText>
-                    <Ionicons
-                      color={theme.colors.onImageMuted}
-                      name="chevron-down"
-                      size={15}
-                    />
-                  </>
-                ) : null}
-              </Pressable>
-            ) : null}
-
-            <AppText
-              style={[
-                styles.quoteMark,
-                isCompactLayout && styles.quoteMarkCompact,
-              ]}
-              tone="onImage"
-            >
-              “
-            </AppText>
             <AppText
               style={[
                 styles.affirmationText,
@@ -549,42 +528,13 @@ const AffirmationPanel: React.FC<Props> = ({
               />
             </View>
           </Animated.View>
-
-          <View style={styles.footer}>
-            <View style={styles.swipeHint} testID="hint-affirmation-swipe">
-              <Ionicons
-                color={theme.colors.onImageMuted}
-                name="swap-vertical-outline"
-                size={18}
-              />
-              {!isMobileLayout ? (
-                <AppText
-                  style={styles.swipeHintText}
-                  tone="onImage"
-                  variant="caption"
-                >
-                  {t('affirmations.swipe')}
-                </AppText>
-              ) : null}
-            </View>
-            <AppText
-              style={styles.position}
-              testID="text-affirmation-position"
-              tone="onImage"
-              variant="caption"
-            >
-              {safeActiveAffirmationIndex + 1} / {totalAffirmations}
-            </AppText>
-          </View>
         </View>
       </View>
       <TopicSelectionModal
         topics={topics}
-        visible={isTopicModalVisible}
+        visible={topicSelectionVisible}
         selectedTopicIds={normalizedSelectedTopicIds}
-        onClose={() => {
-          setIsTopicModalVisible(false);
-        }}
+        onClose={onCloseTopicSelection}
         onSelectTopics={onSelectTopics}
       />
       <BackgroundSelectionModal

@@ -1,7 +1,7 @@
 # Affirmations + Calendar + Settings Feature Spec
 
 ## Summary
-Keep the three-page swipe experience (Affirmations, Calendar, Settings), and upgrade Affirmations with configurable topics and background behavior.
+Keep the page navigation experience (Affirmations and Settings), disable horizontal page swiping, temporarily hide Calendar without deleting its implementation, and upgrade Affirmations with configurable topics and background behavior.
 
 ## Problem
 Users currently see a single generic affirmation stream. The product now needs a lightweight way to personalize affirmations by topic while keeping the immersive visual style.
@@ -13,7 +13,7 @@ Users currently see a single generic affirmation stream. The product now needs a
 
 ## Scope
 - In
-  - Existing swipe navigation between Affirmations, Calendar, and Settings.
+  - Bottom navigation between Affirmations and Settings, with horizontal page swiping disabled and Calendar retained behind a disabled visibility flag.
   - Topic-aware affirmations on the Affirmations screen.
   - Dedicated topic selection and background selection experiences.
   - Persistent liked-affirmation state for future "My Favorites" consumption.
@@ -27,7 +27,7 @@ Users currently see a single generic affirmation stream. The product now needs a
 
 ## Product requirements (high level)
 1. The default landing page remains Affirmations.
-2. Users can open topic selection quickly from Affirmations.
+2. Users can open topic selection from the bottom-left navigation control; Settings has a separate top-left close control.
 3. Selected topic set persists across sessions until the user changes it.
 4. Affirmations page displays only texts from selected topics.
 5. If no topics are selected, Affirmations page displays texts from all topics.
@@ -40,7 +40,7 @@ Users currently see a single generic affirmation stream. The product now needs a
 12. Selecting a background from gallery/search sets fixed mode and applies to all affirmation texts.
 13. Categories, affirmation text, and backgrounds are managed in the admin workspace and retrieved from Supabase.
 14. Liked affirmations persist across sessions and are reserved for a future My Favorites section.
-15. Calendar and Settings behavior from v1 remains unchanged by this update.
+15. Settings behavior from v1 remains unchanged; Calendar remains implemented but is not exposed in the pager or bottom navigation.
 
 ## Acceptance criteria
 - Requirement statement: Topic switching is discoverable and fast.

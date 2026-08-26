@@ -258,6 +258,33 @@ entities:
         constraints:
           minimum: 0
           maximum: 59
+      - name: random_enabled
+        type: boolean
+        required: true
+      - name: random_start_hour
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 23
+      - name: random_start_minute
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 59
+      - name: random_end_hour
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 23
+      - name: random_end_minute
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 59
       - name: timezone
         type: string
         required: TBD
@@ -267,6 +294,30 @@ entities:
       conflict_rule: database_wins_on_sign_in
     unresolved:
       - Time-zone and daylight-saving behavior is TBD.
+
+  - name: NotificationDeliverySettings
+    status: defined
+    storage: supabase_public.notification_delivery_settings
+    fields:
+      - name: id
+        type: string
+        required: true
+        unique: true
+        constraints:
+          allowed_values:
+            - global
+      - name: random_reminders_per_day
+        type: integer
+        required: true
+        constraints:
+          minimum: 1
+          maximum: 8
+      - name: updated_at
+        type: timestamp
+        required: true
+    ownership:
+      read: public
+      update: moodie_admin
 
   - name: UserSettings
     status: defined
@@ -296,6 +347,33 @@ entities:
           minimum: 0
           maximum: 23
       - name: reminder_minute
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 59
+      - name: random_reminder_enabled
+        type: boolean
+        required: true
+      - name: random_reminder_start_hour
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 23
+      - name: random_reminder_start_minute
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 59
+      - name: random_reminder_end_hour
+        type: integer
+        required: true
+        constraints:
+          minimum: 0
+          maximum: 23
+      - name: random_reminder_end_minute
         type: integer
         required: true
         constraints:

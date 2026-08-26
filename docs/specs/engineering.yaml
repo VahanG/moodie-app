@@ -8,6 +8,11 @@ document:
 
 architecture:
   application: React Native
+  native_extensions:
+    - platform: iOS
+      implementation: WidgetKit extension backed by an App Group UserDefaults payload.
+    - platform: Android
+      implementation: AppWidget provider backed by application-private SharedPreferences.
   module_layout:
     - path: src/components
       responsibility: Reusable presentation components and themed UI primitives
@@ -26,6 +31,7 @@ architecture:
     - Keep one component per file for non-trivial components.
     - Keep styles in sibling *.styles.ts files.
     - Export shared types from src/types and prefer small composable functions.
+    - Native affirmation surfaces consume only the topic-filtered widget payload produced by the application feature layer.
 
 documentation_workflow:
   canonical_path_pattern: docs/specs/**/*.yaml

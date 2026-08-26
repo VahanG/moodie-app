@@ -10,26 +10,35 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(async () => undefined),
 }));
 
-test('renders accessible tabs and selects a requested page', async () => {
+test('hides Calendar and selects the visible Settings page', async () => {
   const onSelectPage = jest.fn();
+  const onOpenTopicSelection = jest.fn();
   let renderer: ReactTestRenderer.ReactTestRenderer;
 
   await ReactTestRenderer.act(async () => {
     renderer = ReactTestRenderer.create(
       <ThemeProvider>
-        <HomeFooter activePage={1} onSelectPage={onSelectPage} />
+        <HomeFooter
+          activePage={0}
+          onOpenTopicSelection={onOpenTopicSelection}
+          onSelectPage={onSelectPage}
+        />
       </ThemeProvider>,
     );
   });
 
   expect(
-    renderer!.root.findByProps({ testID: 'btn-nav-calendar' }).props
-      .accessibilityState,
-  ).toMatchObject({ selected: true });
+    renderer!.root.findAllByProps({ testID: 'btn-nav-calendar' }),
+  ).toHaveLength(0);
 
   renderer!.root.findByProps({ testID: 'btn-nav-settings' }).props.onPress();
 
-  expect(onSelectPage).toHaveBeenCalledWith(2);
+  expect(onSelectPage).toHaveBeenCalledWith(1);
+
+  renderer!.root.findByProps({ testID: 'btn-nav-affirmations' }).props.onPress();
+
+  expect(onOpenTopicSelection).toHaveBeenCalledTimes(1);
+  expect(onSelectPage).not.toHaveBeenCalledWith(0);
 });
 
 test('renders mobile image navigation as surface-free icons', async () => {
@@ -38,7 +47,12 @@ test('renders mobile image navigation as surface-free icons', async () => {
   await ReactTestRenderer.act(async () => {
     renderer = ReactTestRenderer.create(
       <ThemeProvider>
-        <HomeFooter activePage={0} onSelectPage={jest.fn()} variant="onImage" />
+        <HomeFooter
+          activePage={0}
+          onOpenTopicSelection={jest.fn()}
+          onSelectPage={jest.fn()}
+          variant="onImage"
+        />
       </ThemeProvider>,
     );
   });

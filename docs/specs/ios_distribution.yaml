@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: '1.0.0'
 
 document:
   id: IOS-DISTRIBUTION
@@ -7,8 +7,8 @@ document:
   source_of_truth: true
 
 release:
-  version: "1.0.0"
-  initial_build_number: "1"
+  version: '1.0.0'
+  initial_build_number: '1'
   display_name: Moodie
   bundle_identifier: com.moodie.am
   bundle_identifier_freeze:
@@ -17,7 +17,7 @@ release:
   platforms:
     - iPhone
     - iPad
-  deployment_target: "16.4"
+  deployment_target: '16.4'
   distribution_path:
     - EAS production build
     - App Store Connect upload
@@ -28,7 +28,7 @@ release:
 build_contract:
   toolchain:
     minimum_sdk: iOS 26
-    local_xcode_verified: "26.6"
+    local_xcode_verified: '26.6'
   app_icon:
     master_path: assets/icon.png
     size: 1024x1024
@@ -44,6 +44,13 @@ build_contract:
   encryption:
     uses_non_exempt_encryption: false
     basis: The current app only relies on operating-system and third-party standard transport encryption.
+  widget_extension:
+    bundle_identifier: com.moodie.am.widget
+    app_group: group.com.moodie.am.shared
+    families:
+      - systemSmall
+      - systemMedium
+    rule: The app and widget extension must use provisioning profiles that include the shared App Group capability.
 
 app_review_gates:
   required_before_testflight:
@@ -51,6 +58,7 @@ app_review_gates:
     - The bundle identifier is registered to the selected Apple Developer team.
     - An Apple Distribution certificate and App Store provisioning profile are available to EAS.
     - A production archive builds successfully with the iOS 26 SDK or later.
+    - The App Group and widget extension App ID are registered and included in distribution provisioning profiles.
   required_before_review:
     - App Store Connect app record exists and matches the bundle identifier.
     - App name, subtitle, description, keywords, category, support URL, and privacy policy URL are complete.
@@ -61,8 +69,8 @@ app_review_gates:
     - Production Supabase authentication, OAuth redirects, and email delivery are verified.
   authentication_review:
     google_login:
-      current_state: implemented
-      requirement: Add an equivalent privacy-preserving login option such as Sign in with Apple, remove Google login from iOS, or document a valid App Review exception.
+      current_state: Google OAuth and native Sign in with Apple are implemented.
+      requirement: Verify the Apple App ID capability and Supabase Apple provider configuration before review.
     account_creation:
       current_state: Must be verified in Supabase before review.
       requirement: If any current flow creates an account, add in-app account deletion before submission.
@@ -103,5 +111,5 @@ unresolved_inputs:
     value: Apple Developer team and App Store Connect access
     owner: Infra and Release
   - id: IOS-RELEASE-TBD-005
-    value: Authentication compliance decision for Google login and account deletion
+    value: Account creation behavior and any resulting in-app account deletion requirement
     owner: Product/Experience

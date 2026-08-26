@@ -1,0 +1,13 @@
+date: '2026-08-26'
+title: Random reminder delivery controls
+type: feature
+
+changes:
+  - Added an alternative random-reminder mode with a user-selected local time range.
+  - Added an admin-controlled daily random-notification count constrained to 1–8.
+  - Enforced at least 60 minutes between randomized notifications.
+  - Added offline fallback from the last valid admin configuration to a default of 3 reminders per day.
+
+native_impact:
+  required: false
+  rationale: Uses the existing local-notification integration and permissions.

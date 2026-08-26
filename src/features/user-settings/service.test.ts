@@ -38,7 +38,16 @@ function makeSettings(themePreference: 'system' | 'light' | 'dark') {
   return {
     languageCode: 'en',
     themePreference,
-    reminderPreferences: { enabled: false, hour: 9, minute: 0 },
+    reminderPreferences: {
+      enabled: false,
+      hour: 9,
+      minute: 0,
+      randomEnabled: false,
+      randomStartHour: 9,
+      randomStartMinute: 0,
+      randomEndHour: 17,
+      randomEndMinute: 0,
+    },
     selectedTopicIds: ['growth'],
     backgroundPreference: { mode: 'free' as const, backgroundId: null },
     likedAffirmationKeys: ['affirmation-1'],

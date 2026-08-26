@@ -92,6 +92,11 @@ permission_matrix:
       - view
       - update
     basis: Current reminder configuration is device-local and no authentication boundary is documented.
+  - actor: anonymous_device_session
+    resource: notification_delivery_settings
+    permissions:
+      - view
+    basis: The global random-reminder count is intentionally public and protected by read-only RLS.
   - actor: authenticated_moodie_user
     resource: published_affirmation_content
     permissions:
@@ -118,6 +123,11 @@ permission_matrix:
       - view
       - update
     basis: Preferences are database-backed for the current user with a device cache.
+  - actor: authenticated_moodie_user
+    resource: notification_delivery_settings
+    permissions:
+      - view
+    basis: The global random-reminder count is readable but cannot be changed by supporter accounts.
   - actor: authenticated_moodie_user
     resource: own_auth_session
     permissions:
@@ -153,6 +163,12 @@ permission_matrix:
       - update
       - delete
     basis: Gallery metadata and private Storage object policies evaluate public.is_admin() for every operation.
+  - actor: moodie_admin
+    resource: notification_delivery_settings
+    permissions:
+      - view
+      - update
+    basis: Delivery-setting RLS permits updates only when public.is_admin() succeeds.
 
 undefined_permissions:
   - resource: product_catalog_management
@@ -170,7 +186,7 @@ undefined_permissions:
 security_requirements:
   - id: ACCESS-001
     priority: MUST
-    statement: Authentication must use the approved Supabase email/password, email OTP, or Google OAuth flows and remain optional until a broader identity and authorization model is approved.
+    statement: Authentication must use the approved Supabase email/password, email OTP, Google OAuth, or native iOS Apple identity-token flows and remain optional until a broader identity and authorization model is approved.
   - id: ACCESS-002
     priority: MUST
     statement: Store, CMS, and API contracts must document authentication and security constraints before implementation.

@@ -80,16 +80,18 @@ components:
   - id: COMP-001
     name: HomePager
     kind: screen_container
-    purpose: Host horizontal navigation between Affirmations, Calendar, and Settings.
+    purpose: Host horizontal navigation between Affirmations and Settings while retaining Calendar behind a visibility flag.
     behavior:
       default_item: affirmations
       item_order:
         - affirmations
-        - calendar
         - settings
+      dormant_items:
+        - calendar
       selection:
-        - Swipe completion updates the selected item.
-        - Tapping an item animates the pager to its page.
+        - Horizontal touch scrolling is disabled.
+        - Tapping Settings animates the pager to Settings.
+        - Tapping the bottom-left control returns to Affirmations and opens Topic Selection.
         - Tapping the selected item keeps the current page stable.
     test_ids:
       - test_id: screen-home
@@ -97,13 +99,13 @@ components:
         interactive: false
       - test_id: pager-home
         element: horizontal pager
-        interactive: true
+        interactive: false
       - test_id: btn-nav-affirmations
         element: Affirmations navigation control
         interactive: true
       - test_id: btn-nav-calendar
-        element: Calendar navigation control
-        interactive: true
+        element: Dormant Calendar navigation control, rendered only when Calendar visibility is enabled
+        interactive: false
       - test_id: btn-nav-settings
         element: Settings navigation control
         interactive: true
@@ -119,7 +121,6 @@ components:
       - current-topic selector
       - centered affirmation statement
       - like and share action dock
-      - swipe instruction and feed-position footer
     responsive_behavior:
       - Layout uses flexible vertical regions rather than hard-coded text offsets.
       - The media card preserves a compact themed outer margin.
@@ -142,22 +143,22 @@ components:
         element: native share control
         interactive: true
       - test_id: btn-open-topic-selection
-        element: topic selection entry
-        interactive: true
+        element: removed in-card topic selection entry
+        interactive: false
       - test_id: btn-open-background-selection
         element: background selection entry
         interactive: true
       - test_id: text-current-topic
-        element: current affirmation topic label
+        element: removed current affirmation topic label
         interactive: false
       - test_id: text-today-heading
         element: Today card heading
         interactive: false
       - test_id: text-affirmation-position
-        element: current eligible affirmation position
+        element: removed eligible affirmation position
         interactive: false
       - test_id: hint-affirmation-swipe
-        element: swipe instruction
+        element: removed swipe-arrow instruction
         interactive: false
 
   - id: COMP-003
@@ -258,6 +259,7 @@ components:
     kind: screen_panel
     purpose: Organize appearance, reminder, and account controls into a responsive settings surface.
     anatomy:
+      - Top-left close control
       - Settings heading and supporting description
       - Appearance card
       - Notifications card
@@ -270,6 +272,9 @@ components:
       - test_id: screen-settings
         element: panel root
         interactive: false
+      - test_id: btn-close-settings
+        element: close Settings and return to Affirmations
+        interactive: true
       - test_id: section-notifications
         element: notification settings card
         interactive: false
@@ -284,6 +289,24 @@ components:
         interactive: true
       - test_id: btn-save-reminder-time
         element: reminder save control
+        interactive: true
+      - test_id: toggle-random-reminders
+        element: random reminder enable control
+        interactive: true
+      - test_id: input-random-reminder-start-hour
+        element: random reminder range start hour
+        interactive: true
+      - test_id: input-random-reminder-start-minute
+        element: random reminder range start minute
+        interactive: true
+      - test_id: input-random-reminder-end-hour
+        element: random reminder range end hour
+        interactive: true
+      - test_id: input-random-reminder-end-minute
+        element: random reminder range end minute
+        interactive: true
+      - test_id: btn-save-random-reminder-range
+        element: random reminder range save control
         interactive: true
       - test_id: text-reminder-status
         element: reminder status or error message
@@ -339,11 +362,11 @@ components:
         element: downward affirmation swipe adapter control
         interactive: true
       - test_id: gesture-home-next
-        element: next-page horizontal swipe adapter control
-        interactive: true
+        element: disabled next-page horizontal swipe adapter control
+        interactive: false
       - test_id: gesture-home-previous
-        element: previous-page horizontal swipe adapter control
-        interactive: true
+        element: disabled previous-page horizontal swipe adapter control
+        interactive: false
       - test_id: animation-affirmation
         element: observable affirmation animation state
         interactive: false
@@ -363,7 +386,7 @@ components:
   - id: COMP-009
     name: AccountSection
     kind: inline_settings_section
-    purpose: Let a user manage a Supabase email/password session without introducing another page, route, or app root.
+    purpose: Let a user manage an optional Supabase session without introducing another page, route, or app root.
     parent: COMP-006
     test_ids:
       - test_id: section-account
@@ -395,6 +418,9 @@ components:
         interactive: true
       - test_id: btn-sign-in-google
         element: Google OAuth control
+        interactive: true
+      - test_id: btn-sign-in-apple
+        element: Native iOS Sign in with Apple control
         interactive: true
       - test_id: btn-sign-out
         element: sign-out control

@@ -1,0 +1,13 @@
+date: '2026-08-26'
+title: Topic-aware affirmation widgets
+type: feature
+
+changes:
+  - Added native iOS and Android home-screen affirmation widgets.
+  - Show the latest delivered reminder affirmation while reminders are enabled.
+  - Rotate an eligible affirmation every three hours while reminders are disabled.
+  - Enforced the active topic selection across the in-app feed, notifications, notification taps, and widgets.
+
+native_impact:
+  required: true
+  rationale: Adds an iOS WidgetKit extension, an App Group capability, and an Android AppWidget provider.

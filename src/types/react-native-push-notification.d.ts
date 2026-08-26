@@ -6,7 +6,11 @@ declare module 'react-native-push-notification' {
   };
 
   export type PushNotificationObject = {
+    data?: unknown;
     finish?: (result: string) => void;
+    message?: string;
+    userInfo?: unknown;
+    userInteraction?: boolean;
   };
 
   export type PushNotificationConfigureOptions = {
@@ -30,6 +34,7 @@ declare module 'react-native-push-notification' {
     date: Date;
     repeatType?: 'day';
     allowWhileIdle?: boolean;
+    userInfo?: Record<string, string>;
   };
 
   export type PushNotificationModule = {

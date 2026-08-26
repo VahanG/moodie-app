@@ -33,7 +33,24 @@ describe('reminder preference storage', () => {
   test.each([
     { enabled: true, hour: 0, minute: 0 },
     { enabled: false, hour: 23, minute: 59 },
-  ])('accepts valid boundary time $hour:$minute', async preferences => {
+  ])('migrates a legacy boundary time $hour:$minute', async preferences => {
+    mockGetItem.mockResolvedValue(JSON.stringify(preferences));
+
+    await expect(loadReminderPreferences()).resolves.toEqual({
+      ...DEFAULT_REMINDER_PREFERENCES,
+      ...preferences,
+    });
+  });
+
+  test('accepts a complete valid random reminder preference', async () => {
+    const preferences = {
+      ...DEFAULT_REMINDER_PREFERENCES,
+      randomEnabled: true,
+      randomStartHour: 0,
+      randomStartMinute: 0,
+      randomEndHour: 23,
+      randomEndMinute: 59,
+    };
     mockGetItem.mockResolvedValue(JSON.stringify(preferences));
 
     await expect(loadReminderPreferences()).resolves.toEqual(preferences);
@@ -47,6 +64,21 @@ describe('reminder preference storage', () => {
     { enabled: true, hour: 24, minute: 0 },
     { enabled: true, hour: 9, minute: 60 },
     { enabled: true, hour: 9.5, minute: 0 },
+    {
+      ...DEFAULT_REMINDER_PREFERENCES,
+      enabled: true,
+      randomEnabled: true,
+    },
+    {
+      ...DEFAULT_REMINDER_PREFERENCES,
+      randomEndHour: 8,
+    },
+    {
+      enabled: false,
+      hour: 9,
+      minute: 0,
+      randomEnabled: false,
+    },
   ])('rejects invalid stored preferences: %p', async preferences => {
     mockGetItem.mockResolvedValue(JSON.stringify(preferences));
 
@@ -56,7 +88,12 @@ describe('reminder preference storage', () => {
   });
 
   test('persists the complete reminder preference', async () => {
-    const preferences = { enabled: true, hour: 8, minute: 30 };
+    const preferences = {
+      ...DEFAULT_REMINDER_PREFERENCES,
+      enabled: true,
+      hour: 8,
+      minute: 30,
+    };
 
     await saveReminderPreferences(preferences);
 

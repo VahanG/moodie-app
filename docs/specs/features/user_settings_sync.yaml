@@ -14,6 +14,11 @@ state_scope:
     - reminder_enabled
     - reminder_hour
     - reminder_minute
+    - random_reminder_enabled
+    - random_reminder_start_hour
+    - random_reminder_start_minute
+    - random_reminder_end_hour
+    - random_reminder_end_minute
     - selected_topic_ids
     - background_mode
     - background_id

@@ -1,0 +1,71 @@
+schema_version: '1.0.0'
+
+feature:
+  id: FEATURE-AFFIRMATION-WIDGET
+  name: Affirmation Home-Screen Widget
+  lifecycle: current
+  purpose: Keep a topic-aware Moodie affirmation visible from the device home screen.
+  entry_route: moodie://affirmations
+  dependencies:
+    - FEATURE-AFFIRMATIONS
+    - FEATURE-TOPIC-SELECTION
+    - FEATURE-REMINDERS
+
+requirements:
+  - id: WIDGET-001
+    title: Native Widget Availability
+    description: A user can add a Moodie affirmation widget through the iOS or Android home-screen widget gallery.
+    priority: MUST
+    acceptance_criteria:
+      - The iOS application includes a WidgetKit extension supporting system-small and system-medium families.
+      - The Android application includes a resizable AppWidget provider.
+      - Tapping the widget opens Moodie's Affirmations experience.
+
+  - id: WIDGET-002
+    title: Notification-Aware Widget Text
+    description: When either reminder mode is enabled, the widget reflects the latest delivered reminder affirmation.
+    priority: MUST
+    acceptance_criteria:
+      - The widget resolves the latest scheduled reminder whose delivery time is not in the future.
+      - Before the first enabled reminder is delivered, the widget shows an eligible affirmation from the current payload.
+      - Disabling reminders immediately switches the widget to three-hour rotation behavior.
+      - Widget refreshes are requested when reminder schedules or preferences change.
+
+  - id: WIDGET-003
+    title: Three-Hour Affirmation Rotation
+    description: When reminders are disabled, the widget changes its affirmation on three-hour boundaries.
+    priority: MUST
+    acceptance_criteria:
+      - The rotation uses deterministic three-hour buckets so all widget instances agree.
+      - The widget requests its next refresh at the following three-hour boundary.
+      - Rotation never selects content outside the active-topic eligible affirmation set.
+
+  - id: WIDGET-004
+    title: Topic Eligibility Invariant
+    description: Widget state contains only affirmations allowed by the user's active topic selection.
+    priority: MUST
+    acceptance_criteria:
+      - Selecting one or more topics limits widget candidates and reminder entries to those topics.
+      - Selecting zero topics makes affirmations from all published topics eligible.
+      - Topic changes remove stale widget and scheduled-reminder entries that are no longer eligible.
+      - If no eligible affirmation is available, the widget shows a refresh prompt rather than an off-topic affirmation.
+
+  - id: WIDGET-005
+    title: Offline Native Rendering
+    description: Native widgets render from a validated payload shared by the app without requiring network access.
+    priority: MUST
+    acceptance_criteria:
+      - The React Native feature layer validates and persists a versioned widget payload.
+      - iOS stores the payload in the shared App Group and Android stores it in application-private preferences.
+      - Native widget code treats malformed or unsupported payloads as unavailable content.
+      - Content, language, topic, reminder preference, and reminder schedule changes publish a fresh payload.
+
+automated_verification:
+  runner: Jest and native platform builds
+  suites:
+    - path: src/features/widgets/service.test.ts
+      covers:
+        - active-topic payload filtering
+        - latest delivered reminder resolution
+        - three-hour rotation
+        - malformed persisted payload fallback

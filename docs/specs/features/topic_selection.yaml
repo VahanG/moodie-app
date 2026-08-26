@@ -18,10 +18,12 @@ test_fixtures:
 requirements:
   - id: TOP-001
     title: Fast Near-Full-Screen Entry
-    description: Topic selection is directly accessible from Affirmations and optimized for browsing.
+    description: Topic selection is directly accessible from the bottom-left navigation control and optimized for browsing.
     priority: MUST
     acceptance_criteria:
-      - Topic selection opens from Affirmations in one tap.
+      - Tapping the bottom-left navigation control opens Topic Selection in one tap.
+      - When Settings is visible, tapping the bottom-left navigation control returns to Affirmations and opens Topic Selection.
+      - The affirmation card does not expose a second Topic Selection control.
       - The selection surface targets at least approximately 90 percent of screen height.
       - Closing the surface returns to Affirmations.
       - Updated topic choices affect eligible text immediately on return.
@@ -31,7 +33,7 @@ requirements:
         - action: goto
           url: moodie://affirmations
         - action: click
-          selector: "[data-testid='btn-open-topic-selection']"
+          selector: "[data-testid='btn-nav-affirmations']"
         - action: expect_visible
           selector: "[data-testid='modal-topic-selection'][data-min-height-percent='90']"
         - action: click
@@ -107,4 +109,3 @@ requirements:
           url: moodie://affirmations/topics?fixtures=topic-a,topic-b&relaunch=true
         - action: expect_visible
           selector: "[data-testid='item-topic-topic-b'][data-state='selected']"
-

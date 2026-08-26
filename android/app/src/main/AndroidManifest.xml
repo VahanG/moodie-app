@@ -20,6 +20,13 @@
         <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
       </intent-filter>
     </receiver>
+    <receiver android:name=".MoodieWidgetProvider" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="com.moodie_app.widget.REFRESH"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/moodie_affirmation_widget_info"/>
+    </receiver>
     <service android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService" android:exported="false">
       <intent-filter>
         <action android:name="com.google.firebase.MESSAGING_EVENT"/>

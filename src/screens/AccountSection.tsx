@@ -6,6 +6,7 @@ import {
   isAuthConfigured,
   loadAuthUser,
   sendEmailOtp,
+  signInWithApple,
   signInWithEmailAndPassword,
   signInWithGoogle,
   signOut,
@@ -23,6 +24,7 @@ import {
 import { useTheme } from '../theme';
 import { useSettingsPanelStyles } from './SettingsPanel.styles';
 import { useLocalization } from '../features/localization';
+import { AppleSignInButton } from '../components/auth/AppleSignInButton';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
@@ -217,6 +219,26 @@ const AccountSection: React.FC = () => {
       setStatusMessage(
         getErrorMessage(error, t('auth.googleError')),
       );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [t]);
+
+  const handleAppleSignIn = useCallback(async () => {
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    try {
+      const nextUser = await signInWithApple();
+
+      if (!nextUser) {
+        setStatusMessage(t('auth.appleCanceled'));
+        return;
+      }
+
+      setUser(nextUser);
+    } catch (error) {
+      setStatusMessage(getErrorMessage(error, t('auth.appleError')));
     } finally {
       setIsSubmitting(false);
     }
@@ -419,6 +441,10 @@ const AccountSection: React.FC = () => {
             </AppText>
             <View style={styles.authDividerLine} />
           </View>
+          <AppleSignInButton
+            disabled={isSubmitting}
+            onPress={handleAppleSignIn}
+          />
           <AppButton
             label={
               isSubmitting ? t('account.openingGoogle') : t('account.google')

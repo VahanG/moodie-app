@@ -17,6 +17,8 @@ module.exports = {
   },
   moduleNameMapper: {
     '^expo/virtual/env$': '<rootDir>/test/mocks/expoVirtualEnv.js',
+    '^expo-apple-authentication$':
+      '<rootDir>/test/mocks/expoAppleAuthentication.js',
     '^expo-auth-session$': '<rootDir>/test/mocks/expoAuthSession.js',
     '^expo-web-browser$': '<rootDir>/test/mocks/expoWebBrowser.js',
     '^@expo/vector-icons$': '<rootDir>/test/mocks/expoVectorIcons.js',

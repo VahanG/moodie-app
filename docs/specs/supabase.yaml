@@ -89,7 +89,7 @@ security:
     statement: Grant only operations required by explicit anon or authenticated policies.
   - id: SUP-SEC-004
     priority: MUST
-    statement: Limit the current client auth surface to the optional email/password session behavior defined in docs/specs/features/authentication.yaml.
+    statement: Limit the current client auth surface to the optional session behavior defined in docs/specs/features/authentication.yaml.
   - id: SUP-SEC-005
     priority: MUST
     statement: Store admin memberships in a private schema that is not exposed by the Data API.
@@ -147,6 +147,29 @@ database_workflow:
     initial_row_rule: seed_from_device_when_database_row_is_absent
     offline_write_rule: retain_user_scoped_pending_snapshot_and_retry
     language_preference: language_code
+    reminder_preferences:
+      fixed_columns:
+        - reminder_enabled
+        - reminder_hour
+        - reminder_minute
+      random_columns:
+        - random_reminder_enabled
+        - random_reminder_start_hour
+        - random_reminder_start_minute
+        - random_reminder_end_hour
+        - random_reminder_end_minute
+      enabled_mode_rule: fixed_and_random_are_mutually_exclusive
+  notification_delivery_settings:
+    table: public.notification_delivery_settings
+    row: global
+    supporter_access: read_only_for_anon_and_authenticated
+    admin_access: update_only
+    admin_authorization: public.is_admin()
+    random_reminders_per_day:
+      default: 3
+      minimum: 1
+      maximum: 8
+    client_offline_fallback: last_valid_device_cache_then_default
 
 open_decisions:
   - id: SUP-TBD-001

@@ -4,7 +4,7 @@
 Let users choose zero, one, or more affirmation topics that power the Affirmations screen.
 
 ## Entry and exit
-- Entry should be easy and quick from the Affirmations screen.
+- The bottom-left navigation control opens Topic Selection, returning to Affirmations first when necessary.
 - Selection surface should take almost the full screen for easier browsing (target at least ~90% of screen height).
 - After selection, user can return to Affirmations and immediately see texts from selected topics.
 

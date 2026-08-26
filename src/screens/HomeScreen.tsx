@@ -5,23 +5,45 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ScrollView, StatusBar, useWindowDimensions, View } from 'react-native';
+import {
+  AppState,
+  ScrollView,
+  StatusBar,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import {
   cancelDailyReminder,
+  cancelRandomReminders,
   configureNotificationChannel,
+  getEligibleReminderAffirmations,
   requestNotificationPermission,
   scheduleDailyReminder,
+  scheduleRandomReminders,
+  selectRandomReminderAffirmation,
 } from '../features/notifications/service';
+import {
+  type OpenedNotificationAffirmation,
+  subscribeToOpenedNotificationAffirmation,
+} from '../features/notifications/openedAffirmation';
 import {
   DEFAULT_REMINDER_PREFERENCES,
   loadReminderPreferences,
   saveReminderPreferences,
 } from '../features/notifications/storage';
-import { ReminderPreferences } from '../features/notifications/types';
+import {
+  ReminderPreferences,
+  ScheduledReminder,
+} from '../features/notifications/types';
+import {
+  DEFAULT_RANDOM_REMINDER_CONFIG,
+  loadRandomReminderConfig,
+} from '../features/notifications/config';
+import { isValidRandomReminderRange } from '../features/notifications/validation';
 import {
   buildAffirmationLikeKey,
   DEFAULT_AFFIRMATION_BACKGROUND_PREFERENCE,
@@ -45,7 +67,12 @@ import SettingsPanel from './SettingsPanel';
 import AffirmationPanel from './AffirmationPanel';
 import CalendarPanel from './CalendarPanel';
 import HomeFooter from './HomeFooter';
-import { getHomePageIndex, HOME_PAGE_COUNT } from './homePager';
+import {
+  CALENDAR_PAGE_VISIBLE,
+  getHomePageIndex,
+  HOME_PAGE_COUNT,
+  HOME_PAGER_SWIPE_ENABLED,
+} from './homePager';
 import {
   subscribeToUserSettings,
   syncCurrentDeviceSettingsToDatabase,
@@ -57,6 +84,7 @@ import {
   type AffirmationContentStatus,
 } from '../features/affirmations/localizedState';
 import { MOBILE_LAYOUT_BREAKPOINT, useTheme } from '../theme';
+import { publishAffirmationWidgetState } from '../features/widgets/service';
 
 function formatTime(hour: number, minute: number): string {
   return `${hour.toString().padStart(2, '0')}:${minute
@@ -89,10 +117,32 @@ const HomeScreen: React.FC = () => {
   const [minuteInput, setMinuteInput] = useState(
     DEFAULT_REMINDER_PREFERENCES.minute.toString(),
   );
+  const [randomStartHourInput, setRandomStartHourInput] = useState(
+    DEFAULT_REMINDER_PREFERENCES.randomStartHour.toString(),
+  );
+  const [randomStartMinuteInput, setRandomStartMinuteInput] = useState(
+    DEFAULT_REMINDER_PREFERENCES.randomStartMinute.toString(),
+  );
+  const [randomEndHourInput, setRandomEndHourInput] = useState(
+    DEFAULT_REMINDER_PREFERENCES.randomEndHour.toString(),
+  );
+  const [randomEndMinuteInput, setRandomEndMinuteInput] = useState(
+    DEFAULT_REMINDER_PREFERENCES.randomEndMinute.toString(),
+  );
+  const [randomRemindersPerDay, setRandomRemindersPerDay] = useState(
+    DEFAULT_RANDOM_REMINDER_CONFIG.notificationsPerDay,
+  );
+  const [randomScheduleRevision, setRandomScheduleRevision] = useState(0);
+  const [scheduledWidgetReminders, setScheduledWidgetReminders] = useState<
+    ScheduledReminder[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activePage, setActivePage] = useState(0);
+  const [isTopicSelectionVisible, setIsTopicSelectionVisible] = useState(false);
+  const [openedNotificationAffirmation, setOpenedNotificationAffirmation] =
+    useState<OpenedNotificationAffirmation | null>(null);
   const statusBarStyle =
     (isMobileLayout && activePage === 0) || theme.isDark
       ? 'light-content'
@@ -117,14 +167,6 @@ const HomeScreen: React.FC = () => {
   const [contentStatusLanguageCode, setContentStatusLanguageCode] = useState<
     string | null
   >(null);
-  const reminderNotificationContent = useMemo(
-    () => ({
-      title: t('notifications.reminderTitle'),
-      message: t('notifications.reminderMessage'),
-    }),
-    [t],
-  );
-
   const refreshAffirmationContent = useCallback(async () => {
     const requestedLanguageCode = languageCode;
     const requestId = contentRequestIdRef.current + 1;
@@ -158,6 +200,63 @@ const HomeScreen: React.FC = () => {
     contentStatusLanguageCode,
     languageCode,
   );
+  const eligibleReminderAffirmations = useMemo(() => {
+    return getEligibleReminderAffirmations(
+      visibleAffirmationContent.topics,
+      selectedTopicIds,
+    );
+  }, [selectedTopicIds, visibleAffirmationContent.topics]);
+  const scheduleConfiguredReminder = useCallback(
+    (reminderPreferences: ReminderPreferences): ScheduledReminder[] => {
+      const reminderAffirmation = selectRandomReminderAffirmation(
+        eligibleReminderAffirmations,
+      );
+      if (!reminderAffirmation) {
+        cancelDailyReminder();
+        return [];
+      }
+
+      const scheduledReminder = scheduleDailyReminder(
+        reminderPreferences.hour,
+        reminderPreferences.minute,
+        {
+          title: t('notifications.reminderTitle'),
+          message: reminderAffirmation.text,
+          affirmationId: reminderAffirmation.id,
+        },
+      );
+      return scheduledReminder ? [scheduledReminder] : [];
+    },
+    [eligibleReminderAffirmations, t],
+  );
+  const scheduleConfiguredRandomReminders = useCallback(
+    (
+      reminderPreferences: ReminderPreferences,
+      notificationsPerDay: number,
+    ): ScheduledReminder[] => {
+      const fallbackAffirmation = eligibleReminderAffirmations[0];
+      if (!fallbackAffirmation) {
+        cancelRandomReminders();
+        return [];
+      }
+
+      return scheduleRandomReminders(
+        reminderPreferences,
+        notificationsPerDay,
+        () => {
+          const reminderAffirmation =
+            selectRandomReminderAffirmation(eligibleReminderAffirmations) ??
+            fallbackAffirmation;
+          return {
+            title: t('notifications.randomReminderTitle'),
+            message: reminderAffirmation.text,
+            affirmationId: reminderAffirmation.id,
+          };
+        },
+      );
+    },
+    [eligibleReminderAffirmations, t],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -170,11 +269,13 @@ const HomeScreen: React.FC = () => {
           storedTopicIds,
           storedBackgroundPreference,
           storedLikedAffirmationKeys,
+          randomReminderConfig,
         ] = await Promise.all([
           loadReminderPreferences(),
           loadSelectedAffirmationTopics(),
           loadAffirmationBackgroundPreference(),
           loadLikedAffirmationKeys(),
+          loadRandomReminderConfig(),
         ]);
 
         if (!isMounted) {
@@ -185,16 +286,15 @@ const HomeScreen: React.FC = () => {
         setSelectedTopicIds(storedTopicIds);
         setBackgroundPreference(storedBackgroundPreference);
         setLikedAffirmationKeys(storedLikedAffirmationKeys);
+        setRandomRemindersPerDay(randomReminderConfig.notificationsPerDay);
         setHourInput(storedPreferences.hour.toString());
         setMinuteInput(storedPreferences.minute.toString());
-
-        if (storedPreferences.enabled) {
-          scheduleDailyReminder(
-            storedPreferences.hour,
-            storedPreferences.minute,
-            reminderNotificationContent,
-          );
-        }
+        setRandomStartHourInput(storedPreferences.randomStartHour.toString());
+        setRandomStartMinuteInput(
+          storedPreferences.randomStartMinute.toString(),
+        );
+        setRandomEndHourInput(storedPreferences.randomEndHour.toString());
+        setRandomEndMinuteInput(storedPreferences.randomEndMinute.toString());
       } catch {
         if (isMounted) {
           setStatusMessage(t('status.settingsLoadError'));
@@ -212,7 +312,7 @@ const HomeScreen: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [refreshAffirmationContent, reminderNotificationContent, t]);
+  }, [refreshAffirmationContent, t]);
 
   useEffect(
     () =>
@@ -223,20 +323,110 @@ const HomeScreen: React.FC = () => {
         setLikedAffirmationKeys(settings.likedAffirmationKeys);
         setHourInput(settings.reminderPreferences.hour.toString());
         setMinuteInput(settings.reminderPreferences.minute.toString());
+        setRandomStartHourInput(
+          settings.reminderPreferences.randomStartHour.toString(),
+        );
+        setRandomStartMinuteInput(
+          settings.reminderPreferences.randomStartMinute.toString(),
+        );
+        setRandomEndHourInput(
+          settings.reminderPreferences.randomEndHour.toString(),
+        );
+        setRandomEndMinuteInput(
+          settings.reminderPreferences.randomEndMinute.toString(),
+        );
         setIsLoading(false);
-
-        if (settings.reminderPreferences.enabled) {
-          scheduleDailyReminder(
-            settings.reminderPreferences.hour,
-            settings.reminderPreferences.minute,
-            reminderNotificationContent,
-          );
-        } else {
-          cancelDailyReminder();
-        }
       }),
-    [reminderNotificationContent],
+    [],
   );
+
+  useEffect(() => {
+    let isMounted = true;
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState !== 'active') return;
+
+      loadRandomReminderConfig()
+        .then(config => {
+          if (!isMounted) return;
+          setRandomRemindersPerDay(config.notificationsPerDay);
+          setRandomScheduleRevision(current => current + 1);
+        })
+        .catch(() => undefined);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (eligibleReminderAffirmations.length === 0) {
+      cancelDailyReminder();
+      cancelRandomReminders();
+      setScheduledWidgetReminders([]);
+      return;
+    }
+
+    let nextScheduledWidgetReminders: ScheduledReminder[] = [];
+    if (preferences.enabled) {
+      nextScheduledWidgetReminders = scheduleConfiguredReminder(preferences);
+    } else {
+      cancelDailyReminder();
+    }
+
+    if (!preferences.randomEnabled) {
+      cancelRandomReminders();
+      setScheduledWidgetReminders(nextScheduledWidgetReminders);
+      return;
+    }
+
+    if (!isValidRandomReminderRange(preferences, randomRemindersPerDay)) {
+      cancelRandomReminders();
+      setStatusMessage(
+        t('status.invalidRandomRange', { count: randomRemindersPerDay }),
+      );
+      setScheduledWidgetReminders(nextScheduledWidgetReminders);
+      return;
+    }
+
+    nextScheduledWidgetReminders = scheduleConfiguredRandomReminders(
+      preferences,
+      randomRemindersPerDay,
+    );
+    setScheduledWidgetReminders(nextScheduledWidgetReminders);
+  }, [
+    eligibleReminderAffirmations,
+    isLoading,
+    preferences,
+    randomRemindersPerDay,
+    randomScheduleRevision,
+    scheduleConfiguredRandomReminders,
+    scheduleConfiguredReminder,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    publishAffirmationWidgetState({
+      notificationsEnabled: preferences.enabled || preferences.randomEnabled,
+      affirmations: eligibleReminderAffirmations,
+      scheduledNotifications: scheduledWidgetReminders,
+    }).catch(() => undefined);
+  }, [
+    eligibleReminderAffirmations,
+    isLoading,
+    preferences.enabled,
+    preferences.randomEnabled,
+    scheduledWidgetReminders,
+  ]);
 
   useEffect(() => {
     if (contentStatus !== 'ready' || contentLanguageCode !== languageCode) {
@@ -319,6 +509,15 @@ const HomeScreen: React.FC = () => {
     () => formatTime(preferences.hour, preferences.minute),
     [preferences.hour, preferences.minute],
   );
+  const randomReminderStartTimeText = useMemo(
+    () =>
+      formatTime(preferences.randomStartHour, preferences.randomStartMinute),
+    [preferences.randomStartHour, preferences.randomStartMinute],
+  );
+  const randomReminderEndTimeText = useMemo(
+    () => formatTime(preferences.randomEndHour, preferences.randomEndMinute),
+    [preferences.randomEndHour, preferences.randomEndMinute],
+  );
 
   const persistPreferences = useCallback(
     async (next: ReminderPreferences) => {
@@ -360,14 +559,14 @@ const HomeScreen: React.FC = () => {
           return;
         }
 
-        const nextPreferences = { ...preferences, enabled: true };
+        const nextPreferences = {
+          ...preferences,
+          enabled: true,
+          randomEnabled: false,
+        };
         const persisted = await persistPreferences(nextPreferences);
         if (persisted) {
-          scheduleDailyReminder(
-            nextPreferences.hour,
-            nextPreferences.minute,
-            reminderNotificationContent,
-          );
+          cancelRandomReminders();
           setStatusMessage(
             t('status.reminderEnabled', {
               time: formatTime(nextPreferences.hour, nextPreferences.minute),
@@ -378,7 +577,67 @@ const HomeScreen: React.FC = () => {
         setStatusMessage(t('status.reminderUpdateError'));
       }
     },
-    [persistPreferences, preferences, reminderNotificationContent, t],
+    [persistPreferences, preferences, t],
+  );
+
+  const handleRandomToggle = useCallback(
+    async (nextEnabled: boolean) => {
+      try {
+        setStatusMessage(null);
+
+        if (!nextEnabled) {
+          const nextPreferences = {
+            ...preferences,
+            randomEnabled: false,
+          };
+          const persisted = await persistPreferences(nextPreferences);
+          if (persisted) {
+            cancelRandomReminders();
+            setStatusMessage(t('status.randomRemindersOff'));
+          }
+          return;
+        }
+
+        if (!isValidRandomReminderRange(preferences, randomRemindersPerDay)) {
+          setStatusMessage(
+            t('status.invalidRandomRange', { count: randomRemindersPerDay }),
+          );
+          return;
+        }
+
+        const hasPermission = await requestNotificationPermission();
+        if (!hasPermission) {
+          setStatusMessage(t('status.randomPermissionRequired'));
+          return;
+        }
+
+        const nextPreferences = {
+          ...preferences,
+          enabled: false,
+          randomEnabled: true,
+        };
+        const persisted = await persistPreferences(nextPreferences);
+        if (persisted) {
+          cancelDailyReminder();
+          setStatusMessage(
+            t('status.randomReminderEnabled', {
+              count: randomRemindersPerDay,
+              start: formatTime(
+                nextPreferences.randomStartHour,
+                nextPreferences.randomStartMinute,
+              ),
+              end: formatTime(
+                nextPreferences.randomEndHour,
+                nextPreferences.randomEndMinute,
+              ),
+            }),
+          );
+        }
+      } catch {
+        setStatusMessage(t('status.randomReminderUpdateError'));
+      }
+    },
+    [persistPreferences, preferences, randomRemindersPerDay, t],
   );
 
   const handleSaveTime = useCallback(async () => {
@@ -412,11 +671,6 @@ const HomeScreen: React.FC = () => {
       }
 
       if (nextPreferences.enabled) {
-        scheduleDailyReminder(
-          nextPreferences.hour,
-          nextPreferences.minute,
-          reminderNotificationContent,
-        );
         setStatusMessage(
           t('status.reminderTimeUpdated', {
             time: formatTime(nextPreferences.hour, nextPreferences.minute),
@@ -433,12 +687,55 @@ const HomeScreen: React.FC = () => {
     } catch {
       setStatusMessage(t('status.reminderTimeError'));
     }
+  }, [hourInput, minuteInput, persistPreferences, preferences, t]);
+
+  const handleSaveRandomRange = useCallback(async () => {
+    try {
+      setStatusMessage(null);
+
+      const nextPreferences = {
+        ...preferences,
+        randomStartHour: Number(randomStartHourInput),
+        randomStartMinute: Number(randomStartMinuteInput),
+        randomEndHour: Number(randomEndHourInput),
+        randomEndMinute: Number(randomEndMinuteInput),
+      };
+      if (!isValidRandomReminderRange(nextPreferences, randomRemindersPerDay)) {
+        setStatusMessage(
+          t('status.invalidRandomRange', { count: randomRemindersPerDay }),
+        );
+        return;
+      }
+
+      const persisted = await persistPreferences(nextPreferences);
+      if (!persisted) return;
+
+      const statusKey = nextPreferences.randomEnabled
+        ? 'status.randomRangeUpdated'
+        : 'status.randomRangeSaved';
+      setStatusMessage(
+        t(statusKey, {
+          start: formatTime(
+            nextPreferences.randomStartHour,
+            nextPreferences.randomStartMinute,
+          ),
+          end: formatTime(
+            nextPreferences.randomEndHour,
+            nextPreferences.randomEndMinute,
+          ),
+        }),
+      );
+    } catch {
+      setStatusMessage(t('status.randomRangeError'));
+    }
   }, [
-    hourInput,
-    minuteInput,
     persistPreferences,
     preferences,
-    reminderNotificationContent,
+    randomEndHourInput,
+    randomEndMinuteInput,
+    randomRemindersPerDay,
+    randomStartHourInput,
+    randomStartMinuteInput,
     t,
   ]);
 
@@ -484,6 +781,21 @@ const HomeScreen: React.FC = () => {
       });
     },
     [pagerWidth],
+  );
+
+  const handleOpenTopicSelection = useCallback(() => {
+    handlePageSelect(0);
+    setIsTopicSelectionVisible(true);
+  }, [handlePageSelect]);
+
+  useEffect(
+    () =>
+      subscribeToOpenedNotificationAffirmation(affirmation => {
+        setOpenedNotificationAffirmation(affirmation);
+        setIsTopicSelectionVisible(false);
+        handlePageSelect(0);
+      }),
+    [handlePageSelect],
   );
 
   const handleTopicSelect = useCallback(
@@ -558,6 +870,7 @@ const HomeScreen: React.FC = () => {
           style={styles.pager}
           horizontal
           pagingEnabled
+          scrollEnabled={HOME_PAGER_SWIPE_ENABLED}
           bounces={false}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}
@@ -595,25 +908,32 @@ const HomeScreen: React.FC = () => {
               onRetryContent={refreshAffirmationContent}
               selectedTopicIds={selectedTopicIds}
               onSelectTopics={handleTopicSelect}
+              topicSelectionVisible={isTopicSelectionVisible}
+              openedNotificationAffirmation={openedNotificationAffirmation}
+              onCloseTopicSelection={() => {
+                setIsTopicSelectionVisible(false);
+              }}
               backgroundPreference={backgroundPreference}
               onBackgroundPreferenceChange={handleBackgroundPreferenceChange}
               likedAffirmationKeys={likedAffirmationKeys}
               onToggleAffirmationLike={handleToggleAffirmationLike}
             />
           </View>
-          <View
-            style={[
-              styles.page,
-              styles.calendarPage,
-              isMobileLayout && styles.pageWithMobileNavigation,
-              mobileSecondaryPageInsets,
-              { width: pagerWidth },
-            ]}
-          >
-            <CalendarPanel
-              backgrounds={visibleAffirmationContent.backgrounds}
-            />
-          </View>
+          {CALENDAR_PAGE_VISIBLE ? (
+            <View
+              style={[
+                styles.page,
+                styles.calendarPage,
+                isMobileLayout && styles.pageWithMobileNavigation,
+                mobileSecondaryPageInsets,
+                { width: pagerWidth },
+              ]}
+            >
+              <CalendarPanel
+                backgrounds={visibleAffirmationContent.backgrounds}
+              />
+            </View>
+          ) : null}
           <View
             style={[
               styles.page,
@@ -630,10 +950,26 @@ const HomeScreen: React.FC = () => {
               minuteInput={minuteInput}
               setHourInput={setHourInput}
               setMinuteInput={setMinuteInput}
+              randomStartHourInput={randomStartHourInput}
+              randomStartMinuteInput={randomStartMinuteInput}
+              randomEndHourInput={randomEndHourInput}
+              randomEndMinuteInput={randomEndMinuteInput}
+              setRandomStartHourInput={setRandomStartHourInput}
+              setRandomStartMinuteInput={setRandomStartMinuteInput}
+              setRandomEndHourInput={setRandomEndHourInput}
+              setRandomEndMinuteInput={setRandomEndMinuteInput}
               onToggle={handleToggle}
               onSaveTime={handleSaveTime}
+              onRandomToggle={handleRandomToggle}
+              onSaveRandomRange={handleSaveRandomRange}
               statusMessage={statusMessage}
               reminderTimeText={reminderTimeText}
+              randomReminderStartTimeText={randomReminderStartTimeText}
+              randomReminderEndTimeText={randomReminderEndTimeText}
+              randomRemindersPerDay={randomRemindersPerDay}
+              onClose={() => {
+                handlePageSelect(0);
+              }}
             />
           </View>
         </ScrollView>
@@ -647,12 +983,17 @@ const HomeScreen: React.FC = () => {
           >
             <HomeFooter
               activePage={activePage}
+              onOpenTopicSelection={handleOpenTopicSelection}
               onSelectPage={handlePageSelect}
               variant={activePage === 0 ? 'onImage' : 'minimal'}
             />
           </View>
         ) : (
-          <HomeFooter activePage={activePage} onSelectPage={handlePageSelect} />
+          <HomeFooter
+            activePage={activePage}
+            onOpenTopicSelection={handleOpenTopicSelection}
+            onSelectPage={handlePageSelect}
+          />
         )}
       </SafeAreaView>
     </>

@@ -69,6 +69,8 @@ test('renders the modern Today card and keeps core actions functional', async ()
   const dailyIndex =
     Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % topic.affirmations.length;
   const activeAffirmation = topic.affirmations[dailyIndex];
+  const openedNotificationText =
+    'This exact affirmation came from a notification.';
   const onToggleAffirmationLike = jest.fn();
   const shareSpy = jest
     .spyOn(Share, 'share')
@@ -86,6 +88,12 @@ test('renders the modern Today card and keeps core actions functional', async ()
           onBackgroundPreferenceChange={jest.fn()}
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
+          onCloseTopicSelection={jest.fn()}
+          openedNotificationAffirmation={{
+            id: activeAffirmation.id,
+            text: openedNotificationText,
+          }}
+          topicSelectionVisible={false}
           onToggleAffirmationLike={onToggleAffirmationLike}
           selectedTopicIds={[topic.id]}
           topics={[topic]}
@@ -98,8 +106,20 @@ test('renders the modern Today card and keeps core actions functional', async ()
     renderer!.root.findByProps({ testID: 'text-today-heading' }),
   ).toBeTruthy();
   expect(
-    renderer!.root.findByProps({ testID: 'text-affirmation-position' }),
-  ).toBeTruthy();
+    renderer!.root.findAllByProps({ testID: 'text-affirmation-position' }),
+  ).toHaveLength(0);
+  expect(
+    renderer!.root.findAllByProps({ testID: 'hint-affirmation-swipe' }),
+  ).toHaveLength(0);
+  expect(
+    renderer!.root.findAllByProps({ testID: 'btn-open-topic-selection' }),
+  ).toHaveLength(0);
+  expect(
+    renderer!.root.findByProps({ testID: 'text-affirmation' }).props.children,
+  ).toBe(openedNotificationText);
+  expect(
+    renderer!.root.findAll(node => node.props.children === '“'),
+  ).toHaveLength(0);
   expect(
     StyleSheet.flatten(
       renderer!.root.findByProps({ testID: 'screen-affirmations' }).props.style,
@@ -129,10 +149,61 @@ test('renders the modern Today card and keeps core actions functional', async ()
 
   expect(onToggleAffirmationLike).toHaveBeenCalledWith(activeAffirmation.id);
   expect(shareSpy).toHaveBeenCalledWith({
-    message: expect.stringContaining(activeAffirmation.text),
+    message: expect.stringContaining(openedNotificationText),
   });
 
   shareSpy.mockRestore();
+});
+
+test('ignores a notification affirmation outside the currently selected topics', async () => {
+  const calmTopic: AffirmationTopic = {
+    id: 'calm',
+    name: 'Calm',
+    imageUri: 'https://example.com/calm.jpg',
+    affirmations: [
+      {
+        id: 'calm-1',
+        imageUri: 'https://example.com/calm-affirmation.jpg',
+        text: 'I return to calm.',
+      },
+    ],
+  };
+  const growthTopic: AffirmationTopic = {
+    id: 'growth',
+    name: 'Growth',
+    imageUri: 'https://example.com/growth.jpg',
+    affirmations: [{ id: 'growth-1', imageUri: '', text: 'I welcome growth.' }],
+  };
+  let renderer: ReactTestRenderer.ReactTestRenderer;
+
+  await ReactTestRenderer.act(async () => {
+    renderer = ReactTestRenderer.create(
+      <ThemeProvider>
+        <AffirmationPanel
+          backgrounds={[]}
+          backgroundPreference={{ mode: 'free', backgroundId: null }}
+          contentStatus="ready"
+          likedAffirmationKeys={[]}
+          onBackgroundPreferenceChange={jest.fn()}
+          onRetryContent={jest.fn()}
+          onSelectTopics={jest.fn()}
+          onCloseTopicSelection={jest.fn()}
+          openedNotificationAffirmation={{
+            id: growthTopic.affirmations[0].id,
+            text: 'A stale growth notification.',
+          }}
+          topicSelectionVisible={false}
+          onToggleAffirmationLike={jest.fn()}
+          selectedTopicIds={[calmTopic.id]}
+          topics={[calmTopic, growthTopic]}
+        />
+      </ThemeProvider>,
+    );
+  });
+
+  expect(
+    renderer!.root.findByProps({ testID: 'text-affirmation' }).props.children,
+  ).toBe('I return to calm.');
 });
 
 test('renders translated affirmation text without an untranslated topic label', async () => {
@@ -161,6 +232,9 @@ test('renders translated affirmation text without an untranslated topic label', 
           onBackgroundPreferenceChange={jest.fn()}
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
+          onCloseTopicSelection={jest.fn()}
+          openedNotificationAffirmation={null}
+          topicSelectionVisible={false}
           onToggleAffirmationLike={jest.fn()}
           selectedTopicIds={[]}
           topics={[topic]}
@@ -206,6 +280,9 @@ test('renders a catalog background when the affirmation image is empty', async (
           onBackgroundPreferenceChange={jest.fn()}
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
+          onCloseTopicSelection={jest.fn()}
+          openedNotificationAffirmation={null}
+          topicSelectionVisible={false}
           onToggleAffirmationLike={jest.fn()}
           selectedTopicIds={[]}
           topics={[topic]}
@@ -250,6 +327,9 @@ test('prefetches the resolved catalog fallback for an adjacent affirmation', asy
           onBackgroundPreferenceChange={jest.fn()}
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
+          onCloseTopicSelection={jest.fn()}
+          openedNotificationAffirmation={null}
+          topicSelectionVisible={false}
           onToggleAffirmationLike={jest.fn()}
           selectedTopicIds={[]}
           topics={[topic]}
@@ -302,6 +382,9 @@ test('keeps the previous image visible while crossfading to a new background', a
         onBackgroundPreferenceChange={jest.fn()}
         onRetryContent={jest.fn()}
         onSelectTopics={jest.fn()}
+        onCloseTopicSelection={jest.fn()}
+        openedNotificationAffirmation={null}
+        topicSelectionVisible={false}
         onToggleAffirmationLike={jest.fn()}
         selectedTopicIds={[]}
         topics={[topic]}
@@ -415,6 +498,9 @@ test('shows a successfully prefetched background without the neutral loading sta
         onBackgroundPreferenceChange={jest.fn()}
         onRetryContent={jest.fn()}
         onSelectTopics={jest.fn()}
+        onCloseTopicSelection={jest.fn()}
+        openedNotificationAffirmation={null}
+        topicSelectionVisible={false}
         onToggleAffirmationLike={jest.fn()}
         selectedTopicIds={[]}
         topics={[

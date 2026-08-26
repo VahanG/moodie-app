@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/moodie_widget_root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/moodie_widget_background"
+  android:gravity="center"
+  android:orientation="vertical"
+  android:padding="20dp">
+
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:fontFamily="sans-serif-medium"
+    android:letterSpacing="0.16"
+    android:text="MOODIE"
+    android:textColor="#D9E7FF"
+    android:textSize="11sp" />
+
+  <TextView
+    android:id="@+id/moodie_widget_affirmation"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fontFamily="sans-serif-medium"
+    android:gravity="center"
+    android:maxLines="6"
+    android:text="@string/affirmation_widget_prompt"
+    android:textColor="#FFFFFF"
+    android:textSize="18sp" />
+
+</LinearLayout>
