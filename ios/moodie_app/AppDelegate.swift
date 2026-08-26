@@ -1,11 +1,12 @@
 import UIKit
+import UserNotifications
 internal import Expo
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 
 @main
-class AppDelegate: ExpoAppDelegate {
+class AppDelegate: ExpoAppDelegate, UNUserNotificationCenterDelegate {
   var window: UIWindow?
 
   var reactNativeDelegate: ReactNativeDelegate?
@@ -15,6 +16,8 @@ class AppDelegate: ExpoAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    UNUserNotificationCenter.current().delegate = self
+
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -31,6 +34,18 @@ class AppDelegate: ExpoAppDelegate {
     )
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    MoodieWidgetBridge.storeOpenedNotification(
+      response.notification.request.content.userInfo
+    )
+    RNCPushNotificationIOS.didReceive(response)
+    completionHandler()
   }
 }
 
