@@ -458,22 +458,49 @@ function parseCachedContent(value: string): AffirmationContent {
 
 export async function loadAffirmationContent(
   languageCode: string,
+  onCachedContent?: (content: LoadedAffirmationContent) => void,
 ): Promise<LoadedAffirmationContent> {
   const cacheKey = `${CONTENT_CACHE_PREFIX}${languageCode}`;
-  try {
-    const content = await fetchPublishedAffirmationContent(languageCode);
-    await AsyncStorage.setItem(
-      cacheKey,
-      JSON.stringify({ version: CONTENT_CACHE_VERSION, ...content }),
-    ).catch(() => undefined);
-    return { content, source: 'remote' };
-  } catch (remoteError) {
-    const cachedValue = await AsyncStorage.getItem(cacheKey);
-    if (cachedValue === null) throw remoteError;
+  let hasFreshRemoteContent = false;
+  const cachedResultPromise = AsyncStorage.getItem(cacheKey)
+    .then(cachedValue =>
+      cachedValue === null ? null : parseCachedContent(cachedValue),
+    )
+    .then(content =>
+      content
+        ? ({ content, source: 'cache' } satisfies LoadedAffirmationContent)
+        : null,
+    )
+    .catch(() => null)
+    .then(cachedResult => {
+      if (cachedResult && !hasFreshRemoteContent) {
+        onCachedContent?.(cachedResult);
+      }
 
-    return {
-      content: parseCachedContent(cachedValue),
-      source: 'cache',
-    };
+      return cachedResult;
+    });
+  const remoteContentPromise = fetchPublishedAffirmationContent(languageCode)
+    .then(content => {
+      AsyncStorage.setItem(
+        cacheKey,
+        JSON.stringify({ version: CONTENT_CACHE_VERSION, ...content }),
+      ).catch(() => undefined);
+
+      return { content, source: 'remote' as const };
+    })
+    .then(
+      loaded => ({ loaded, error: null }),
+      error => ({ loaded: null, error }),
+    );
+
+  const remoteResult = await remoteContentPromise;
+  if (remoteResult.loaded) {
+    hasFreshRemoteContent = true;
+    return remoteResult.loaded;
   }
+
+  const cachedResult = await cachedResultPromise;
+  if (cachedResult) return cachedResult;
+
+  throw remoteResult.error;
 }

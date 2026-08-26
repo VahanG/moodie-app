@@ -37,7 +37,10 @@ requirements:
     acceptance_criteria:
       - The last-known-good compatible content is retained in the cache.
       - When the remote source is unavailable, the application uses last-known-good content.
+      - Cache lookup and remote refresh start concurrently so returning users can render validated local content without waiting for network completion or failure.
+      - Remote refresh happens in the background after a cache hit and refresh failure does not replace the ready cached state with an error state.
       - Editorial caches are scoped by language and never reused across languages.
+      - Persistent content metadata is separate from image warming; startup does not prefetch the full image catalog.
       - Cache invalidation rules are defined before production rollout.
       - Behavior when no cached content exists is TBD.
     verification:

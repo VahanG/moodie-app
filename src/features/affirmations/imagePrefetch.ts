@@ -1,6 +1,7 @@
 import { Image } from 'react-native';
 
 export const AFFIRMATION_IMAGE_PREFETCH_LIMIT = 2;
+const inFlightImagePrefetches = new Map<string, Promise<string | null>>();
 
 export function getAdjacentAffirmationImageUris(
   imageUris: string[],
@@ -33,16 +34,27 @@ export function getAdjacentAffirmationImageUris(
 export async function prefetchAffirmationImages(
   imageUris: string[],
 ): Promise<string[]> {
-  const prefetchResults = await Promise.all(
-    imageUris.slice(0, AFFIRMATION_IMAGE_PREFETCH_LIMIT).map(async imageUri => {
-      try {
-        return (await Image.prefetch(imageUri)) ? imageUri : null;
-      } catch {
-        // A failed prefetch must not interrupt affirmation navigation.
-        return null;
-      }
-    }),
-  );
+  const candidateImageUris = [
+    ...new Set(imageUris.map(imageUri => imageUri.trim()).filter(Boolean)),
+  ].slice(0, AFFIRMATION_IMAGE_PREFETCH_LIMIT);
+  const prefetches = candidateImageUris.flatMap(imageUri => {
+    const existingPrefetch = inFlightImagePrefetches.get(imageUri);
+    if (existingPrefetch) return [existingPrefetch];
+    if (inFlightImagePrefetches.size >= AFFIRMATION_IMAGE_PREFETCH_LIMIT) {
+      return [];
+    }
+
+    const prefetch = Promise.resolve()
+      .then(() => Image.prefetch(imageUri))
+      .then(succeeded => (succeeded ? imageUri : null))
+      .catch(() => null)
+      .finally(() => {
+        inFlightImagePrefetches.delete(imageUri);
+      });
+    inFlightImagePrefetches.set(imageUri, prefetch);
+    return [prefetch];
+  });
+  const prefetchResults = await Promise.all(prefetches);
 
   return prefetchResults.filter(
     (imageUri): imageUri is string => imageUri !== null,

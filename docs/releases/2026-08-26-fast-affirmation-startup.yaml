@@ -1,0 +1,29 @@
+schema_version: '1.0.0'
+
+release:
+  id: fast-affirmation-startup
+  date: '2026-08-26'
+  type: supporter_experience
+  summary: Render last-known-good affirmations immediately on returning launches while refreshing content in the background.
+  feature_spec: docs/specs/features/affirmations.yaml
+
+delivery:
+  startup_strategy: stale_while_revalidate
+  cache_scope: selected_language
+  saved_language_hydration: local_first
+  cache_and_remote_start: concurrent
+  refresh_success: replace_visible_cache_and_persist
+  refresh_failure: keep_visible_cache
+  first_launch_without_cache: wait_for_remote_or_show_retryable_error
+  image_prefetch_scope: immediate_previous_and_next_only
+  maximum_concurrent_image_prefetches: 2
+  speculative_prefetch_backlog: none
+
+verification:
+  - A cache hit is published to the screen before a delayed remote refresh completes.
+  - A saved non-default language selects its own cache without waiting for the remote language catalog.
+  - Fresh remote content replaces cached content and updates the last-known-good payload.
+  - A remote failure leaves cached content visible and ready.
+  - A launch without valid cached or remote content retains the retryable unavailable state.
+  - Adjacent image prefetch remains capped at two URLs.
+  - Overlapping cache and remote renders never exceed two active prefetch requests or queue stale images.

@@ -103,6 +103,70 @@ describe('LocalizationProvider', () => {
     mockSyncCurrentDeviceSettingsToDatabase.mockResolvedValue(undefined);
   });
 
+  test('exposes the saved language before the remote language catalog finishes', async () => {
+    const supportedLanguages = createDeferred<
+      Array<{
+        code: string;
+        englishName: string;
+        nativeName: string;
+        textDirection: 'ltr' | 'rtl';
+        isDefault: boolean;
+      }>
+    >();
+    mockLoadLanguageCode.mockResolvedValue('hy');
+    mockLoadSupportedLanguages.mockReturnValue(supportedLanguages.promise);
+    mockLoadRemoteMessages.mockResolvedValue({ sample: 'Հայերեն' });
+    let latestLocalization: ReturnType<typeof useLocalization> | null = null;
+
+    function Probe() {
+      latestLocalization = useLocalization();
+      return null;
+    }
+
+    let renderer: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(
+        <LocalizationProvider>
+          <Probe />
+        </LocalizationProvider>,
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(latestLocalization!.languageCode).toBe('hy');
+    expect(latestLocalization!.t('sample')).toBe('hy:sample');
+    expect(mockLoadRemoteMessages).not.toHaveBeenCalled();
+
+    await ReactTestRenderer.act(async () => {
+      supportedLanguages.resolve([
+        {
+          code: 'en',
+          englishName: 'English',
+          nativeName: 'English',
+          textDirection: 'ltr',
+          isDefault: true,
+        },
+        {
+          code: 'hy',
+          englishName: 'Armenian',
+          nativeName: 'Հայերեն',
+          textDirection: 'ltr',
+          isDefault: false,
+        },
+      ]);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(latestLocalization!.languageCode).toBe('hy');
+    expect(latestLocalization!.t('sample')).toBe('Հայերեն');
+
+    await ReactTestRenderer.act(() => {
+      renderer!.unmount();
+    });
+  });
+
   test('keeps an explicit language selection coherent when stale settings publish', async () => {
     const armenianMessages = createDeferred<Record<string, string>>();
     mockLoadRemoteMessages.mockImplementation((languageCode: string) =>

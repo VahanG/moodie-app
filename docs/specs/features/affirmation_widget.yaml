@@ -2,9 +2,9 @@ schema_version: '1.0.0'
 
 feature:
   id: FEATURE-AFFIRMATION-WIDGET
-  name: Affirmation Home-Screen Widget
+  name: Affirmation Widget
   lifecycle: current
-  purpose: Keep a topic-aware Moodie affirmation visible from the device home screen.
+  purpose: Keep a topic-aware Moodie affirmation visible from the device home screen or iOS Lock Screen.
   entry_route: moodie://affirmations
   dependencies:
     - FEATURE-AFFIRMATIONS
@@ -14,10 +14,12 @@ feature:
 requirements:
   - id: WIDGET-001
     title: Native Widget Availability
-    description: A user can add a Moodie affirmation widget through the iOS or Android home-screen widget gallery.
+    description: A user can add a Moodie affirmation widget through the iOS or Android home-screen widget gallery or the iOS Lock Screen editor.
     priority: MUST
     acceptance_criteria:
-      - The iOS application includes a WidgetKit extension supporting system-small and system-medium families.
+      - The iOS application includes a WidgetKit extension supporting system-small, system-medium, accessory-inline, and accessory-rectangular families.
+      - The inline Lock Screen family shows a single-line topic-aware affirmation.
+      - The rectangular Lock Screen family shows a compact topic-aware affirmation with Moodie branding.
       - The Android application includes a resizable AppWidget provider.
       - Tapping the widget opens Moodie's Affirmations experience.
 

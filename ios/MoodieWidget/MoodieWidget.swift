@@ -153,14 +153,19 @@ private struct MoodieWidgetProvider: TimelineProvider {
 
 private struct MoodieWidgetView: View {
   let entry: MoodieWidgetEntry
+  @Environment(\.widgetFamily) private var family
 
-  private var content: some View {
+  private var affirmation: String {
+    entry.affirmation ?? "Open Moodie to refresh your selected affirmations."
+  }
+
+  private var homeScreenContent: some View {
     VStack(spacing: 10) {
       Text("MOODIE")
         .font(.system(size: 11, weight: .semibold))
         .tracking(2)
         .foregroundStyle(Color.white.opacity(0.82))
-      Text(entry.affirmation ?? "Open Moodie to refresh your selected affirmations.")
+      Text(affirmation)
         .font(.system(size: 18, weight: .semibold, design: .rounded))
         .multilineTextAlignment(.center)
         .foregroundStyle(.white)
@@ -169,9 +174,40 @@ private struct MoodieWidgetView: View {
     .padding(18)
   }
 
-  var body: some View {
+  private var inlineContent: some View {
+    Label {
+      Text(affirmation)
+        .lineLimit(1)
+    } icon: {
+      Image(systemName: "sparkles")
+    }
+    .widgetAccentable()
+  }
+
+  private var rectangularContent: some View {
+    ZStack {
+      AccessoryWidgetBackground()
+
+      VStack(alignment: .leading, spacing: 3) {
+        Label("MOODIE", systemImage: "sparkles")
+          .font(.system(size: 10, weight: .semibold))
+          .widgetAccentable()
+
+        Text(affirmation)
+          .font(.system(size: 13, weight: .semibold, design: .rounded))
+          .lineLimit(2)
+          .minimumScaleFactor(0.8)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 6)
+    }
+  }
+
+  @ViewBuilder
+  private var homeScreenBody: some View {
     if #available(iOSApplicationExtension 17.0, *) {
-      content.containerBackground(for: .widget) {
+      homeScreenContent.containerBackground(for: .widget) {
         LinearGradient(
           colors: [Color(red: 0.14, green: 0.23, blue: 0.47),
                    Color(red: 0.42, green: 0.29, blue: 0.63)],
@@ -180,7 +216,7 @@ private struct MoodieWidgetView: View {
         )
       }
     } else {
-      content.background(
+      homeScreenContent.background(
         LinearGradient(
           colors: [Color(red: 0.14, green: 0.23, blue: 0.47),
                    Color(red: 0.42, green: 0.29, blue: 0.63)],
@@ -188,6 +224,18 @@ private struct MoodieWidgetView: View {
           endPoint: .bottomTrailing
         )
       )
+    }
+  }
+
+  @ViewBuilder
+  var body: some View {
+    switch family {
+    case .accessoryInline:
+      inlineContent
+    case .accessoryRectangular:
+      rectangularContent
+    default:
+      homeScreenBody
     }
   }
 }
@@ -202,7 +250,12 @@ struct MoodieAffirmationWidget: Widget {
         .widgetURL(URL(string: "moodie-app://affirmations"))
     }
     .configurationDisplayName("Moodie Affirmation")
-    .description("Keep a topic-aware affirmation on your Home Screen.")
-    .supportedFamilies([.systemSmall, .systemMedium])
+    .description("Keep a topic-aware affirmation on your Home Screen or Lock Screen.")
+    .supportedFamilies([
+      .systemSmall,
+      .systemMedium,
+      .accessoryInline,
+      .accessoryRectangular,
+    ])
   }
 }

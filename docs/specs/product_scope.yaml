@@ -28,7 +28,7 @@ current_priorities:
   - id: PRIORITY-006
     statement: Let existing Moodie users sign in from Settings without interrupting the home experience.
   - id: PRIORITY-007
-    statement: Extend topic-aware affirmations to native home-screen widgets on iOS and Android.
+    statement: Extend topic-aware affirmations to native home-screen widgets on iOS and Android and Lock Screen widgets on iOS.
 
 affirmation_experience:
   problem: >-

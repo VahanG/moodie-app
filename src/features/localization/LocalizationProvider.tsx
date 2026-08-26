@@ -89,8 +89,17 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    const storedLanguageCodePromise = loadLanguageCode();
 
-    Promise.all([loadSupportedLanguages(), loadLanguageCode()])
+    storedLanguageCodePromise
+      .then(storedCode => {
+        if (!active) return;
+        activeLanguageCodeRef.current = storedCode;
+        setLocale({ languageCode: storedCode, remoteMessages: {} });
+      })
+      .catch(() => undefined);
+
+    Promise.all([loadSupportedLanguages(), storedLanguageCodePromise])
       .then(async ([loadedLanguages, storedCode]) => {
         if (!active) return;
         const fallback =

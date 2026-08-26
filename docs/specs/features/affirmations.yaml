@@ -31,6 +31,8 @@ requirements:
       - Administrators can create, edit, order, publish, unpublish, and delete content through the admin workspace.
       - Every admin mutation is authorized by database RLS using the current authenticated administrator.
       - A validated database response is cached as last-known-good content for offline launches.
+      - On returning launches, the selected-language cache lookup and remote refresh start together; valid cached content renders as soon as the local read completes without waiting for the remote request to fail.
+      - A successful remote refresh replaces cached content, while a failed refresh leaves already-rendered cached content available.
       - Invalid or unavailable remote content never replaces the last-known-good cache.
       - The Today feed includes only affirmations with translations for the currently selected language.
       - A translated affirmation remains eligible when its topic name has not yet been translated; untranslated topic labels are omitted.
@@ -38,6 +40,7 @@ requirements:
       - Missing translated background metadata does not prevent otherwise translated affirmations from loading.
       - An affirmation image is optional and does not affect affirmation eligibility.
       - Stable gallery:// image references, when present, are resolved to signed Gallery Storage URLs before content is rendered or cached.
+      - Persistent catalog caching does not trigger catalog-wide image prefetching; only the immediate previous and next resolved affirmation backgrounds may be warmed, with at most two image prefetches in flight globally and no speculative backlog.
     verification:
       test_id: database_managed_affirmation_content
       status: integration_contract_check

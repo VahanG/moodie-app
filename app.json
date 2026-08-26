@@ -17,7 +17,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.moodie.am",
-      "buildNumber": "11",
+      "buildNumber": "12",
       "supportsTablet": true,
       "usesAppleSignIn": true,
       "entitlements": {

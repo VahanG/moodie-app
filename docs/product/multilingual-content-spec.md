@@ -15,7 +15,10 @@ native release for every new language or content translation.
 - English (`en`) is the initial and default language.
 - The user's selection is stored on the device and, when authenticated, in
   `public.user_settings`.
-- The active language code and its UI-message bundle are applied atomically;
+- On returning launches, the locally saved language code and its bundled
+  same-language messages are applied as soon as device storage responds,
+  without waiting for the remote enabled-language catalog.
+- Remote UI-message overrides are then applied atomically for that language;
   stale message loads or settings snapshots cannot create a mixed-language
   state or override a newer explicit selection.
 - If a previously selected language is disabled, the app returns to the
@@ -81,6 +84,8 @@ browser uses only the Supabase publishable key.
 
 - The enabled-language catalog and UI messages use a last-known-good
   device cache.
+- The saved language is exposed before remote language and message refreshes
+  finish so language-scoped editorial caches can be read immediately.
 - Editorial content is cached separately per language.
 - A cached payload for one language must never be shown for another.
 - If no valid selected-language content exists remotely or in that
@@ -90,6 +95,8 @@ browser uses only the Supabase publishable key.
 
 - A user can choose any enabled language from Settings and the selection
   survives restart and authenticated-device synchronization.
+- A returning user's saved language becomes active from device storage before
+  the remote enabled-language request completes.
 - Admin can add a language without a schema or app release.
 - Admin can enter topic, affirmation, background-tag, and app UI translations
   per supported language.

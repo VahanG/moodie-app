@@ -24,7 +24,10 @@ const mockSetItem = AsyncStorage.setItem as jest.MockedFunction<
   typeof AsyncStorage.setItem
 >;
 
-function buildQuery(result: { data: unknown[] | null; error: Error | null }) {
+function buildQuery(
+  result: { data: unknown[] | null; error: Error | null },
+  waitFor: Promise<unknown> = Promise.resolve(),
+) {
   const query = {
     select: jest.fn(),
     eq: jest.fn(),
@@ -32,7 +35,7 @@ function buildQuery(result: { data: unknown[] | null; error: Error | null }) {
     then: (
       resolve: (value: typeof result) => unknown,
       reject: (reason: unknown) => unknown,
-    ) => Promise.resolve(result).then(resolve, reject),
+    ) => waitFor.then(() => result).then(resolve, reject),
   };
   query.select.mockReturnValue(query);
   query.eq.mockReturnValue(query);
@@ -250,9 +253,34 @@ describe('affirmation content loading', () => {
       { background_id: 'forest', tags: ['growth'] },
     ],
   };
+  const cachedPayload = JSON.stringify({
+    version: 3,
+    topics: [
+      {
+        id: 'growth',
+        name: 'Growth',
+        imageUri: 'https://example.com/growth.jpg',
+        affirmations: [
+          {
+            id: 'affirmation-1',
+            text: 'Cached affirmation.',
+            imageUri: 'https://example.com/affirmation.jpg',
+          },
+        ],
+      },
+    ],
+    backgrounds: [
+      {
+        id: 'forest',
+        imageUri: 'https://example.com/forest.jpg',
+        tags: ['growth'],
+      },
+    ],
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetItem.mockResolvedValue(null);
     mockSetItem.mockResolvedValue();
     mockCreateSignedUrls.mockResolvedValue({ data: [], error: null });
   });
@@ -331,36 +359,74 @@ describe('affirmation content loading', () => {
     );
   });
 
+  test('publishes cached content before a delayed remote refresh finishes', async () => {
+    let finishRemoteRefresh: () => void = () => undefined;
+    const remoteRefreshGate = new Promise<void>(resolve => {
+      finishRemoteRefresh = resolve;
+    });
+    mockGetItem.mockResolvedValue(cachedPayload);
+    mockFrom.mockImplementation((table: string) =>
+      buildQuery({ data: rowsByTable[table], error: null }, remoteRefreshGate),
+    );
+    const onCachedContent = jest.fn();
+    let refreshFinished = false;
+
+    const loading = loadAffirmationContent('en', onCachedContent).then(
+      loaded => {
+        refreshFinished = true;
+        return loaded;
+      },
+    );
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    expect(onCachedContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'cache',
+        content: expect.objectContaining({
+          topics: expect.arrayContaining([
+            expect.objectContaining({
+              affirmations: expect.arrayContaining([
+                expect.objectContaining({ text: 'Cached affirmation.' }),
+              ]),
+            }),
+          ]),
+        }),
+      }),
+    );
+    expect(refreshFinished).toBe(false);
+
+    finishRemoteRefresh();
+    const loaded = await loading;
+
+    expect(loaded.source).toBe('remote');
+    expect(loaded.content.topics[0].affirmations[0].text).toBe('Keep going.');
+  });
+
+  test('does not delay fresh remote content behind a slower cache read', async () => {
+    let finishCacheRead: (value: string | null) => void = () => undefined;
+    const cacheRead = new Promise<string | null>(resolve => {
+      finishCacheRead = resolve;
+    });
+    mockGetItem.mockReturnValue(cacheRead);
+    mockFrom.mockImplementation((table: string) =>
+      buildQuery({ data: rowsByTable[table], error: null }),
+    );
+    const onCachedContent = jest.fn();
+
+    const loaded = await loadAffirmationContent('en', onCachedContent);
+
+    expect(loaded.source).toBe('remote');
+    expect(loaded.content.topics[0].affirmations[0].text).toBe('Keep going.');
+    finishCacheRead(cachedPayload);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    expect(onCachedContent).not.toHaveBeenCalled();
+  });
+
   test('uses only the selected languages last-known-good cache', async () => {
     mockFrom.mockImplementation(() =>
       buildQuery({ data: null, error: new Error('offline') }),
     );
-    mockGetItem.mockResolvedValue(
-      JSON.stringify({
-        version: 3,
-        topics: [
-          {
-            id: 'growth',
-            name: 'Growth',
-            imageUri: 'https://example.com/growth.jpg',
-            affirmations: [
-              {
-                id: 'affirmation-1',
-                text: 'Cached affirmation.',
-                imageUri: 'https://example.com/affirmation.jpg',
-              },
-            ],
-          },
-        ],
-        backgrounds: [
-          {
-            id: 'forest',
-            imageUri: 'https://example.com/forest.jpg',
-            tags: ['growth'],
-          },
-        ],
-      }),
-    );
+    mockGetItem.mockResolvedValue(cachedPayload);
 
     const loaded = await loadAffirmationContent('en');
 

@@ -60,6 +60,9 @@ Deliver a focused affirmation experience that users can personalize by topic and
   - Background mode and selected fixed background (if applicable).
 - The screen stores liked affirmations so the liked state remains consistent across app restarts.
 - Liked affirmations are persisted now and will be surfaced in a dedicated "My Favorites" view in a later update.
+- The last validated affirmation catalog is stored per language. On a returning launch, its local read runs alongside the remote refresh and is rendered first when available.
+- A successful remote refresh replaces the saved view without blocking interaction. A failed refresh keeps the saved affirmations visible.
+- Saving catalog metadata must not cause catalog-wide image warming. Image prefetch stays limited to the immediate previous and next resolved backgrounds, with no more than two requests in flight and no speculative backlog.
 
 ## Affirmation actions behavior
 
@@ -77,6 +80,9 @@ Deliver a focused affirmation experience that users can personalize by topic and
 - The current background remains visible until the incoming background is ready, with no neutral frame between them.
 - The incoming background crossfades smoothly over the current image and prefetched backgrounds begin immediately.
 - Only the two adjacent resolved background URLs are considered for prefetch at any position.
+- At most two background prefetches run concurrently; rapid content changes do not queue stale speculative images.
+- A returning user with a valid selected-language cache can see affirmations before the remote refresh finishes.
+- A remote refresh failure does not replace already-visible cached affirmations with the unavailable state.
 - Fixed mode always keeps the same background.
 - Free mode updates background according to displayed text.
 - Heart and share icons are visible below the affirmation text.

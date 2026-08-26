@@ -50,6 +50,8 @@ build_contract:
     families:
       - systemSmall
       - systemMedium
+      - accessoryInline
+      - accessoryRectangular
     rule: The app and widget extension must use provisioning profiles that include the shared App Group capability.
 
 app_review_gates:

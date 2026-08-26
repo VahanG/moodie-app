@@ -61,6 +61,7 @@ import {
   AffirmationContent,
   AffirmationBackgroundPreference,
   AffirmationTopicId,
+  LoadedAffirmationContent,
 } from '../features/affirmations/types';
 import { useHomeScreenStyles } from './HomeScreen.styles';
 import SettingsPanel from './SettingsPanel';
@@ -99,6 +100,8 @@ const HomeScreen: React.FC = () => {
   const safeAreaInsets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const contentRequestIdRef = useRef(0);
+  const translationRef = useRef(t);
+  translationRef.current = t;
   const { width: windowWidth } = useWindowDimensions();
   const isMobileLayout = windowWidth < MOBILE_LAYOUT_BREAKPOINT;
   const mobileSecondaryPageInsets = isMobileLayout
@@ -174,14 +177,21 @@ const HomeScreen: React.FC = () => {
     setContentStatusLanguageCode(requestedLanguageCode);
     setContentStatus('loading');
 
-    try {
-      const loaded = await loadAffirmationContent(requestedLanguageCode);
+    const publishLoadedContent = (loaded: LoadedAffirmationContent) => {
       if (contentRequestIdRef.current !== requestId) {
         return;
       }
       setAffirmationContent(loaded.content);
       setContentLanguageCode(requestedLanguageCode);
       setContentStatus('ready');
+    };
+
+    try {
+      const loaded = await loadAffirmationContent(
+        requestedLanguageCode,
+        publishLoadedContent,
+      );
+      publishLoadedContent(loaded);
     } catch {
       if (contentRequestIdRef.current !== requestId) {
         return;
@@ -263,7 +273,6 @@ const HomeScreen: React.FC = () => {
 
     const initialize = async () => {
       try {
-        configureNotificationChannel(t('notifications.channelName'));
         const [
           storedPreferences,
           storedTopicIds,
@@ -297,7 +306,7 @@ const HomeScreen: React.FC = () => {
         setRandomEndMinuteInput(storedPreferences.randomEndMinute.toString());
       } catch {
         if (isMounted) {
-          setStatusMessage(t('status.settingsLoadError'));
+          setStatusMessage(translationRef.current('status.settingsLoadError'));
         }
       } finally {
         if (isMounted) {
@@ -307,12 +316,23 @@ const HomeScreen: React.FC = () => {
     };
 
     initialize();
-    refreshAffirmationContent();
 
     return () => {
       isMounted = false;
     };
-  }, [refreshAffirmationContent, t]);
+  }, []);
+
+  useEffect(() => {
+    configureNotificationChannel(t('notifications.channelName'));
+  }, [t]);
+
+  useEffect(() => {
+    refreshAffirmationContent();
+
+    return () => {
+      contentRequestIdRef.current += 1;
+    };
+  }, [refreshAffirmationContent]);
 
   useEffect(
     () =>

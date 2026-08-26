@@ -67,3 +67,33 @@ test('does not mark failed prefetches as ready', async () => {
 
   prefetchSpy.mockRestore();
 });
+
+test('never queues more work while two image prefetches are in flight', async () => {
+  const finishPrefetches: Array<(succeeded: boolean) => void> = [];
+  const prefetchSpy = jest.spyOn(Image, 'prefetch').mockImplementation(
+    () =>
+      new Promise<boolean>(resolve => {
+        finishPrefetches.push(resolve);
+      }),
+  );
+
+  const firstBatch = prefetchAffirmationImages([
+    'https://example.com/one.jpg',
+    'https://example.com/two.jpg',
+  ]);
+  await Promise.resolve();
+
+  await expect(
+    prefetchAffirmationImages([
+      'https://example.com/three.jpg',
+      'https://example.com/four.jpg',
+    ]),
+  ).resolves.toEqual([]);
+  expect(prefetchSpy).toHaveBeenCalledTimes(2);
+
+  finishPrefetches.forEach(finishPrefetch => finishPrefetch(true));
+  await expect(firstBatch).resolves.toHaveLength(2);
+  expect(prefetchSpy).toHaveBeenCalledTimes(2);
+
+  prefetchSpy.mockRestore();
+});
