@@ -1,4 +1,7 @@
-import { Linking } from 'react-native';
+import * as Linking from 'expo-linking';
+import { AppState } from 'react-native';
+import { loadPublishedWidgetAffirmation } from '../widgets/service';
+import { consumeNativeOpenedNotification } from './bridge';
 
 export type OpenedAffirmation = {
   id: string;
@@ -85,6 +88,15 @@ export function getOpenedAffirmationFromUrl(
   }
 }
 
+function isAffirmationUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'moodie-app:' && url.hostname === 'affirmations';
+  } catch {
+    return false;
+  }
+}
+
 function publishOpenedAffirmation(affirmation: OpenedAffirmation): void {
   if (listeners.size === 0) {
     pendingAffirmation = affirmation;
@@ -105,31 +117,65 @@ export function handleNotificationInteraction(
   publishOpenedAffirmation(affirmation);
 }
 
-export function handleOpenedAffirmationUrl(url: string): void {
+export function handleOpenedAffirmationUrl(url: string): boolean {
   const affirmation = getOpenedAffirmationFromUrl(url);
   if (!affirmation) {
-    return;
+    return false;
   }
 
   publishOpenedAffirmation(affirmation);
+  return true;
 }
 
 export function subscribeToOpenedAffirmationLinks(): () => void {
-  let isSubscribed = true;
-  const subscription = Linking.addEventListener('url', event => {
-    handleOpenedAffirmationUrl(event.url);
+  const consumePendingLink = () => {
+    const url = Linking.getLinkingURL();
+    if (!url || !isAffirmationUrl(url)) {
+      return;
+    }
+
+    const consume = async () => {
+      const handledExactLink = handleOpenedAffirmationUrl(url);
+      if (!handledExactLink) {
+        const affirmation = await loadPublishedWidgetAffirmation();
+        if (affirmation) {
+          publishOpenedAffirmation(affirmation);
+        }
+      }
+
+      if (Linking.getLinkingURL() === url) {
+        Linking.clearInitialURL();
+      }
+    };
+
+    consume().catch(() => undefined);
+  };
+
+  const consumePendingNativeNotification = () => {
+    consumeNativeOpenedNotification()
+      .then(affirmation => {
+        if (affirmation) {
+          publishOpenedAffirmation(affirmation);
+        }
+      })
+      .catch(() => undefined);
+  };
+
+  const consumePendingEntryPoints = () => {
+    consumePendingLink();
+    consumePendingNativeNotification();
+  };
+
+  consumePendingEntryPoints();
+  const coldStartRetry = setTimeout(consumePendingNativeNotification, 1000);
+  const subscription = AppState.addEventListener('change', nextState => {
+    if (nextState === 'active') {
+      consumePendingEntryPoints();
+    }
   });
 
-  Linking.getInitialURL()
-    .then(url => {
-      if (isSubscribed && url) {
-        handleOpenedAffirmationUrl(url);
-      }
-    })
-    .catch(() => undefined);
-
   return () => {
-    isSubscribed = false;
+    clearTimeout(coldStartRetry);
     subscription.remove();
   };
 }

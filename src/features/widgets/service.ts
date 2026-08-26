@@ -157,6 +157,15 @@ export function resolveWidgetAffirmation(
   return getRotatingWidgetAffirmation(payload.affirmations, now);
 }
 
+export async function loadPublishedWidgetAffirmation(
+  now = Date.now(),
+): Promise<WidgetAffirmation | null> {
+  const payload = parseAffirmationWidgetPayload(
+    await AsyncStorage.getItem(AFFIRMATION_WIDGET_STORAGE_KEY),
+  );
+  return payload ? resolveWidgetAffirmation(payload, now) : null;
+}
+
 type PublishAffirmationWidgetStateOptions = {
   notificationsEnabled: boolean;
   affirmations: ReminderAffirmation[];

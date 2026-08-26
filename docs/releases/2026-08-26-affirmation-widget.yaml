@@ -10,6 +10,7 @@ changes:
   - Rotate an eligible affirmation every three hours while reminders are disabled.
   - Enforced the active topic selection across the in-app feed, notifications, notification taps, and widgets.
   - Made notification and widget taps open the exact affirmation displayed at the time of the tap, including after topic or catalog changes.
+  - Added iOS notification-response forwarding and a persisted cold-start handoff so local-notification taps reliably reach the affirmation screen.
 
 native_impact:
   required: true

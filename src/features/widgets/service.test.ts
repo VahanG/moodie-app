@@ -3,6 +3,7 @@ import { NativeModules } from 'react-native';
 import {
   AFFIRMATION_WIDGET_ROTATION_MS,
   getLatestDeliveredWidgetNotification,
+  loadPublishedWidgetAffirmation,
   parseAffirmationWidgetPayload,
   publishAffirmationWidgetState,
   resolveWidgetAffirmation,
@@ -65,6 +66,14 @@ describe('affirmation widget state', () => {
     ).toEqual({ id: 'growth-1', text: 'Latest', deliveryAt: 200 });
     expect(resolveWidgetAffirmation(notificationPayload, 300)?.text).toBe(
       'Latest',
+    );
+  });
+
+  test('loads the affirmation represented by the last published widget state', async () => {
+    mockGetItem.mockResolvedValue(JSON.stringify(payload));
+
+    await expect(loadPublishedWidgetAffirmation(0)).resolves.toEqual(
+      payload.affirmations[0],
     );
   });
 
