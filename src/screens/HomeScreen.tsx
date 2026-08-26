@@ -27,8 +27,9 @@ import {
   selectRandomReminderAffirmation,
 } from '../features/notifications/service';
 import {
-  type OpenedNotificationAffirmation,
-  subscribeToOpenedNotificationAffirmation,
+  type OpenedAffirmation,
+  subscribeToOpenedAffirmation,
+  subscribeToOpenedAffirmationLinks,
 } from '../features/notifications/openedAffirmation';
 import {
   DEFAULT_REMINDER_PREFERENCES,
@@ -144,8 +145,8 @@ const HomeScreen: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activePage, setActivePage] = useState(0);
   const [isTopicSelectionVisible, setIsTopicSelectionVisible] = useState(false);
-  const [openedNotificationAffirmation, setOpenedNotificationAffirmation] =
-    useState<OpenedNotificationAffirmation | null>(null);
+  const [openedAffirmation, setOpenedAffirmation] =
+    useState<OpenedAffirmation | null>(null);
   const statusBarStyle =
     (isMobileLayout && activePage === 0) || theme.isDark
       ? 'light-content'
@@ -810,13 +811,15 @@ const HomeScreen: React.FC = () => {
 
   useEffect(
     () =>
-      subscribeToOpenedNotificationAffirmation(affirmation => {
-        setOpenedNotificationAffirmation(affirmation);
+      subscribeToOpenedAffirmation(affirmation => {
+        setOpenedAffirmation(affirmation);
         setIsTopicSelectionVisible(false);
         handlePageSelect(0);
       }),
     [handlePageSelect],
   );
+
+  useEffect(() => subscribeToOpenedAffirmationLinks(), []);
 
   const handleTopicSelect = useCallback(
     async (topicIds: AffirmationTopicId[]) => {
@@ -929,7 +932,7 @@ const HomeScreen: React.FC = () => {
               selectedTopicIds={selectedTopicIds}
               onSelectTopics={handleTopicSelect}
               topicSelectionVisible={isTopicSelectionVisible}
-              openedNotificationAffirmation={openedNotificationAffirmation}
+              openedAffirmation={openedAffirmation}
               onCloseTopicSelection={() => {
                 setIsTopicSelectionVisible(false);
               }}

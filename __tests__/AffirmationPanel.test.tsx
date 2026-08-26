@@ -89,7 +89,7 @@ test('renders the modern Today card and keeps core actions functional', async ()
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
           onCloseTopicSelection={jest.fn()}
-          openedNotificationAffirmation={{
+          openedAffirmation={{
             id: activeAffirmation.id,
             text: openedNotificationText,
           }}
@@ -155,7 +155,7 @@ test('renders the modern Today card and keeps core actions functional', async ()
   shareSpy.mockRestore();
 });
 
-test('ignores a notification affirmation outside the currently selected topics', async () => {
+test('shows the exact opened affirmation outside the currently selected topics', async () => {
   const calmTopic: AffirmationTopic = {
     id: 'calm',
     name: 'Calm',
@@ -188,7 +188,7 @@ test('ignores a notification affirmation outside the currently selected topics',
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
           onCloseTopicSelection={jest.fn()}
-          openedNotificationAffirmation={{
+          openedAffirmation={{
             id: growthTopic.affirmations[0].id,
             text: 'A stale growth notification.',
           }}
@@ -203,7 +203,7 @@ test('ignores a notification affirmation outside the currently selected topics',
 
   expect(
     renderer!.root.findByProps({ testID: 'text-affirmation' }).props.children,
-  ).toBe('I return to calm.');
+  ).toBe('A stale growth notification.');
 });
 
 test('renders translated affirmation text without an untranslated topic label', async () => {
@@ -233,7 +233,7 @@ test('renders translated affirmation text without an untranslated topic label', 
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
           onCloseTopicSelection={jest.fn()}
-          openedNotificationAffirmation={null}
+          openedAffirmation={null}
           topicSelectionVisible={false}
           onToggleAffirmationLike={jest.fn()}
           selectedTopicIds={[]}
@@ -281,7 +281,7 @@ test('renders a catalog background when the affirmation image is empty', async (
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
           onCloseTopicSelection={jest.fn()}
-          openedNotificationAffirmation={null}
+          openedAffirmation={null}
           topicSelectionVisible={false}
           onToggleAffirmationLike={jest.fn()}
           selectedTopicIds={[]}
@@ -328,7 +328,7 @@ test('prefetches the resolved catalog fallback for an adjacent affirmation', asy
           onRetryContent={jest.fn()}
           onSelectTopics={jest.fn()}
           onCloseTopicSelection={jest.fn()}
-          openedNotificationAffirmation={null}
+          openedAffirmation={null}
           topicSelectionVisible={false}
           onToggleAffirmationLike={jest.fn()}
           selectedTopicIds={[]}
@@ -383,7 +383,7 @@ test('keeps the previous image visible while crossfading to a new background', a
         onRetryContent={jest.fn()}
         onSelectTopics={jest.fn()}
         onCloseTopicSelection={jest.fn()}
-        openedNotificationAffirmation={null}
+        openedAffirmation={null}
         topicSelectionVisible={false}
         onToggleAffirmationLike={jest.fn()}
         selectedTopicIds={[]}
@@ -499,7 +499,7 @@ test('shows a successfully prefetched background without the neutral loading sta
         onRetryContent={jest.fn()}
         onSelectTopics={jest.fn()}
         onCloseTopicSelection={jest.fn()}
-        openedNotificationAffirmation={null}
+        openedAffirmation={null}
         topicSelectionVisible={false}
         onToggleAffirmationLike={jest.fn()}
         selectedTopicIds={[]}

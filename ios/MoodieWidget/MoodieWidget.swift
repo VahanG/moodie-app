@@ -29,7 +29,22 @@ private struct AffirmationWidgetPayload: Codable {
 
 private struct MoodieWidgetEntry: TimelineEntry {
   let date: Date
-  let affirmation: String?
+  let affirmation: WidgetAffirmation?
+
+  var deepLinkURL: URL? {
+    guard let affirmation else {
+      return URL(string: "moodie-app://affirmations")
+    }
+
+    var components = URLComponents()
+    components.scheme = "moodie-app"
+    components.host = "affirmations"
+    components.queryItems = [
+      URLQueryItem(name: "affirmationId", value: affirmation.id),
+      URLQueryItem(name: "affirmationText", value: affirmation.text),
+    ]
+    return components.url
+  }
 }
 
 private enum WidgetState {
@@ -49,13 +64,13 @@ private enum WidgetState {
   static func affirmation(
     from payload: AffirmationWidgetPayload?,
     at date: Date
-  ) -> String? {
+  ) -> WidgetAffirmation? {
     guard let payload else { return nil }
 
     if payload.notificationsEnabled,
        let latest = latestNotification(in: payload, at: date) {
       let text = latest.text.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !text.isEmpty { return text }
+      if !text.isEmpty { return WidgetAffirmation(id: latest.id, text: text) }
     }
 
     guard !payload.affirmations.isEmpty else { return nil }
@@ -63,7 +78,9 @@ private enum WidgetState {
     let index = bucket % payload.affirmations.count
     let text = payload.affirmations[index].text
       .trimmingCharacters(in: .whitespacesAndNewlines)
-    return text.isEmpty ? nil : text
+    return text.isEmpty
+      ? nil
+      : WidgetAffirmation(id: payload.affirmations[index].id, text: text)
   }
 
   static func nextRefresh(
@@ -156,7 +173,8 @@ private struct MoodieWidgetView: View {
   @Environment(\.widgetFamily) private var family
 
   private var affirmation: String {
-    entry.affirmation ?? "Open Moodie to refresh your selected affirmations."
+    entry.affirmation?.text
+      ?? "Open Moodie to refresh your selected affirmations."
   }
 
   private var homeScreenContent: some View {
@@ -247,7 +265,7 @@ struct MoodieAffirmationWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: MoodieWidgetProvider()) { entry in
       MoodieWidgetView(entry: entry)
-        .widgetURL(URL(string: "moodie-app://affirmations"))
+        .widgetURL(entry.deepLinkURL)
     }
     .configurationDisplayName("Moodie Affirmation")
     .description("Keep a topic-aware affirmation on your Home Screen or Lock Screen.")

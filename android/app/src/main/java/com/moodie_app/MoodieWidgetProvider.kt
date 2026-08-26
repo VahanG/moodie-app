@@ -7,11 +7,14 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.RemoteViews
 import org.json.JSONArray
 import org.json.JSONObject
 
 class MoodieWidgetProvider : AppWidgetProvider() {
+  internal data class WidgetAffirmation(val id: String, val text: String)
+
   override fun onUpdate(
     context: Context,
     appWidgetManager: AppWidgetManager,
@@ -64,11 +67,14 @@ class MoodieWidgetProvider : AppWidgetProvider() {
 
     private fun buildViews(context: Context, rawPayload: String): RemoteViews {
       val views = RemoteViews(context.packageName, R.layout.moodie_affirmation_widget)
-      val text = resolveAffirmation(rawPayload, System.currentTimeMillis())
+      val affirmation = resolveAffirmation(rawPayload, System.currentTimeMillis())
+      val text = affirmation?.text
         ?: context.getString(R.string.affirmation_widget_prompt)
       views.setTextViewText(R.id.moodie_widget_affirmation, text)
 
       val openAppIntent = Intent(context, MainActivity::class.java).apply {
+        action = Intent.ACTION_VIEW
+        data = buildAffirmationDeepLink(affirmation)
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
       }
       val pendingIntent = PendingIntent.getActivity(
@@ -81,20 +87,45 @@ class MoodieWidgetProvider : AppWidgetProvider() {
       return views
     }
 
-    internal fun resolveAffirmation(rawPayload: String, now: Long): String? {
+    private fun buildAffirmationDeepLink(affirmation: WidgetAffirmation?): Uri {
+      val builder = Uri.Builder()
+        .scheme("moodie-app")
+        .authority("affirmations")
+      if (affirmation != null) {
+        builder
+          .appendQueryParameter("affirmationId", affirmation.id)
+          .appendQueryParameter("affirmationText", affirmation.text)
+      }
+      return builder.build()
+    }
+
+    internal fun resolveAffirmation(
+      rawPayload: String,
+      now: Long,
+    ): WidgetAffirmation? {
       return try {
         val payload = JSONObject(rawPayload)
         if (payload.optInt("version") != 1) return null
 
         if (payload.optBoolean("notificationsEnabled")) {
-          latestNotification(payload, now)?.optString("text")?.trim()
-            ?.takeIf { it.isNotEmpty() }
+          widgetAffirmation(latestNotification(payload, now))
             ?: rotatingAffirmation(payload.optJSONArray("affirmations"), now)
         } else {
           rotatingAffirmation(payload.optJSONArray("affirmations"), now)
         }
       } catch (_: Exception) {
         null
+      }
+    }
+
+    private fun widgetAffirmation(value: JSONObject?): WidgetAffirmation? {
+      if (value == null) return null
+      val id = value.optString("id").trim()
+      val text = value.optString("text").trim()
+      return if (id.isEmpty() || text.isEmpty()) {
+        null
+      } else {
+        WidgetAffirmation(id, text)
       }
     }
 
@@ -122,11 +153,13 @@ class MoodieWidgetProvider : AppWidgetProvider() {
       return latest
     }
 
-    private fun rotatingAffirmation(affirmations: JSONArray?, now: Long): String? {
+    private fun rotatingAffirmation(
+      affirmations: JSONArray?,
+      now: Long,
+    ): WidgetAffirmation? {
       if (affirmations == null || affirmations.length() == 0) return null
       val index = ((now / THREE_HOURS_MS) % affirmations.length()).toInt()
-      return affirmations.optJSONObject(index)?.optString("text")?.trim()
-        ?.takeIf { it.isNotEmpty() }
+      return widgetAffirmation(affirmations.optJSONObject(index))
     }
 
     fun scheduleRefreshes(context: Context, rawPayload: String) {

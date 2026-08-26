@@ -33,7 +33,7 @@ import { AppButton, AppText, IconButton } from '../components/ui';
 import { MOBILE_LAYOUT_BREAKPOINT, useTheme } from '../theme';
 import { useAffirmationPanelStyles } from './AffirmationPanel.styles';
 import { useLocalization } from '../features/localization';
-import type { OpenedNotificationAffirmation } from '../features/notifications/openedAffirmation';
+import type { OpenedAffirmation } from '../features/notifications/openedAffirmation';
 
 type Props = {
   topics: AffirmationTopic[];
@@ -44,7 +44,7 @@ type Props = {
   onSelectTopics: (topicIds: AffirmationTopicId[]) => Promise<void> | void;
   topicSelectionVisible: boolean;
   onCloseTopicSelection: () => void;
-  openedNotificationAffirmation: OpenedNotificationAffirmation | null;
+  openedAffirmation: OpenedAffirmation | null;
   backgroundPreference: AffirmationBackgroundPreference;
   onBackgroundPreferenceChange: (
     preference: AffirmationBackgroundPreference,
@@ -105,7 +105,7 @@ const AffirmationPanel: React.FC<Props> = ({
   onSelectTopics,
   topicSelectionVisible,
   onCloseTopicSelection,
-  openedNotificationAffirmation,
+  openedAffirmation,
   backgroundPreference,
   onBackgroundPreferenceChange,
   likedAffirmationKeys,
@@ -133,23 +133,35 @@ const AffirmationPanel: React.FC<Props> = ({
   );
   const affirmationFeed = useMemo(() => {
     const feed = buildAffirmationFeed(activeTopics);
-    if (!openedNotificationAffirmation) {
+    if (!openedAffirmation) {
       return feed;
     }
 
     const existingAffirmation = feed.find(
-      affirmation => affirmation.id === openedNotificationAffirmation.id,
+      affirmation => affirmation.id === openedAffirmation.id,
     );
     if (existingAffirmation) {
       return feed.map(affirmation =>
-        affirmation.id === openedNotificationAffirmation.id
-          ? { ...affirmation, text: openedNotificationAffirmation.text }
+        affirmation.id === openedAffirmation.id
+          ? { ...affirmation, text: openedAffirmation.text }
           : affirmation,
       );
     }
 
-    return feed;
-  }, [activeTopics, openedNotificationAffirmation]);
+    const catalogAffirmation = buildAffirmationFeed(topics).find(
+      affirmation => affirmation.id === openedAffirmation.id,
+    );
+    const visualFallback = catalogAffirmation ?? feed[0];
+    return [
+      ...feed,
+      {
+        id: openedAffirmation.id,
+        topicId: visualFallback?.topicId ?? '',
+        imageUri: visualFallback?.imageUri ?? '',
+        text: openedAffirmation.text,
+      },
+    ];
+  }, [activeTopics, openedAffirmation, topics]);
   const dailyAffirmationIndex = useMemo(
     () => getDailyIndex(affirmationFeed.length),
     [affirmationFeed.length],
@@ -173,9 +185,9 @@ const AffirmationPanel: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    const openedAffirmationIndex = openedNotificationAffirmation
+    const openedAffirmationIndex = openedAffirmation
       ? affirmationFeed.findIndex(
-          affirmation => affirmation.id === openedNotificationAffirmation.id,
+          affirmation => affirmation.id === openedAffirmation.id,
         )
       : -1;
 
@@ -184,7 +196,7 @@ const AffirmationPanel: React.FC<Props> = ({
         ? openedAffirmationIndex
         : dailyAffirmationIndex,
     );
-  }, [affirmationFeed, dailyAffirmationIndex, openedNotificationAffirmation]);
+  }, [affirmationFeed, dailyAffirmationIndex, openedAffirmation]);
 
   const showPreviousAffirmation = useCallback(() => {
     if (totalAffirmations === 0) {
@@ -370,7 +382,7 @@ const AffirmationPanel: React.FC<Props> = ({
     }
   }, [activeAffirmation]);
 
-  if (!activeAffirmation || !activeBackground) {
+  if (!activeAffirmation) {
     return (
       <View style={styles.screen} testID="screen-affirmations">
         <View style={styles.emptyState} testID="state-affirmation-content">
@@ -408,14 +420,16 @@ const AffirmationPanel: React.FC<Props> = ({
         style={[styles.mediaCard, isMobileLayout && styles.mediaCardMobile]}
         testID="card-affirmation-media"
       >
-        <AffirmationBackgroundImage
-          imageUri={activeBackground.imageUri}
-          onImageLoad={imageUri => {
-            markBackgroundUrisReady([imageUri]);
-          }}
-          readyImageUris={readyBackgroundUris}
-          style={styles.image}
-        />
+        {activeBackground ? (
+          <AffirmationBackgroundImage
+            imageUri={activeBackground.imageUri}
+            onImageLoad={imageUri => {
+              markBackgroundUrisReady([imageUri]);
+            }}
+            readyImageUris={readyBackgroundUris}
+            style={styles.image}
+          />
+        ) : null}
         <View pointerEvents="none" style={styles.imageOverlay} />
         <View
           style={[

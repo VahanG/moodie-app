@@ -1,4 +1,6 @@
-export type OpenedNotificationAffirmation = {
+import { Linking } from 'react-native';
+
+export type OpenedAffirmation = {
   id: string;
   text: string;
 };
@@ -10,10 +12,10 @@ type NotificationPayload = {
   userInteraction?: boolean;
 };
 
-type Listener = (affirmation: OpenedNotificationAffirmation) => void;
+type Listener = (affirmation: OpenedAffirmation) => void;
 
 const listeners = new Set<Listener>();
-let pendingAffirmation: OpenedNotificationAffirmation | null = null;
+let pendingAffirmation: OpenedAffirmation | null = null;
 
 function parsePayload(value: unknown): Record<string, unknown> | null {
   if (typeof value === 'string') {
@@ -33,7 +35,7 @@ function parsePayload(value: unknown): Record<string, unknown> | null {
 
 export function getOpenedNotificationAffirmation(
   notification: NotificationPayload,
-): OpenedNotificationAffirmation | null {
+): OpenedAffirmation | null {
   if (notification.userInteraction !== true) {
     return null;
   }
@@ -62,14 +64,28 @@ export function getOpenedNotificationAffirmation(
   return null;
 }
 
-export function handleNotificationInteraction(
-  notification: NotificationPayload,
-): void {
-  const affirmation = getOpenedNotificationAffirmation(notification);
-  if (!affirmation) {
-    return;
-  }
+export function getOpenedAffirmationFromUrl(
+  value: string,
+): OpenedAffirmation | null {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'moodie-app:' || url.hostname !== 'affirmations') {
+      return null;
+    }
 
+    const id = url.searchParams.get('affirmationId')?.trim();
+    const text = url.searchParams.get('affirmationText')?.trim();
+    if (!id || !text) {
+      return null;
+    }
+
+    return { id, text };
+  } catch {
+    return null;
+  }
+}
+
+function publishOpenedAffirmation(affirmation: OpenedAffirmation): void {
   if (listeners.size === 0) {
     pendingAffirmation = affirmation;
     return;
@@ -78,7 +94,47 @@ export function handleNotificationInteraction(
   listeners.forEach(listener => listener(affirmation));
 }
 
-export function subscribeToOpenedNotificationAffirmation(
+export function handleNotificationInteraction(
+  notification: NotificationPayload,
+): void {
+  const affirmation = getOpenedNotificationAffirmation(notification);
+  if (!affirmation) {
+    return;
+  }
+
+  publishOpenedAffirmation(affirmation);
+}
+
+export function handleOpenedAffirmationUrl(url: string): void {
+  const affirmation = getOpenedAffirmationFromUrl(url);
+  if (!affirmation) {
+    return;
+  }
+
+  publishOpenedAffirmation(affirmation);
+}
+
+export function subscribeToOpenedAffirmationLinks(): () => void {
+  let isSubscribed = true;
+  const subscription = Linking.addEventListener('url', event => {
+    handleOpenedAffirmationUrl(event.url);
+  });
+
+  Linking.getInitialURL()
+    .then(url => {
+      if (isSubscribed && url) {
+        handleOpenedAffirmationUrl(url);
+      }
+    })
+    .catch(() => undefined);
+
+  return () => {
+    isSubscribed = false;
+    subscription.remove();
+  };
+}
+
+export function subscribeToOpenedAffirmation(
   listener: Listener,
 ): () => void {
   listeners.add(listener);

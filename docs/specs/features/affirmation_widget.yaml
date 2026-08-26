@@ -5,7 +5,7 @@ feature:
   name: Affirmation Widget
   lifecycle: current
   purpose: Keep a topic-aware Moodie affirmation visible from the device home screen or iOS Lock Screen.
-  entry_route: moodie://affirmations
+  entry_route: moodie-app://affirmations
   dependencies:
     - FEATURE-AFFIRMATIONS
     - FEATURE-TOPIC-SELECTION
@@ -21,7 +21,8 @@ requirements:
       - The inline Lock Screen family shows a single-line topic-aware affirmation.
       - The rectangular Lock Screen family shows a compact topic-aware affirmation with Moodie branding.
       - The Android application includes a resizable AppWidget provider.
-      - Tapping the widget opens Moodie's Affirmations experience.
+      - Tapping the widget opens Moodie's Affirmations experience and displays exactly the affirmation that was visible in the tapped widget.
+      - The tapped affirmation remains the initial in-app affirmation even if the user's topic selection or remote content changes between widget rendering and app launch.
 
   - id: WIDGET-002
     title: Notification-Aware Widget Text
@@ -71,3 +72,7 @@ automated_verification:
         - latest delivered reminder resolution
         - three-hour rotation
         - malformed persisted payload fallback
+    - path: src/features/notifications/openedAffirmation.test.ts
+      covers:
+        - widget deep-link parsing
+        - cold-start and foreground widget taps

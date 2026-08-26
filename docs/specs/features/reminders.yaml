@@ -25,6 +25,7 @@ requirements:
       - When a reminder schedule is created or refreshed, its message is randomly selected from the same affirmation texts eligible for the user's selected topics.
       - The scheduled notification carries the selected affirmation identifier and exact text as local notification data.
       - Opening the app by tapping a daily reminder returns to Affirmations and displays exactly the affirmation text contained in that notification.
+      - The tapped notification text remains the initial in-app affirmation even if its topic is no longer selected or its catalog entry has changed since scheduling.
       - No reminder is scheduled until at least one affirmation eligible for the active topic selection is available.
       - If today's selected time has passed, the first notification is scheduled for the next local day.
       - The default preference is disabled at 09:00 local time.
